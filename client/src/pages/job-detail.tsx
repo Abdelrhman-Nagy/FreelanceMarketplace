@@ -31,6 +31,10 @@ export default function JobDetail() {
   const queryClient = useQueryClient();
   const [showProposalForm, setShowProposalForm] = useState(false);
 
+  console.log("JobDetail component - ID:", id);
+  console.log("JobDetail component - User:", user);
+  console.log("JobDetail component - Loading:", isLoading, "Authenticated:", isAuthenticated);
+
   // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -46,10 +50,14 @@ export default function JobDetail() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: job, isLoading: isJobLoading } = useQuery({
+  const { data: job, isLoading: isJobLoading, error: jobError } = useQuery({
     queryKey: [`/api/jobs/${id}`],
     enabled: !!id,
   });
+
+  console.log("Job data:", job);
+  console.log("Job loading:", isJobLoading);
+  console.log("Job error:", jobError);
 
   const { data: proposals, isLoading: isProposalsLoading } = useQuery({
     queryKey: [`/api/jobs/${id}/proposals`],
@@ -208,8 +216,8 @@ export default function JobDetail() {
                     <span className="text-sm text-gray-500">Budget</span>
                     <p className="text-xl font-semibold text-green-600">
                       {job.budgetType === 'fixed' 
-                        ? `$${job.budgetMin} - $${job.budgetMax}`
-                        : `$${job.hourlyRate}/hr`
+                        ? `$${job.budgetMin || 0} - $${job.budgetMax || 0}`
+                        : `$${job.hourlyRate || 0}/hr`
                       }
                     </p>
                   </div>
