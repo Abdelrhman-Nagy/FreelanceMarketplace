@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import Navigation from "@/components/ui/navigation";
+import { Navigation } from "@/components/ui/navigation";
 import MessageThread from "@/components/ui/message-thread";
 import { 
   Home, 

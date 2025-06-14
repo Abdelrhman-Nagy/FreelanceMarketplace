@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Navigation from "@/components/ui/navigation";
+import { Navigation } from "@/components/ui/navigation";
 import JobCard from "@/components/ui/job-card";
 import { Search, Filter } from "lucide-react";
 
