@@ -28,6 +28,7 @@ import {
   Star,
   CheckCircle,
   PlusCircle,
+  Plus,
   MoreHorizontal,
   Camera
 } from "lucide-react";
@@ -408,8 +409,13 @@ export default function Dashboard() {
                     </div>
                     
                     <div className="divide-y divide-gray-200">
-                      {isFreelancer ? (
-                        myContracts?.map((contract: any) => (
+                      {isLoading ? (
+                        <div className="p-12 text-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-upwork-green mx-auto"></div>
+                          <p className="text-gray-600 mt-4">Loading jobs...</p>
+                        </div>
+                      ) : isFreelancer ? (
+                        (myContracts as any)?.map((contract: any) => (
                           <div key={contract.id} className="p-6">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
@@ -444,33 +450,45 @@ export default function Dashboard() {
                           </div>
                         ))
                       ) : (
-                        myJobs?.map((job: any) => (
-                          <div key={job.id} className="p-6">
+                        (myJobs as any)?.map((job: any) => (
+                          <div key={job.id} className="p-6 hover:bg-gray-50 transition-colors">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
-                                <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
+                                <Link href={`/jobs/${job.id}`}>
+                                  <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
+                                    {job.title}
+                                  </h3>
+                                </Link>
                                 <p className="text-gray-600 mt-1">
                                   Posted {new Date(job.createdAt).toLocaleDateString()}
                                 </p>
                                 <p className="text-sm text-gray-500 mt-2">
-                                  {job.description.substring(0, 150)}...
+                                  {job.description?.length > 150 
+                                    ? `${job.description.substring(0, 150)}...`
+                                    : job.description
+                                  }
                                 </p>
                                 <div className="flex items-center space-x-4 mt-4">
-                                  <Badge variant={job.status === 'open' ? 'secondary' : 'default'}>
-                                    {job.status.replace('_', ' ')}
+                                  <Badge variant={job.status === 'open' ? 'secondary' : job.status === 'in_progress' ? 'default' : 'outline'}>
+                                    {job.status?.replace('_', ' ') || 'Open'}
                                   </Badge>
                                   <span className="text-sm text-gray-500">
-                                    {job.proposalCount} proposals
+                                    {job.proposalCount || 0} proposals
                                   </span>
-                                  <span className="text-sm text-gray-500">
+                                  <span className="text-sm text-green-600 font-medium">
                                     {job.budgetType === 'fixed' 
-                                      ? `$${job.budgetMin} - $${job.budgetMax}`
-                                      : `$${job.hourlyRate}/hr`
+                                      ? `$${job.budgetMin || 0} - $${job.budgetMax || 0}`
+                                      : `$${job.hourlyRate || 0}/hr`
                                     }
                                   </span>
                                 </div>
                               </div>
                               <div className="ml-6 flex space-x-2">
+                                <Link href={`/jobs/${job.id}`}>
+                                  <Button variant="outline" size="sm">
+                                    View Details
+                                  </Button>
+                                </Link>
                                 <Button variant="ghost" size="sm">
                                   <MessageCircle className="w-4 h-4" />
                                 </Button>
@@ -483,19 +501,35 @@ export default function Dashboard() {
                         ))
                       )}
                       
-                      {((isFreelancer && (!myContracts || myContracts.length === 0)) || 
-                        (!isFreelancer && (!myJobs || myJobs.length === 0))) && (
+                      {((isFreelancer && (!(myContracts as any) || (myContracts as any)?.length === 0)) || 
+                        (!isFreelancer && (!(myJobs as any) || (myJobs as any)?.length === 0))) && (
                         <div className="p-12 text-center">
                           <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                           <h3 className="text-lg font-medium text-gray-900 mb-2">
                             {isFreelancer ? "No active jobs" : "No jobs posted"}
                           </h3>
-                          <p className="text-gray-600">
+                          <p className="text-gray-600 mb-4">
                             {isFreelancer 
                               ? "Start browsing and applying to jobs to see them here."
                               : "Post your first job to start finding freelancers."
                             }
                           </p>
+                          {!isFreelancer && (
+                            <Link href="/post-job">
+                              <Button className="bg-upwork-green hover:bg-upwork-dark text-white">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Post Your First Job
+                              </Button>
+                            </Link>
+                          )}
+                          {isFreelancer && (
+                            <Link href="/browse-jobs">
+                              <Button className="bg-upwork-green hover:bg-upwork-dark text-white">
+                                <Briefcase className="w-4 h-4 mr-2" />
+                                Browse Jobs
+                              </Button>
+                            </Link>
+                          )}
                         </div>
                       )}
                     </div>
