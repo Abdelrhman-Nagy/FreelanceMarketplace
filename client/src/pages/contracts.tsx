@@ -73,10 +73,7 @@ export default function Contracts() {
 
   const updateContractMutation = useMutation({
     mutationFn: async ({ contractId, status }: { contractId: number; status: string }) => {
-      return await apiRequest(`/api/contracts/${contractId}`, {
-        method: 'PATCH',
-        body: { status },
-      });
+      return await apiRequest(`/api/contracts/${contractId}`, 'PATCH', { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/my-contracts'] });
