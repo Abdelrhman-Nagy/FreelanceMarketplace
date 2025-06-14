@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { ProgressRing } from "@/components/ui/progress-ring";
 import { Navigation } from "@/components/ui/navigation";
 import MessageThread from "@/components/ui/message-thread";
 import { 
@@ -807,36 +808,92 @@ function ProfileTab({ user, profileCompletion, onUpdateProfile, isUpdating }: an
               <CardTitle>Profile Completion</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span>Profile Strength</span>
-                  <span className="text-upwork-green font-medium">{profileCompletion}%</span>
-                </div>
-                <Progress value={profileCompletion} className="h-2" />
-                <div className="text-sm text-gray-600 space-y-1">
-                  <div className="flex items-center">
-                    {user.profileImageUrl ? (
-                      <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                    ) : (
-                      <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-2" />
-                    )}
-                    <span>Profile photo added</span>
+              <div className="flex flex-col items-center space-y-4">
+                <ProgressRing value={profileCompletion} size={140} strokeWidth={10}>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                      {profileCompletion}%
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                      Complete
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    {user.skills && user.skills.length > 0 ? (
-                      <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                    ) : (
-                      <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-2" />
-                    )}
-                    <span>Skills added</span>
-                  </div>
-                  <div className="flex items-center">
-                    {user.bio ? (
-                      <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                    ) : (
-                      <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-2" />
-                    )}
-                    <span>Bio completed</span>
+                </ProgressRing>
+                
+                <div className="w-full space-y-3">
+                  <div className="text-sm font-medium text-gray-700 mb-2">Complete your profile:</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {user.firstName && user.lastName ? (
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        ) : (
+                          <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-2" />
+                        )}
+                        <span className="text-sm">Basic info</span>
+                      </div>
+                      {user.firstName && user.lastName && (
+                        <span className="text-xs text-green-600 font-medium">✓</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {user.profileImageUrl ? (
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        ) : (
+                          <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-2" />
+                        )}
+                        <span className="text-sm">Profile photo</span>
+                      </div>
+                      {user.profileImageUrl && (
+                        <span className="text-xs text-green-600 font-medium">✓</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {user.skills && user.skills.length > 0 ? (
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        ) : (
+                          <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-2" />
+                        )}
+                        <span className="text-sm">Skills</span>
+                      </div>
+                      {user.skills && user.skills.length > 0 && (
+                        <span className="text-xs text-green-600 font-medium">✓</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {user.bio ? (
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        ) : (
+                          <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-2" />
+                        )}
+                        <span className="text-sm">Bio</span>
+                      </div>
+                      {user.bio && (
+                        <span className="text-xs text-green-600 font-medium">✓</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {(user.userType === 'freelancer' ? user.title : user.company) ? (
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        ) : (
+                          <div className="w-4 h-4 border-2 border-gray-300 rounded-full mr-2" />
+                        )}
+                        <span className="text-sm">
+                          {user.userType === 'freelancer' ? 'Professional title' : 'Company'}
+                        </span>
+                      </div>
+                      {(user.userType === 'freelancer' ? user.title : user.company) && (
+                        <span className="text-xs text-green-600 font-medium">✓</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
