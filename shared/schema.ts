@@ -218,6 +218,8 @@ export const insertProposalSchema = createInsertSchema(proposals).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  proposedRate: z.union([z.string(), z.number()]).transform((val) => Number(val)),
 });
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
