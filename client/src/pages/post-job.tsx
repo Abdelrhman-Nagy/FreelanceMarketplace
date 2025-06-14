@@ -116,6 +116,10 @@ export default function PostJob() {
   });
 
   const onSubmit = (data: PostJobForm) => {
+    console.log("Form submitted with data:", data);
+    console.log("Selected skills:", selectedSkills);
+    console.log("Form errors:", form.formState.errors);
+    
     const jobData = {
       ...data,
       skills: selectedSkills,
@@ -124,6 +128,7 @@ export default function PostJob() {
       hourlyRate: data.budgetType === "hourly" ? data.hourlyRate : undefined
     };
     
+    console.log("Job data to submit:", jobData);
     postJobMutation.mutate(jobData);
   };
 
