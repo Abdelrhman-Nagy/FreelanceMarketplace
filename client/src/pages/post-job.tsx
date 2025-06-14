@@ -341,6 +341,20 @@ export default function PostJob() {
           </Card>
 
           {/* Submit */}
+          {/* Form Validation Errors Display */}
+          {Object.keys(form.formState.errors).length > 0 && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="p-4">
+                <p className="text-red-600 font-medium mb-2">Please fix the following errors:</p>
+                <ul className="text-red-600 text-sm space-y-1">
+                  {Object.entries(form.formState.errors).map(([field, error]) => (
+                    <li key={field}>• {error?.message}</li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex justify-end space-x-4">
             <Button
               type="button"
@@ -353,6 +367,11 @@ export default function PostJob() {
               type="submit"
               className="bg-upwork-green hover:bg-upwork-dark text-white"
               disabled={postJobMutation.isPending}
+              onClick={() => {
+                console.log("Submit button clicked!");
+                console.log("Form valid:", form.formState.isValid);
+                console.log("Form errors:", form.formState.errors);
+              }}
             >
               {postJobMutation.isPending ? "Posting..." : "Post Job"}
             </Button>
