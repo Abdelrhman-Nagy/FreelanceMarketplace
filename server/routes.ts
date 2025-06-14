@@ -19,8 +19,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      console.log("User from database:", user);
-      res.json(user);
+      
+      // Ensure user has all required fields
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Make sure userType is included
+      const userResponse = {
+        ...user,
+        userType: user.userType || 'client'
+      };
+      
+      console.log("User response being sent:", userResponse);
+      res.json(userResponse);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
