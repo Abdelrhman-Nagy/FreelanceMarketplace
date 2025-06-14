@@ -318,7 +318,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {statsLoading ? "..." : stats?.totalJobs || 0}
+                  {statsLoading ? "..." : (stats as any)?.totalJobs || 0}
                 </div>
               </CardContent>
             </Card>
@@ -330,7 +330,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {statsLoading ? "..." : stats?.totalProposals || 0}
+                  {statsLoading ? "..." : (stats as any)?.totalProposals || 0}
                 </div>
               </CardContent>
             </Card>
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {statsLoading ? "..." : formatCurrency(stats?.totalRevenue || "0")}
+                  {statsLoading ? "..." : formatCurrency((stats as any)?.totalRevenue || "0")}
                 </div>
               </CardContent>
             </Card>
@@ -383,7 +383,7 @@ export default function AdminDashboard() {
                 <div className="text-center py-8">Loading users...</div>
               ) : (
                 <div className="space-y-4">
-                  {usersData?.users?.map((user: User) => (
+                  {(usersData as any)?.users?.map((user: User) => (
                     <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
@@ -470,7 +470,7 @@ export default function AdminDashboard() {
                 <div className="text-center py-8">Loading jobs...</div>
               ) : (
                 <div className="space-y-4">
-                  {jobsData?.jobs?.map((job: Job) => (
+                  {(jobsData as any)?.jobs?.map((job: Job) => (
                     <div key={job.id} className="p-4 border rounded-lg">
                       <div className="flex items-start justify-between mb-2">
                         <h3 className="font-medium">{job.title}</h3>
@@ -529,7 +529,7 @@ export default function AdminDashboard() {
                 <div className="text-center py-8">Loading proposals...</div>
               ) : (
                 <div className="space-y-4">
-                  {proposalsData?.proposals?.map((proposal: Proposal) => (
+                  {(proposalsData as any)?.proposals?.map((proposal: Proposal) => (
                     <div key={proposal.id} className="p-4 border rounded-lg">
                       <div className="flex items-start justify-between mb-2">
                         <div>
