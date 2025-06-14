@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { insertJobSchema } from "@shared/schema";
 import { Navigation } from "@/components/ui/navigation";
@@ -78,6 +79,8 @@ export default function PostJob() {
   const queryClient = useQueryClient();
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
+  const { user } = useAuth();
+  
   const form = useForm<PostJobForm>({
     resolver: zodResolver(postJobSchema),
     defaultValues: {
@@ -87,7 +90,8 @@ export default function PostJob() {
       budgetType: "fixed",
       experienceLevel: "intermediate",
       remote: true,
-      skills: []
+      skills: [],
+      clientId: user?.id || ""
     }
   });
 
