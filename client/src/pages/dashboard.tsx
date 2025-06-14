@@ -769,6 +769,50 @@ function ProfileTab({ user, profileCompletion, onUpdateProfile, onUploadPhoto, i
                     />
                   </div>
                 )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                  <Textarea
+                    rows={4}
+                    value={formData.bio}
+                    onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                    placeholder="Tell us about yourself, your experience, and what makes you unique..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Skills (comma-separated)
+                  </label>
+                  <Input
+                    value={formData.skills}
+                    onChange={(e) => setFormData(prev => ({ ...prev, skills: e.target.value }))}
+                    placeholder="React, Node.js, JavaScript, MongoDB, Project Management"
+                  />
+                </div>
+                {user.userType === 'freelancer' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Professional Title
+                    </label>
+                    <Input
+                      value={formData.title}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="e.g. Full Stack Developer, UI/UX Designer"
+                    />
+                  </div>
+                )}
+                {user.userType === 'freelancer' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Hourly Rate ($)
+                    </label>
+                    <Input
+                      type="number"
+                      value={formData.hourlyRate}
+                      onChange={(e) => setFormData(prev => ({ ...prev, hourlyRate: e.target.value }))}
+                      placeholder="25"
+                    />
+                  </div>
+                )}
                 <Button 
                   type="submit" 
                   disabled={isUpdating}
@@ -780,55 +824,7 @@ function ProfileTab({ user, profileCompletion, onUpdateProfile, onUploadPhoto, i
             </CardContent>
           </Card>
 
-          {/* Professional Information */}
-          {user.userType === 'freelancer' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Professional Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Professional Title
-                    </label>
-                    <Input
-                      value={formData.title}
-                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Hourly Rate
-                    </label>
-                    <Input
-                      type="number"
-                      value={formData.hourlyRate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, hourlyRate: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-                    <Textarea
-                      rows={4}
-                      value={formData.bio}
-                      onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Skills (comma-separated)
-                    </label>
-                    <Input
-                      value={formData.skills}
-                      onChange={(e) => setFormData(prev => ({ ...prev, skills: e.target.value }))}
-                      placeholder="React, Node.js, JavaScript, MongoDB"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+
         </div>
 
         {/* Profile Preview */}
