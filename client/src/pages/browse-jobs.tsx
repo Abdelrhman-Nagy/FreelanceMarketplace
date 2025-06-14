@@ -13,7 +13,7 @@ import { Search, Filter } from "lucide-react";
 export default function BrowseJobs() {
   const [filters, setFilters] = useState({
     search: "",
-    category: "",
+    category: "all",
     budgetMin: "",
     budgetMax: "",
     experienceLevel: "",
@@ -110,7 +110,7 @@ export default function BrowseJobs() {
                         <SelectValue placeholder="All Categories" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Categories</SelectItem>
+                        <SelectItem value="all">All Categories</SelectItem>
                         {categories.map(category => (
                           <SelectItem key={category} value={category}>{category}</SelectItem>
                         ))}
@@ -169,7 +169,7 @@ export default function BrowseJobs() {
                     variant="outline"
                     onClick={() => setFilters({
                       search: "",
-                      category: "",
+                      category: "all",
                       budgetMin: "",
                       budgetMax: "",
                       experienceLevel: "",

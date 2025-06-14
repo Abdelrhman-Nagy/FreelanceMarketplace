@@ -145,7 +145,7 @@ export class DatabaseStorage implements IStorage {
 
     const conditions = [eq(jobs.status, "open")];
 
-    if (category) {
+    if (category && category !== "all") {
       conditions.push(eq(jobs.category, category));
     }
 
