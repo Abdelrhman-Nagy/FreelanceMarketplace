@@ -73,7 +73,7 @@ export default function Contracts() {
 
   const updateContractMutation = useMutation({
     mutationFn: async ({ contractId, status }: { contractId: number; status: string }) => {
-      return await apiRequest(`/api/contracts/${contractId}`, 'PATCH', { status });
+      return await apiRequest('PATCH', `/api/contracts/${contractId}`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/my-contracts'] });
@@ -130,7 +130,6 @@ export default function Contracts() {
   };
 
   const handleStatusUpdate = (contractId: number, newStatus: string) => {
-    console.log('Updating contract:', { contractId, newStatus, userType: user?.userType });
     updateContractMutation.mutate({ contractId, status: newStatus });
   };
 
@@ -337,11 +336,6 @@ export default function Contracts() {
                             Mark Complete
                           </Button>
                         )}
-                        
-                        {/* Debug info - remove in production */}
-                        <div className="text-xs text-gray-500 mt-1">
-                          Status: {contract.status} | User: {(user as any)?.userType} | Client ID: {contract.clientId}
-                        </div>
                         
                         {contract.status === 'pending' && (
                           <div className="flex gap-1">
