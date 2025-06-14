@@ -324,6 +324,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/contracts/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const contractId = Number(req.params.id);
+      const { status } = req.body;
+      
+      // Validate status
+      const validStatuses = ['pending', 'active', 'completed', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid contract status" });
+      }
+      
+      // Get the contract first to check permissions
+      const contracts = await storage.getContractsByClient(userId);
+      const freelancerContracts = await storage.getContractsByFreelancer(userId);
+      const allUserContracts = [...contracts, ...freelancerContracts];
+      
+      const contract = allUserContracts.find(c => c.id === contractId);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found or unauthorized" });
+      }
+      
+      // Only clients can mark contracts as completed
+      if (status === 'completed' && contract.clientId !== userId) {
+        return res.status(403).json({ message: "Only clients can mark contracts as completed" });
+      }
+      
+      const updatedContract = await storage.updateContract(contractId, { status });
+      res.json(updatedContract);
+    } catch (error) {
+      console.error("Error updating contract:", error);
+      res.status(500).json({ message: "Failed to update contract" });
+    }
+  });
+
   // Admin middleware
   const isAdmin: RequestHandler = async (req: any, res, next) => {
     try {
