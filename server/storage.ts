@@ -307,46 +307,26 @@ export class DatabaseStorage implements IStorage {
     lastMessage: Message;
     unreadCount: number;
   }[]> {
-    // Get unique conversation partners with last message
-    const conversationQuery = sql`
-      WITH conversation_partners AS (
-        SELECT DISTINCT
-          CASE 
-            WHEN sender_id = ${userId} THEN receiver_id
-            ELSE sender_id
-          END as other_user_id
-        FROM messages
-        WHERE sender_id = ${userId} OR receiver_id = ${userId}
-      ),
-      last_messages AS (
-        SELECT DISTINCT ON (
-          CASE 
-            WHEN sender_id = ${userId} THEN receiver_id
-            ELSE sender_id
-          END
-        )
-          *,
-          CASE 
-            WHEN sender_id = ${userId} THEN receiver_id
-            ELSE sender_id
-          END as other_user_id
-        FROM messages
-        WHERE sender_id = ${userId} OR receiver_id = ${userId}
-        ORDER BY other_user_id, created_at DESC
-      )
-      SELECT 
-        cp.other_user_id,
-        lm.*
-      FROM conversation_partners cp
-      JOIN last_messages lm ON cp.other_user_id = lm.other_user_id
-      ORDER BY lm.created_at DESC
-    `;
+    // Get all messages involving the user
+    const userMessages = await db
+      .select()
+      .from(messages)
+      .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)))
+      .orderBy(desc(messages.createdAt));
 
-    const lastMessages = await db.execute(conversationQuery);
+    // Group by conversation partner and get latest message
+    const conversationMap = new Map();
+    
+    for (const message of userMessages) {
+      const otherUserId = message.senderId === userId ? message.receiverId : message.senderId;
+      
+      if (!conversationMap.has(otherUserId)) {
+        conversationMap.set(otherUserId, message);
+      }
+    }
 
     const conversations = [];
-    for (const row of lastMessages.rows) {
-      const otherUserId = row.other_user_id as string;
+    for (const [otherUserId, lastMessage] of Array.from(conversationMap.entries())) {
       const otherUser = await this.getUser(otherUserId);
       
       if (otherUser) {
@@ -365,20 +345,16 @@ export class DatabaseStorage implements IStorage {
         conversations.push({
           otherUserId,
           otherUser,
-          lastMessage: {
-            id: row.id as number,
-            senderId: row.sender_id as string,
-            receiverId: row.receiver_id as string,
-            content: row.content as string,
-            jobId: row.job_id as number | null,
-            proposalId: row.proposal_id as number | null,
-            read: row.read as boolean,
-            createdAt: new Date(row.created_at as string),
-          },
+          lastMessage,
           unreadCount: unreadResult.count,
         });
       }
     }
+
+    // Sort by last message date
+    conversations.sort((a, b) => 
+      new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime()
+    );
 
     return conversations;
   }
