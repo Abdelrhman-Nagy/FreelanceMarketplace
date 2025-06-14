@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import BrowseJobs from "@/pages/browse-jobs";
 import Dashboard from "@/pages/dashboard";
 import JobDetail from "@/pages/job-detail";
+import AdminDashboard from "@/pages/admin-dashboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/browse-jobs" component={BrowseJobs} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/admin" component={AdminDashboard} />
           <Route path="/jobs/:id" component={JobDetail} />
         </>
       )}

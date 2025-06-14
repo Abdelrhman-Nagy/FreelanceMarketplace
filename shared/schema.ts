@@ -32,7 +32,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  userType: varchar("user_type").notNull(), // 'freelancer', 'client', or 'admin'
+  userType: varchar("user_type").notNull().default('client'), // 'freelancer', 'client', or 'admin'
   title: varchar("title"), // Professional title for freelancers
   bio: text("bio"), // Professional bio
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }), // For freelancers
