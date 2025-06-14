@@ -8,168 +8,167 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Search, 
-  MessageCircle, 
-  Bell, 
-  User, 
-  Settings, 
+import {
+  Home,
+  Search,
+  MessageSquare,
+  User,
+  Briefcase,
+  Settings,
   LogOut,
-  Menu
+  Shield,
 } from "lucide-react";
 
-export default function Navigation() {
-  const { user } = useAuth();
+export function Navigation() {
+  const { user, isAuthenticated } = useAuth();
   const [location] = useLocation();
 
+  // Get unread message count
   const { data: unreadCount } = useQuery({
     queryKey: ["/api/messages/unread/count"],
-    enabled: !!user,
+    enabled: isAuthenticated,
   });
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
-  };
+  if (!isAuthenticated) {
+    return null;
+  }
 
-  const isFreelancer = user?.userType === 'freelancer';
+  const navItems = [
+    { href: "/", label: "Home", icon: Home },
+    { href: "/browse-jobs", label: "Browse Jobs", icon: Search },
+    { 
+      href: "/messages", 
+      label: "Messages", 
+      icon: MessageSquare,
+      badge: (unreadCount as any)?.count > 0 ? (unreadCount as any).count : null
+    },
+    { href: "/dashboard", label: "Dashboard", icon: Briefcase },
+  ];
+
+  // Add admin link for admin users
+  if ((user as any)?.userType === 'admin') {
+    navItems.push({ href: "/admin", label: "Admin", icon: Shield });
+  }
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo and Main Navigation */}
-          <div className="flex items-center">
-            <Link href="/">
-              <div className="flex-shrink-0 cursor-pointer">
-                <h1 className="text-2xl font-bold text-upwork-green">FreelanceConnect</h1>
-              </div>
-            </Link>
-            
-            <div className="hidden md:block ml-10">
-              <div className="flex items-baseline space-x-4">
-                {isFreelancer ? (
-                  <>
-                    <Link href="/browse-jobs">
-                      <Button 
-                        variant="ghost" 
-                        className={`${location === '/browse-jobs' ? 'text-upwork-green' : 'text-gray-700'} hover:text-upwork-green`}
-                      >
-                        Find Work
-                      </Button>
-                    </Link>
-                    <Link href="/dashboard">
-                      <Button 
-                        variant="ghost" 
-                        className={`${location === '/dashboard' ? 'text-upwork-green' : 'text-gray-700'} hover:text-upwork-green`}
-                      >
-                        My Jobs
-                      </Button>
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/browse-talent">
-                      <Button 
-                        variant="ghost" 
-                        className="text-gray-700 hover:text-upwork-green"
-                      >
-                        Find Talent
-                      </Button>
-                    </Link>
-                    <Link href="/dashboard">
-                      <Button 
-                        variant="ghost" 
-                        className={`${location === '/dashboard' ? 'text-upwork-green' : 'text-gray-700'} hover:text-upwork-green`}
-                      >
-                        My Projects
-                      </Button>
-                    </Link>
-                  </>
-                )}
-                <Button variant="ghost" className="text-gray-700 hover:text-upwork-green">
-                  Reports
-                </Button>
-              </div>
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link href="/">
+            <div className="flex items-center space-x-2">
+              <Briefcase className="h-6 w-6" />
+              <span className="font-bold text-xl">FreelanceHub</span>
             </div>
+          </Link>
+
+          {/* Navigation Items */}
+          <div className="hidden md:flex items-center space-x-6">
+            {navItems.map((item) => {
+              const isActive = location === item.href;
+              return (
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    variant={isActive ? "default" : "ghost"}
+                    className="relative"
+                  >
+                    <item.icon className="h-4 w-4 mr-2" />
+                    {item.label}
+                    {item.badge && (
+                      <Badge className="ml-2 px-1.5 py-0.5 text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Right side navigation */}
+          {/* User Menu */}
           <div className="flex items-center space-x-4">
-            {/* Search */}
-            <Button variant="ghost" size="sm" className="hidden md:flex">
-              <Search className="w-4 h-4" />
-            </Button>
-
-            {/* Messages */}
-            <Button variant="ghost" size="sm" className="relative">
-              <MessageCircle className="w-4 h-4" />
-              {unreadCount?.count > 0 && (
-                <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[16px] h-4 flex items-center justify-center p-0">
-                  {unreadCount.count > 9 ? '9+' : unreadCount.count}
-                </Badge>
-              )}
-            </Button>
-
-            {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="w-4 h-4" />
-              <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[16px] h-4 flex items-center justify-center p-0">
-                3
-              </Badge>
-            </Button>
-
-            {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || ""} />
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={(user as any)?.profileImageUrl} />
                     <AvatarFallback>
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
+                      {(user as any)?.firstName?.[0] || (user as any)?.email?.[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
-                <div className="flex flex-col space-y-1 p-2">
-                  <p className="text-sm font-medium leading-none">
-                    {user?.firstName} {user?.lastName}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
-                  </p>
-                </div>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {(user as any)?.firstName && (user as any)?.lastName
+                        ? `${(user as any).firstName} ${(user as any).lastName}`
+                        : (user as any)?.email}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {(user as any)?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <Link href="/dashboard">
-                  <DropdownMenuItem className="cursor-pointer">
+                  <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
                 </Link>
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
+                {(user as any)?.userType === 'admin' && (
+                  <Link href="/admin">
+                    <DropdownMenuItem>
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Admin Panel</span>
+                    </DropdownMenuItem>
+                  </Link>
+                )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  className="cursor-pointer text-red-600 focus:text-red-600"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                <DropdownMenuItem asChild>
+                  <a href="/api/logout" className="w-full">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </a>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+        </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <Button variant="ghost" size="sm">
-                <Menu className="w-4 h-4" />
-              </Button>
-            </div>
+        {/* Mobile Navigation */}
+        <div className="md:hidden pb-4">
+          <div className="flex space-x-2 overflow-x-auto">
+            {navItems.map((item) => {
+              const isActive = location === item.href;
+              return (
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    variant={isActive ? "default" : "ghost"}
+                    size="sm"
+                    className="relative whitespace-nowrap"
+                  >
+                    <item.icon className="h-4 w-4 mr-2" />
+                    {item.label}
+                    {item.badge && (
+                      <Badge className="ml-2 px-1.5 py-0.5 text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
