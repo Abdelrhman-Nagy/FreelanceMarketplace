@@ -21,7 +21,7 @@ import {
   type AdminStats,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and, or, like, count, sql } from "drizzle-orm";
+import { eq, desc, asc, and, or, like, count, sql, isNull, not } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
@@ -143,7 +143,15 @@ export class DatabaseStorage implements IStorage {
     let query = db.select().from(jobs);
     let countQuery = db.select({ count: count() }).from(jobs);
 
-    const conditions = [eq(jobs.status, "open")];
+    const conditions = [
+      eq(jobs.status, "open"),
+      // Exclude jobs that have completed contracts using NOT EXISTS
+      sql`NOT EXISTS (
+        SELECT 1 FROM ${contracts} 
+        WHERE ${contracts.jobId} = ${jobs.id} 
+        AND ${contracts.status} = 'completed'
+      )`
+    ];
 
     if (category && category !== "all") {
       conditions.push(eq(jobs.category, category));
