@@ -329,10 +329,12 @@ export default function Dashboard() {
                     {isFreelancer ? "My Jobs" : "Posted Jobs"}
                   </h1>
                   {!isFreelancer && (
-                    <Button className="bg-upwork-green hover:bg-upwork-dark text-white">
-                      <PlusCircle className="w-4 h-4 mr-2" />
-                      Post New Job
-                    </Button>
+                    <Link href="/post-job">
+                      <Button className="bg-upwork-green hover:bg-upwork-dark text-white">
+                        <PlusCircle className="w-4 h-4 mr-2" />
+                        Post New Job
+                      </Button>
+                    </Link>
                   )}
                 </div>
                 
