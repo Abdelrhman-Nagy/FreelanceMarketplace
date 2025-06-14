@@ -73,25 +73,29 @@ export default function Home() {
               </Link>
             )}
             {isClient && (
-              <Button className="bg-upwork-green hover:bg-upwork-dark text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Post a Job
-              </Button>
+              <Link href="/post-job">
+                <Button className="bg-upwork-green hover:bg-upwork-dark text-white">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Post a Job
+                </Button>
+              </Link>
             )}
             <Link href="/dashboard">
               <Button variant="outline">
                 Go to Dashboard
               </Button>
             </Link>
-            <Button variant="outline" className="relative">
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Messages
-              {unreadCount?.count > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs">
-                  {unreadCount.count}
-                </Badge>
-              )}
-            </Button>
+            <Link href="/messages">
+              <Button variant="outline" className="relative">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Messages
+                {unreadCount?.count > 0 && (
+                  <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs">
+                    {unreadCount.count}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
           </div>
         </div>
 
