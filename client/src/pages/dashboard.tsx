@@ -109,6 +109,37 @@ export default function Dashboard() {
     },
   });
 
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async (imageData: string) => {
+      await apiRequest("POST", "/api/auth/upload-photo", { imageData });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Success",
+        description: "Profile photo updated successfully",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to upload photo",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -546,7 +577,9 @@ export default function Dashboard() {
                 user={user} 
                 profileCompletion={profileCompletion}
                 onUpdateProfile={(data) => updateProfileMutation.mutate(data)}
+                onUploadPhoto={(imageData) => uploadPhotoMutation.mutate(imageData)}
                 isUpdating={updateProfileMutation.isPending}
+                isUploadingPhoto={uploadPhotoMutation.isPending}
               />
             )}
 
@@ -641,7 +674,7 @@ export default function Dashboard() {
   );
 }
 
-function ProfileTab({ user, profileCompletion, onUpdateProfile, isUpdating }: any) {
+function ProfileTab({ user, profileCompletion, onUpdateProfile, onUploadPhoto, isUpdating, isUploadingPhoto }: any) {
   const [formData, setFormData] = useState({
     firstName: user.firstName || "",
     lastName: user.lastName || "",
@@ -660,6 +693,23 @@ function ProfileTab({ user, profileCompletion, onUpdateProfile, isUpdating }: an
       ...formData,
       skills: formData.skills.split(",").map(s => s.trim()).filter(Boolean),
     });
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert("File size must be less than 5MB");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageData = event.target?.result as string;
+        onUploadPhoto(imageData);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -795,10 +845,23 @@ function ProfileTab({ user, profileCompletion, onUpdateProfile, isUpdating }: an
                     {user.firstName?.[0]}{user.lastName?.[0]}
                   </AvatarFallback>
                 </Avatar>
-                <Button variant="outline">
-                  <Camera className="w-4 h-4 mr-2" />
-                  Change Photo
-                </Button>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                    id="photo-upload"
+                  />
+                  <Button 
+                    variant="outline"
+                    onClick={() => document.getElementById('photo-upload')?.click()}
+                    disabled={isUploadingPhoto}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    {isUploadingPhoto ? "Uploading..." : "Change Photo"}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

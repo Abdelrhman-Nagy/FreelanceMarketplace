@@ -44,11 +44,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const updates = req.body;
-      const user = await storage.upsertUser({ id: userId, ...updates });
+      
+      // Clean up numeric fields - convert empty strings to null
+      const cleanedUpdates = {
+        ...updates,
+        hourlyRate: updates.hourlyRate === "" || updates.hourlyRate === undefined ? null : parseFloat(updates.hourlyRate),
+      };
+      
+      // Remove undefined/null values except for explicitly null fields
+      Object.keys(cleanedUpdates).forEach(key => {
+        if (cleanedUpdates[key] === undefined) {
+          delete cleanedUpdates[key];
+        }
+      });
+      
+      const user = await storage.upsertUser({ id: userId, ...cleanedUpdates });
+      console.log("User updated successfully:", user);
       res.json(user);
     } catch (error) {
       console.error("Error updating user:", error);
       res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Upload profile photo
+  app.post('/api/auth/upload-photo', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { imageData } = req.body;
+      
+      if (!imageData) {
+        return res.status(400).json({ message: "No image data provided" });
+      }
+      
+      // For demo purposes, we'll store the base64 image data directly
+      // In production, you'd upload to a file storage service like AWS S3, Cloudinary, etc.
+      const user = await storage.upsertUser({ 
+        id: userId, 
+        profileImageUrl: imageData 
+      });
+      
+      res.json({ profileImageUrl: user.profileImageUrl });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      res.status(500).json({ message: "Failed to upload photo" });
     }
   });
 
