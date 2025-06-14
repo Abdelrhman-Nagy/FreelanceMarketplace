@@ -212,6 +212,10 @@ export const insertJobSchema = createInsertSchema(jobs).omit({
   proposalCount: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  budgetMin: z.union([z.string(), z.number()]).transform((val) => Number(val)).optional(),
+  budgetMax: z.union([z.string(), z.number()]).transform((val) => Number(val)).optional(),
+  hourlyRate: z.union([z.string(), z.number()]).transform((val) => Number(val)).optional(),
 });
 
 export const insertProposalSchema = createInsertSchema(proposals).omit({
