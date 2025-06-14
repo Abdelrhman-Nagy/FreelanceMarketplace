@@ -74,7 +74,7 @@ export default function AdminDashboard() {
 
   // Redirect if not admin
   useProtectedPageEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.userType !== 'admin')) {
+    if (!isLoading && (!isAuthenticated || (user as any)?.userType !== 'admin')) {
       toast({
         title: "Unauthorized",
         description: "Admin access required. Redirecting...",
@@ -89,30 +89,30 @@ export default function AdminDashboard() {
   // Admin stats query
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/admin/stats"],
-    enabled: isAuthenticated && user?.userType === 'admin',
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
   });
 
   // Users query
   const { data: usersData, isLoading: usersLoading } = useQuery({
     queryKey: ["/api/admin/users", userFilters],
-    enabled: isAuthenticated && user?.userType === 'admin',
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
   });
 
   // Jobs query
   const { data: jobsData, isLoading: jobsLoading } = useQuery({
     queryKey: ["/api/admin/jobs", jobFilters],
-    enabled: isAuthenticated && user?.userType === 'admin',
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
   });
 
   // Proposals query
   const { data: proposalsData, isLoading: proposalsLoading } = useQuery({
     queryKey: ["/api/admin/proposals", proposalFilters],
-    enabled: isAuthenticated && user?.userType === 'admin',
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
   });
 
   // Update stats mutation
   const updateStatsMutation = useMutation({
-    mutationFn: () => apiRequest("/api/admin/stats/update", { method: "POST" }),
+    mutationFn: () => apiRequest("/api/admin/stats/update", "POST"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       toast({
@@ -141,10 +141,7 @@ export default function AdminDashboard() {
   // Suspend user mutation
   const suspendUserMutation = useMutation({
     mutationFn: ({ userId, reason }: { userId: string; reason: string }) =>
-      apiRequest(`/api/admin/users/${userId}/suspend`, {
-        method: "POST",
-        body: JSON.stringify({ reason }),
-      }),
+      apiRequest(`/api/admin/users/${userId}/suspend`, "POST", { reason }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setSuspendDialogOpen(false);
@@ -176,10 +173,7 @@ export default function AdminDashboard() {
   // Update role mutation
   const updateRoleMutation = useMutation({
     mutationFn: ({ userId, userType }: { userId: string; userType: string }) =>
-      apiRequest(`/api/admin/users/${userId}/role`, {
-        method: "PUT",
-        body: JSON.stringify({ userType }),
-      }),
+      apiRequest(`/api/admin/users/${userId}/role`, "PUT", { userType }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setRoleChangeDialogOpen(false);
@@ -211,7 +205,7 @@ export default function AdminDashboard() {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: (userId: string) =>
-      apiRequest(`/api/admin/users/${userId}`, { method: "DELETE" }),
+      apiRequest(`/api/admin/users/${userId}`, "DELETE"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({
@@ -237,7 +231,7 @@ export default function AdminDashboard() {
     },
   });
 
-  if (isLoading || !isAuthenticated || user?.userType !== 'admin') {
+  if (isLoading || !isAuthenticated || (user as any)?.userType !== 'admin') {
     return (
       <div className="container mx-auto p-6">
         <div className="flex items-center justify-center min-h-96">
@@ -312,7 +306,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {statsLoading ? "..." : stats?.totalUsers || 0}
+                  {statsLoading ? "..." : (stats as any)?.totalUsers || 0}
                 </div>
               </CardContent>
             </Card>
