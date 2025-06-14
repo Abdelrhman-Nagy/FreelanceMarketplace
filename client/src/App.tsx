@@ -11,6 +11,7 @@ import Dashboard from "@/pages/dashboard";
 import JobDetail from "@/pages/job-detail";
 import AdminDashboard from "@/pages/admin-dashboard";
 import Messages from "@/pages/messages";
+import Contracts from "@/pages/contracts";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/browse-jobs" component={BrowseJobs} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/contracts" component={Contracts} />
           <Route path="/messages" component={Messages} />
           <Route path="/admin" component={AdminDashboard} />
           <Route path="/jobs/:id" component={JobDetail} />

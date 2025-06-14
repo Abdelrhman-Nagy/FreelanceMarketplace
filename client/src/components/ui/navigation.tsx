@@ -21,6 +21,7 @@ import {
   Settings,
   LogOut,
   Shield,
+  FileText,
 } from "lucide-react";
 
 export function Navigation() {
@@ -40,6 +41,7 @@ export function Navigation() {
   const navItems = [
     { href: "/", label: "Home", icon: Home },
     { href: "/browse-jobs", label: "Browse Jobs", icon: Search },
+    { href: "/contracts", label: "Contracts", icon: FileText },
     { 
       href: "/messages", 
       label: "Messages", 
