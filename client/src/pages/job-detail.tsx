@@ -31,9 +31,7 @@ export default function JobDetail() {
   const queryClient = useQueryClient();
   const [showProposalForm, setShowProposalForm] = useState(false);
 
-  console.log("JobDetail component - ID:", id);
-  console.log("JobDetail component - User:", user);
-  console.log("JobDetail component - Loading:", isLoading, "Authenticated:", isAuthenticated);
+
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -55,9 +53,7 @@ export default function JobDetail() {
     enabled: !!id,
   });
 
-  console.log("Job data:", job);
-  console.log("Job loading:", isJobLoading);
-  console.log("Job error:", jobError);
+
 
   const { data: proposals, isLoading: isProposalsLoading } = useQuery({
     queryKey: [`/api/jobs/${id}/proposals`],
