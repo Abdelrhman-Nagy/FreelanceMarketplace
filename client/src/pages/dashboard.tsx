@@ -968,12 +968,39 @@ function calculateProfileCompletion(user: any): number {
   let completed = 0;
   const total = 6;
 
-  if (user.firstName && user.lastName) completed++;
-  if (user.email) completed++;
-  if (user.profileImageUrl) completed++;
-  if (user.bio) completed++;
-  if (user.skills && user.skills.length > 0) completed++;
-  if (user.userType === 'freelancer' ? user.title : user.company) completed++;
+  const checks = {
+    basicInfo: user.firstName && user.lastName,
+    email: user.email,
+    profileImage: user.profileImageUrl,
+    bio: user.bio,
+    skills: user.skills && user.skills.length > 0,
+    professionalInfo: user.userType === 'freelancer' ? user.title : user.company
+  };
+
+  if (checks.basicInfo) completed++;
+  if (checks.email) completed++;
+  if (checks.profileImage) completed++;
+  if (checks.bio) completed++;
+  if (checks.skills) completed++;
+  if (checks.professionalInfo) completed++;
+
+  console.log("Profile completion calculation:", {
+    user: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      profileImageUrl: user.profileImageUrl,
+      bio: user.bio,
+      skills: user.skills,
+      userType: user.userType,
+      company: user.company,
+      title: user.title
+    },
+    checks,
+    completed,
+    total,
+    percentage: Math.round((completed / total) * 100)
+  });
 
   return Math.round((completed / total) * 100);
 }
