@@ -32,7 +32,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  userType: varchar("user_type").notNull(), // 'freelancer' or 'client'
+  userType: varchar("user_type").notNull(), // 'freelancer', 'client', or 'admin'
   title: varchar("title"), // Professional title for freelancers
   bio: text("bio"), // Professional bio
   hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }), // For freelancers
@@ -173,11 +173,38 @@ export const contractsRelations = relations(contracts, ({ one }) => ({
   }),
 }));
 
+// Admin statistics table
+export const adminStats = pgTable("admin_stats", {
+  id: serial("id").primaryKey(),
+  totalUsers: integer("total_users").default(0),
+  totalJobs: integer("total_jobs").default(0),
+  totalProposals: integer("total_proposals").default(0),
+  totalContracts: integer("total_contracts").default(0),
+  totalRevenue: decimal("total_revenue", { precision: 12, scale: 2 }).default("0"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User bans/suspensions table
+export const userSuspensions = pgTable("user_suspensions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  adminId: varchar("admin_id").notNull().references(() => users.id),
+  reason: text("reason").notNull(),
+  suspendedUntil: timestamp("suspended_until"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Zod schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertSuspensionSchema = createInsertSchema(userSuspensions).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertJobSchema = createInsertSchema(jobs).omit({
@@ -215,3 +242,6 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertContract = z.infer<typeof insertContractSchema>;
 export type Contract = typeof contracts.$inferSelect;
+export type InsertSuspension = z.infer<typeof insertSuspensionSchema>;
+export type Suspension = typeof userSuspensions.$inferSelect;
+export type AdminStats = typeof adminStats.$inferSelect;

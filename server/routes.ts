@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -321,6 +321,190 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching contracts:", error);
       res.status(500).json({ message: "Failed to fetch contracts" });
+    }
+  });
+
+  // Admin middleware
+  const isAdmin: RequestHandler = async (req: any, res, next) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || user.userType !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      next();
+    } catch (error) {
+      console.error("Admin middleware error:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  };
+
+  // Admin routes
+  app.get("/api/admin/stats", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  app.post("/api/admin/stats/update", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      await storage.updateAdminStats();
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error updating admin stats:", error);
+      res.status(500).json({ message: "Failed to update admin stats" });
+    }
+  });
+
+  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { page = 1, limit = 20, userType, search } = req.query;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      const result = await storage.getAllUsers({
+        userType: userType as string,
+        search: search as string,
+        limit: parseInt(limit),
+        offset,
+      });
+
+      res.json({
+        ...result,
+        page: parseInt(page),
+        totalPages: Math.ceil(result.total / parseInt(limit)),
+      });
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/admin/jobs", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { page = 1, limit = 20, status, search } = req.query;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      const result = await storage.getAllJobs({
+        status: status as string,
+        search: search as string,
+        limit: parseInt(limit),
+        offset,
+      });
+
+      res.json({
+        ...result,
+        page: parseInt(page),
+        totalPages: Math.ceil(result.total / parseInt(limit)),
+      });
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      res.status(500).json({ message: "Failed to fetch jobs" });
+    }
+  });
+
+  app.get("/api/admin/proposals", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { page = 1, limit = 20, status } = req.query;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      const result = await storage.getAllProposals({
+        status: status as string,
+        limit: parseInt(limit),
+        offset,
+      });
+
+      res.json({
+        ...result,
+        page: parseInt(page),
+        totalPages: Math.ceil(result.total / parseInt(limit)),
+      });
+    } catch (error) {
+      console.error("Error fetching proposals:", error);
+      res.status(500).json({ message: "Failed to fetch proposals" });
+    }
+  });
+
+  app.post("/api/admin/users/:userId/suspend", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { reason, suspendedUntil } = req.body;
+      const adminId = req.user.claims.sub;
+
+      if (!reason) {
+        return res.status(400).json({ message: "Suspension reason is required" });
+      }
+
+      const suspension = await storage.suspendUser({
+        userId,
+        adminId,
+        reason,
+        suspendedUntil: suspendedUntil ? new Date(suspendedUntil) : null,
+      });
+
+      res.json(suspension);
+    } catch (error) {
+      console.error("Error suspending user:", error);
+      res.status(500).json({ message: "Failed to suspend user" });
+    }
+  });
+
+  app.post("/api/admin/users/:userId/unsuspend", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      await storage.unsuspendUser(userId);
+      res.json({ message: "User unsuspended successfully" });
+    } catch (error) {
+      console.error("Error unsuspending user:", error);
+      res.status(500).json({ message: "Failed to unsuspend user" });
+    }
+  });
+
+  app.put("/api/admin/users/:userId/role", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { userType } = req.body;
+
+      if (!['freelancer', 'client', 'admin'].includes(userType)) {
+        return res.status(400).json({ message: "Invalid user type" });
+      }
+
+      const user = await storage.updateUserRole(userId, userType);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  app.delete("/api/admin/users/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      await storage.deleteUser(userId);
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  app.get("/api/admin/users/:userId/suspensions", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const suspensions = await storage.getUserSuspensions(userId);
+      res.json(suspensions);
+    } catch (error) {
+      console.error("Error fetching user suspensions:", error);
+      res.status(500).json({ message: "Failed to fetch user suspensions" });
     }
   });
 

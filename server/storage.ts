@@ -4,6 +4,8 @@ import {
   proposals,
   messages,
   contracts,
+  userSuspensions,
+  adminStats,
   type User,
   type UpsertUser,
   type Job,
@@ -14,6 +16,9 @@ import {
   type InsertMessage,
   type Contract,
   type InsertContract,
+  type Suspension,
+  type InsertSuspension,
+  type AdminStats,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, asc, and, or, like, count, sql } from "drizzle-orm";
@@ -66,6 +71,33 @@ export interface IStorage {
   getContractsByFreelancer(freelancerId: string): Promise<(Contract & { job: Job; client: User })[]>;
   getContractsByClient(clientId: string): Promise<(Contract & { job: Job; freelancer: User })[]>;
   updateContract(id: number, updates: Partial<InsertContract>): Promise<Contract>;
+
+  // Admin operations
+  getAllUsers(filters?: {
+    userType?: string;
+    search?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ users: User[]; total: number }>;
+  getAllJobs(filters?: {
+    status?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ jobs: (Job & { client: User })[]; total: number }>;
+  getAllProposals(filters?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ proposals: (Proposal & { job: Job; freelancer: User })[]; total: number }>;
+  getAdminStats(): Promise<AdminStats>;
+  updateAdminStats(): Promise<void>;
+  suspendUser(suspension: InsertSuspension): Promise<Suspension>;
+  unsuspendUser(userId: string): Promise<void>;
+  getUserSuspensions(userId: string): Promise<Suspension[]>;
+  deleteUser(userId: string): Promise<void>;
+  updateUserRole(userId: string, userType: string): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -450,6 +482,246 @@ export class DatabaseStorage implements IStorage {
       .where(eq(contracts.id, id))
       .returning();
     return contract;
+  }
+
+  // Admin operations
+  async getAllUsers(filters: {
+    userType?: string;
+    search?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{ users: User[]; total: number }> {
+    const { limit = 50, offset = 0, userType, search, status } = filters;
+
+    let query = db.select().from(users);
+    let countQuery = db.select({ count: count() }).from(users);
+
+    const conditions = [];
+
+    if (userType && userType !== 'all') {
+      conditions.push(eq(users.userType, userType));
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          like(users.firstName, `%${search}%`),
+          like(users.lastName, `%${search}%`),
+          like(users.email, `%${search}%`)
+        )
+      );
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+      countQuery = countQuery.where(and(...conditions));
+    }
+
+    const [userResults, countResult] = await Promise.all([
+      query.orderBy(desc(users.createdAt)).limit(limit).offset(offset),
+      countQuery,
+    ]);
+
+    return {
+      users: userResults,
+      total: countResult[0].count,
+    };
+  }
+
+  async getAllJobs(filters: {
+    status?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{ jobs: (Job & { client: User })[]; total: number }> {
+    const { limit = 50, offset = 0, status, search } = filters;
+
+    let query = db
+      .select()
+      .from(jobs)
+      .leftJoin(users, eq(jobs.clientId, users.id));
+    
+    let countQuery = db.select({ count: count() }).from(jobs);
+
+    const conditions = [];
+
+    if (status && status !== 'all') {
+      conditions.push(eq(jobs.status, status));
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          like(jobs.title, `%${search}%`),
+          like(jobs.description, `%${search}%`)
+        )
+      );
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+      countQuery = countQuery.where(and(...conditions));
+    }
+
+    const [jobResults, countResult] = await Promise.all([
+      query.orderBy(desc(jobs.createdAt)).limit(limit).offset(offset),
+      countQuery,
+    ]);
+
+    return {
+      jobs: jobResults.map(result => ({
+        ...result.jobs,
+        client: result.users!,
+      })),
+      total: countResult[0].count,
+    };
+  }
+
+  async getAllProposals(filters: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{ proposals: (Proposal & { job: Job; freelancer: User })[]; total: number }> {
+    const { limit = 50, offset = 0, status } = filters;
+
+    let query = db
+      .select()
+      .from(proposals)
+      .leftJoin(jobs, eq(proposals.jobId, jobs.id))
+      .leftJoin(users, eq(proposals.freelancerId, users.id));
+    
+    let countQuery = db.select({ count: count() }).from(proposals);
+
+    const conditions = [];
+
+    if (status && status !== 'all') {
+      conditions.push(eq(proposals.status, status));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+      countQuery = countQuery.where(and(...conditions));
+    }
+
+    const [proposalResults, countResult] = await Promise.all([
+      query.orderBy(desc(proposals.createdAt)).limit(limit).offset(offset),
+      countQuery,
+    ]);
+
+    return {
+      proposals: proposalResults.map(result => ({
+        ...result.proposals,
+        job: result.jobs!,
+        freelancer: result.users!,
+      })),
+      total: countResult[0].count,
+    };
+  }
+
+  async getAdminStats(): Promise<AdminStats> {
+    // Get or create admin stats
+    let [stats] = await db.select().from(adminStats).limit(1);
+    
+    if (!stats) {
+      // Create initial stats record
+      await this.updateAdminStats();
+      [stats] = await db.select().from(adminStats).limit(1);
+    }
+
+    return stats;
+  }
+
+  async updateAdminStats(): Promise<void> {
+    const [userCount] = await db.select({ count: count() }).from(users);
+    const [jobCount] = await db.select({ count: count() }).from(jobs);
+    const [proposalCount] = await db.select({ count: count() }).from(proposals);
+    const [contractCount] = await db.select({ count: count() }).from(contracts);
+
+    // Calculate total revenue (sum of all contract earnings)
+    const [revenueResult] = await db
+      .select({ total: sql`COALESCE(SUM(${contracts.totalEarnings}), 0)` })
+      .from(contracts);
+
+    const statsData = {
+      totalUsers: userCount.count,
+      totalJobs: jobCount.count,
+      totalProposals: proposalCount.count,
+      totalContracts: contractCount.count,
+      totalRevenue: revenueResult.total as string,
+      updatedAt: new Date(),
+    };
+
+    // Upsert stats
+    const [existingStats] = await db.select().from(adminStats).limit(1);
+    
+    if (existingStats) {
+      await db
+        .update(adminStats)
+        .set(statsData)
+        .where(eq(adminStats.id, existingStats.id));
+    } else {
+      await db.insert(adminStats).values(statsData);
+    }
+  }
+
+  async suspendUser(suspension: InsertSuspension): Promise<Suspension> {
+    const [newSuspension] = await db
+      .insert(userSuspensions)
+      .values(suspension)
+      .returning();
+    return newSuspension;
+  }
+
+  async unsuspendUser(userId: string): Promise<void> {
+    await db
+      .update(userSuspensions)
+      .set({ isActive: false })
+      .where(and(eq(userSuspensions.userId, userId), eq(userSuspensions.isActive, true)));
+  }
+
+  async getUserSuspensions(userId: string): Promise<Suspension[]> {
+    return await db
+      .select()
+      .from(userSuspensions)
+      .where(eq(userSuspensions.userId, userId))
+      .orderBy(desc(userSuspensions.createdAt));
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    // Delete user and all related data
+    await db.transaction(async (tx) => {
+      // Delete user suspensions
+      await tx.delete(userSuspensions).where(eq(userSuspensions.userId, userId));
+      
+      // Delete messages
+      await tx.delete(messages).where(
+        or(eq(messages.senderId, userId), eq(messages.receiverId, userId))
+      );
+      
+      // Delete contracts where user is involved
+      await tx.delete(contracts).where(
+        or(eq(contracts.freelancerId, userId), eq(contracts.clientId, userId))
+      );
+      
+      // Delete proposals by user
+      await tx.delete(proposals).where(eq(proposals.freelancerId, userId));
+      
+      // Delete jobs by user
+      await tx.delete(jobs).where(eq(jobs.clientId, userId));
+      
+      // Finally delete the user
+      await tx.delete(users).where(eq(users.id, userId));
+    });
+  }
+
+  async updateUserRole(userId: string, userType: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ userType, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
   }
 }
 
