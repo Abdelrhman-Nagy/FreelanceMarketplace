@@ -170,14 +170,14 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  const isFreelancer = user.userType === 'freelancer';
+  const isFreelancer = (user as any).userType === 'freelancer';
   const profileCompletion = calculateProfileCompletion(user);
 
   const sidebarItems = [
     { id: "overview", label: "Overview", icon: Home },
     { id: "jobs", label: isFreelancer ? "My Jobs" : "Posted Jobs", icon: Briefcase },
     { id: "proposals", label: "Proposals", icon: FileText },
-    { id: "messages", label: "Messages", icon: MessageCircle, badge: unreadCount?.count },
+    { id: "messages", label: "Messages", icon: MessageCircle, badge: (unreadCount as any)?.count },
     { id: "profile", label: "Profile", icon: User },
     { id: "earnings", label: isFreelancer ? "Earnings" : "Spending", icon: DollarSign },
   ];
