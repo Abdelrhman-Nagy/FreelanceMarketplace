@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import BrowseJobs from "@/pages/browse-jobs";
 import Dashboard from "@/pages/dashboard";
 import JobDetail from "@/pages/job-detail";
+import PostJob from "@/pages/post-job";
 import AdminDashboard from "@/pages/admin-dashboard";
 import Messages from "@/pages/messages";
 import Contracts from "@/pages/contracts";
@@ -29,6 +30,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/browse-jobs" component={BrowseJobs} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/post-job" component={PostJob} />
           <Route path="/contracts" component={Contracts} />
           <Route path="/messages" component={Messages} />
           <Route path="/admin" component={AdminDashboard} />
