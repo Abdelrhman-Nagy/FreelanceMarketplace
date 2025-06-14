@@ -55,12 +55,12 @@ export default function Dashboard() {
 
   const { data: myJobs } = useQuery({
     queryKey: ["/api/my-jobs"],
-    enabled: !!user && user.userType === 'client',
+    enabled: !!user && (user as any)?.userType === 'client',
   });
 
   const { data: myProposals } = useQuery({
     queryKey: ["/api/my-proposals"],
-    enabled: !!user && user.userType === 'freelancer',
+    enabled: !!user && (user as any)?.userType === 'freelancer',
   });
 
   const { data: myContracts } = useQuery({
@@ -135,6 +135,26 @@ export default function Dashboard() {
       toast({
         title: "Error",
         description: "Failed to upload photo",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const switchUserTypeMutation = useMutation({
+    mutationFn: async (userType: string) => {
+      await apiRequest("POST", "/api/auth/switch-type", { userType });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Success",
+        description: "User type switched successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to switch user type",
         variant: "destructive",
       });
     },
@@ -578,8 +598,10 @@ export default function Dashboard() {
                 profileCompletion={profileCompletion}
                 onUpdateProfile={(data) => updateProfileMutation.mutate(data)}
                 onUploadPhoto={(imageData) => uploadPhotoMutation.mutate(imageData)}
+                onSwitchUserType={(userType) => switchUserTypeMutation.mutate(userType)}
                 isUpdating={updateProfileMutation.isPending}
                 isUploadingPhoto={uploadPhotoMutation.isPending}
+                isSwitchingType={switchUserTypeMutation.isPending}
               />
             )}
 
@@ -674,7 +696,7 @@ export default function Dashboard() {
   );
 }
 
-function ProfileTab({ user, profileCompletion, onUpdateProfile, onUploadPhoto, isUpdating, isUploadingPhoto }: any) {
+function ProfileTab({ user, profileCompletion, onUpdateProfile, onUploadPhoto, onSwitchUserType, isUpdating, isUploadingPhoto, isSwitchingType }: any) {
   const [formData, setFormData] = useState({
     firstName: user.firstName || "",
     lastName: user.lastName || "",
@@ -858,6 +880,45 @@ function ProfileTab({ user, profileCompletion, onUpdateProfile, onUploadPhoto, i
                     {isUploadingPhoto ? "Uploading..." : "Change Photo"}
                   </Button>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* User Type Switcher for Testing */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Testing Mode</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600">Switch user type for testing:</p>
+                <div className="flex space-x-2">
+                  <Button
+                    variant={user.userType === 'client' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => onSwitchUserType('client')}
+                    disabled={isSwitchingType}
+                  >
+                    Client
+                  </Button>
+                  <Button
+                    variant={user.userType === 'freelancer' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => onSwitchUserType('freelancer')}
+                    disabled={isSwitchingType}
+                  >
+                    Freelancer
+                  </Button>
+                  <Button
+                    variant={user.userType === 'admin' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => onSwitchUserType('admin')}
+                    disabled={isSwitchingType}
+                  >
+                    Admin
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">Current: {user.userType}</p>
               </div>
             </CardContent>
           </Card>

@@ -91,6 +91,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Switch user type for testing
+  app.post('/api/auth/switch-type', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { userType } = req.body;
+      
+      if (!['client', 'freelancer', 'admin'].includes(userType)) {
+        return res.status(400).json({ message: "Invalid user type" });
+      }
+      
+      const user = await storage.upsertUser({ 
+        id: userId, 
+        userType 
+      });
+      
+      res.json({ userType: user.userType });
+    } catch (error) {
+      console.error("Error switching user type:", error);
+      res.status(500).json({ message: "Failed to switch user type" });
+    }
+  });
+
   // Job routes
   app.post('/api/jobs', isAuthenticated, async (req: any, res) => {
     try {
