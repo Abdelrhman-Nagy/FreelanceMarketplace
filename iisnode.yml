@@ -1,0 +1,40 @@
+# iisnode.yml - IIS Node.js configuration
+# This file configures how IIS runs Node.js applications
+
+# Enable logging
+loggingEnabled: true
+logDirectory: logs
+
+# Node.js executable path
+nodeProcessCommandLine: "C:\Program Files\nodejs\node.exe"
+
+# Environment variables
+node_env: production
+
+# Performance settings
+maxProcessCountPerApplication: 1
+maxConcurrentRequestsPerProcess: 1024
+maxNamedPipeConnectionRetry: 100
+namedPipeConnectionRetryDelay: 250
+
+# Debugging
+devErrorsEnabled: true
+debuggingEnabled: false
+
+# Request handling
+flushResponse: false
+enableXFF: false
+
+# Watchdog settings
+watchedFiles: "*.js;node_modules\*;dist\*"
+
+# Buffer settings
+initialRequestBufferSize: 4096
+maxRequestBufferSize: 65536
+
+# Connection pooling
+maxNamedPipeConnectionPoolSize: 512
+maxNamedPipePooledConnectionAge: 30000
+
+# Server variables to promote
+promoteServerVars: "LOGON_USER,AUTH_USER,AUTH_TYPE"
