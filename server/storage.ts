@@ -709,4 +709,20 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Database switcher - set DB_TYPE environment variable to 'sqlserver' to use SQL Server
+const DB_TYPE = process.env.DB_TYPE || 'postgresql';
+
+// Import SQL Server storage conditionally
+let sqlServerStorage: any = null;
+if (DB_TYPE === 'sqlserver') {
+  try {
+    const { sqlServerStorage: sqlServerStorageImpl } = require('./storage-sqlserver');
+    sqlServerStorage = sqlServerStorageImpl;
+  } catch (error) {
+    console.warn('SQL Server storage not available, falling back to PostgreSQL');
+  }
+}
+
+export const storage = DB_TYPE === 'sqlserver' && sqlServerStorage 
+  ? sqlServerStorage 
+  : new DatabaseStorage();
