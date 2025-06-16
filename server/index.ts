@@ -151,7 +151,7 @@ const init = async () => {
   server.route({
     method: 'GET',
     path: '/{param*}',
-    handler: (request, h) => {
+    handler: async (request, h) => {
       const requestPath = request.path;
       
       // API routes are handled by other routes
@@ -161,7 +161,11 @@ const init = async () => {
       
       // For files with extensions, try to serve them
       if (requestPath.includes('.')) {
-        return h.file(requestPath).catch(() => h.response().code(404));
+        try {
+          return h.file(requestPath);
+        } catch (error) {
+          return h.response().code(404);
+        }
       }
       
       // For everything else (React routes), serve index.html
