@@ -44,7 +44,7 @@ Write-Host "Copying application files..." -ForegroundColor Yellow
 # Core files
 $filesToCopy = @(
     @{ Source = "web.config"; Dest = "$SitePath\web.config" },
-    @{ Source = "index.js"; Dest = "$SitePath\index.js" },
+    @{ Source = "app.js"; Dest = "$SitePath\app.js" },
     @{ Source = "package.json"; Dest = "$SitePath\package.json" },
     @{ Source = "iisnode.yml"; Dest = "$SitePath\iisnode.yml" }
 )

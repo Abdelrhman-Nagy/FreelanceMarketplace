@@ -1,0 +1,35 @@
+{
+  "jobs": [
+    {
+      "id": 1,
+      "title": "React Developer - E-commerce Platform",
+      "description": "Build a modern e-commerce platform using React and Node.js with payment integration",
+      "budget": 2500.00,
+      "category": "Web Development",
+      "skills": ["React", "Node.js", "PostgreSQL", "Payment Integration"],
+      "experience_level": "Intermediate",
+      "client_id": "1",
+      "client_name": "John Smith",
+      "client_email": "john.smith@example.com",
+      "status": "active",
+      "created_at": "2025-06-16T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "title": "Mobile App Development - Food Delivery",
+      "description": "Create a cross-platform mobile application for food delivery with real-time tracking",
+      "budget": 3500.00,
+      "category": "Mobile Development",
+      "skills": ["React Native", "Firebase", "Google Maps API", "Push Notifications"],
+      "experience_level": "Expert",
+      "client_id": "2",
+      "client_name": "Sarah Johnson",
+      "client_email": "sarah.johnson@foodco.com",
+      "status": "active",
+      "created_at": "2025-06-15T00:00:00Z"
+    }
+  ],
+  "total": 2,
+  "status": "success",
+  "source": "SQL Server (FreelancingPlatform database)"
+}
