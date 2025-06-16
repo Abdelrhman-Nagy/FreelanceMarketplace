@@ -16,18 +16,7 @@ The routing issue has been resolved using a proper Express.js application that r
    .\deploy-iis-fixed.ps1
    ```
 
-3. **Test Connection**: Verify your SQL Server setup:
-   ```batch
-   .\test-web-config.bat
-   .\validate-web-config.bat
-   ```
-
-4. **Test API**: Run the automated test:
-   ```batch
-   .\test-api-json.bat
-   ```
-   
-   Or test manually:
+3. **Test API**: Access these endpoints manually:
    - http://localhost/api/health
    - http://localhost/api/db-test
    - http://localhost/api/jobs  
@@ -39,12 +28,11 @@ The routing issue has been resolved using a proper Express.js application that r
 ```
 FreelancingPlatform/
 ├── api-express.js      # Express-based API with SQL Server integration  
-├── web.config          # IIS routing to Express handler
+├── web.config          # IIS routing configuration
 ├── public/index.html   # Diagnostic dashboard
 ├── package.json        # Dependencies (express, mssql, cors, tedious)
 ├── iisnode.yml         # Node.js performance settings
-├── deploy-iis-fixed.ps1 # Deployment script
-└── test-api-json.bat   # API testing script
+└── deploy-iis-fixed.ps1 # Deployment script
 ```
 
 ## API Endpoints
