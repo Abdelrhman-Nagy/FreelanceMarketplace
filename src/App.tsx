@@ -1,13 +1,14 @@
+import React from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Router, Route, Switch } from 'wouter';
-import { ThemeProvider } from '@/components/theme-provider';
-import Header from '@/components/Header';
-import HomePage from '@/pages/HomePage';
-import JobsPage from '@/pages/JobsPage';
-import DashboardPage from '@/pages/DashboardPage';
-import JobDetailPage from '@/pages/JobDetailPage';
-import { Toaster } from '@/components/ui/toaster';
-import { queryClient } from '@/lib/queryClient';
+import { ThemeProvider } from './components/theme-provider';
+import Header from './components/Header';
+import HomePage from './pages/HomePage';
+import JobsPage from './pages/JobsPage';
+import DashboardPage from './pages/DashboardPage';
+import JobDetailPage from './pages/JobDetailPage';
+import { Toaster } from './components/ui/toaster';
+import { queryClient } from './lib/queryClient';
 
 function App() {
   return (
