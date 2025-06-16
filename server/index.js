@@ -42,7 +42,7 @@ server.route({
       server: 'Node.js Hapi',
       database: dbConfig.type,
       config: {
-        host: dbConfig.host,
+        server: dbConfig.server,
         database: dbConfig.database,
         port: dbConfig.port
       }
@@ -85,7 +85,7 @@ server.route({
         ],
         total: 2,
         status: "success",
-        database: "Connected to postgresql"
+        database: "Connected to SQL Server"
       };
     } catch (error) {
       console.error('Jobs endpoint error:', error);
@@ -112,7 +112,7 @@ server.route({
       environment: process.env.NODE_ENV || 'development',
       database: dbConfig.type,
       connection: {
-        host: dbConfig.host,
+        server: dbConfig.server,
         database: dbConfig.database,
         port: dbConfig.port,
         user: dbConfig.user

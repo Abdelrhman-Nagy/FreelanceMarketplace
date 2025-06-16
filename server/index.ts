@@ -25,13 +25,17 @@ const server = Hapi.server({
 
 // Database configuration from environment variables
 const dbConfig = {
-  type: 'postgresql',
-  connectionString: process.env.DATABASE_URL || 'postgresql://app_user:Xman@123@localhost:5432/freelancing_platform',
-  host: process.env.PGHOST || 'localhost',
-  user: process.env.PGUSER || 'app_user',
-  password: process.env.PGPASSWORD || 'Xman@123',
-  database: process.env.PGDATABASE || 'freelancing_platform',
-  port: parseInt(process.env.PGPORT || '5432')
+  type: 'sqlserver',
+  connectionString: process.env.DATABASE_URL || 'Server=localhost;Database=freelancing_platform;User Id=app_user;Password=Xman@123;Encrypt=true;TrustServerCertificate=true;',
+  server: process.env.DB_SERVER || 'localhost',
+  user: process.env.DB_USER || 'app_user',
+  password: process.env.DB_PASSWORD || 'Xman@123',
+  database: process.env.DB_DATABASE || 'freelancing_platform',
+  port: parseInt(process.env.DB_PORT || '1433'),
+  options: {
+    encrypt: true,
+    trustServerCertificate: true
+  }
 };
 
 // Test API route
@@ -46,7 +50,7 @@ server.route({
       server: 'Node.js Hapi',
       database: dbConfig.type,
       config: {
-        host: dbConfig.host,
+        server: dbConfig.server,
         database: dbConfig.database,
         port: dbConfig.port
       }
@@ -89,7 +93,7 @@ server.route({
         ],
         total: 2,
         status: "success",
-        database: "Connected to postgresql"
+        database: "Connected to SQL Server"
       };
     } catch (error) {
       console.error('Jobs endpoint error:', error);
@@ -116,7 +120,7 @@ server.route({
       environment: process.env.NODE_ENV || 'development',
       database: dbConfig.type,
       connection: {
-        host: dbConfig.host,
+        server: dbConfig.server,
         database: dbConfig.database,
         port: dbConfig.port,
         user: dbConfig.user

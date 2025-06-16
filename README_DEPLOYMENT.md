@@ -30,7 +30,7 @@ Your Hapi.js freelancing platform is ready for IIS deployment. Choose one method
 - **Application Pool**: No Managed Code (Node.js)
 
 ### Database Connection
-- **PostgreSQL**: `postgresql://app_user:Xman@123@localhost:5432/freelancing_platform`
+- **SQL Server**: `Server=localhost;Database=freelancing_platform;User Id=app_user;Password=Xman@123;Encrypt=true;TrustServerCertificate=true;`
 
 ## After Deployment
 
@@ -45,7 +45,7 @@ Test these URLs:
 Before running deployment:
 - Windows with IIS enabled
 - Node.js installed
-- PostgreSQL running with your database
+- SQL Server running with your database
 - Run deployment script as Administrator
 
 ## Troubleshooting
@@ -53,7 +53,7 @@ Before running deployment:
 If deployment fails:
 1. Ensure running as Administrator
 2. Check Node.js is installed and in PATH
-3. Verify PostgreSQL is running
+3. Verify SQL Server is running
 4. Check Windows Event Viewer for errors
 5. Review iisnode logs in `C:\inetpub\wwwroot\freelancing-platform\iisnode\`
 

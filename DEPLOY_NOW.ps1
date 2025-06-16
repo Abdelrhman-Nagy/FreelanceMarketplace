@@ -104,6 +104,6 @@ Write-Host "Main App: http://localhost/" -ForegroundColor White
 Write-Host "API Health: http://localhost/api/health" -ForegroundColor White
 Write-Host "Jobs API: http://localhost/api/jobs" -ForegroundColor White
 Write-Host ""
-Write-Host "Database: postgresql://app_user:Xman@123@localhost:5432/freelancing_platform" -ForegroundColor Cyan
+Write-Host "Database: Server=localhost;Database=freelancing_platform;User Id=app_user;Password=Xman@123;" -ForegroundColor Cyan
 Write-Host ""
 Read-Host "Press Enter to exit"

@@ -88,6 +88,6 @@ echo Main App: http://localhost/
 echo API Health: http://localhost/api/health
 echo Jobs API: http://localhost/api/jobs
 echo.
-echo Database: postgresql://app_user:Xman@123@localhost:5432/freelancing_platform
+echo Database: Server=localhost;Database=freelancing_platform;User Id=app_user;Password=Xman@123;
 echo.
 pause
