@@ -1,4 +1,3 @@
-// Hapi server for IIS deployment with PostgreSQL support
 const Hapi = require('@hapi/hapi');
 const Inert = require('@hapi/inert');
 const Vision = require('@hapi/vision');
@@ -6,8 +5,8 @@ const path = require('path');
 
 // Initialize Hapi server
 const server = Hapi.server({
-  port: process.env.PORT || process.env.IISNODE_HTTP_PORT || 3000,
-  host: process.env.IISNODE_HTTP_HOST || '0.0.0.0',
+  port: process.env.PORT || 5000,
+  host: '0.0.0.0',
   routes: {
     cors: {
       origin: ['*'],
@@ -20,7 +19,7 @@ const server = Hapi.server({
   }
 });
 
-// Database configuration from environment variables
+// Database configuration
 const dbConfig = {
   type: 'postgresql',
   connectionString: process.env.DATABASE_URL || 'postgresql://app_user:Xman@123@localhost:5432/freelancing_platform',

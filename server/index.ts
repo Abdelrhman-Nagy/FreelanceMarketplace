@@ -9,8 +9,8 @@ const __dirname = path.dirname(__filename);
 
 // Initialize Hapi server
 const server = Hapi.server({
-  port: process.env.PORT || process.env.IISNODE_HTTP_PORT || 5000,
-  host: process.env.IISNODE_HTTP_HOST || '0.0.0.0',
+  port: process.env.PORT || 5000,
+  host: '0.0.0.0',
   routes: {
     cors: {
       origin: ['*'],
