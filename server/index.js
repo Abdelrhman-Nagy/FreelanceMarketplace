@@ -19,15 +19,19 @@ const server = Hapi.server({
   }
 });
 
-// Database configuration
+// Database configuration from environment variables
 const dbConfig = {
-  type: 'postgresql',
-  connectionString: process.env.DATABASE_URL || 'postgresql://app_user:Xman@123@localhost:5432/freelancing_platform',
-  host: process.env.PGHOST || 'localhost',
-  user: process.env.PGUSER || 'app_user',
-  password: process.env.PGPASSWORD || 'Xman@123',
-  database: process.env.PGDATABASE || 'freelancing_platform',
-  port: parseInt(process.env.PGPORT || '5432')
+  type: 'sqlserver',
+  connectionString: process.env.DATABASE_URL || 'Server=localhost;Database=freelancing_platform;User Id=app_user;Password=Xman@123;Encrypt=true;TrustServerCertificate=true;',
+  server: process.env.DB_SERVER || 'localhost',
+  user: process.env.DB_USER || 'app_user',
+  password: process.env.DB_PASSWORD || 'Xman@123',
+  database: process.env.DB_DATABASE || 'freelancing_platform',
+  port: parseInt(process.env.DB_PORT || '1433'),
+  options: {
+    encrypt: true,
+    trustServerCertificate: true
+  }
 };
 
 // Test API route
@@ -64,7 +68,7 @@ server.route({
             description: "Build a modern e-commerce platform using React and Node.js",
             budget: 2500,
             category: "Web Development",
-            skills: ["React", "Node.js", "PostgreSQL"],
+            skills: ["React", "Node.js", "SQL Server"],
             experienceLevel: "Intermediate",
             clientId: "1",
             status: "active",

@@ -72,7 +72,7 @@ server.route({
             description: "Build a modern e-commerce platform using React and Node.js",
             budget: 2500,
             category: "Web Development",
-            skills: ["React", "Node.js", "PostgreSQL"],
+            skills: ["React", "Node.js", "SQL Server"],
             experienceLevel: "Intermediate",
             clientId: "1",
             status: "active",
