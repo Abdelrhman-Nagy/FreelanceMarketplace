@@ -1,12 +1,12 @@
-# Quick Start - Deployment Fix
+# Quick Start - Windows IIS Deployment
 
-## PowerShell Syntax Issues Fixed
+## Deployment Options
 
-The original PowerShell scripts had syntax errors. Use this working script:
+Use one of these deployment methods:
 
 ```powershell
 # Run as Administrator
-.\deploy-working.ps1
+.\deploy-clean.ps1
 ```
 
 OR use the batch file (easier):
