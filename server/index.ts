@@ -25,10 +25,11 @@ app.use((req, res, next) => {
 
 // Database configuration from environment variables
 const dbConfig = {
-  type: process.env.DB_TYPE || 'postgresql',
+  type: 'postgresql',
+  connectionString: process.env.DATABASE_URL || 'postgresql://app_user:Xman@123@localhost:5432/freelancing_platform',
   host: process.env.PGHOST || 'localhost',
-  user: process.env.PGUSER || 'user',
-  password: process.env.PGPASSWORD || '',
+  user: process.env.PGUSER || 'app_user',
+  password: process.env.PGPASSWORD || 'Xman@123',
   database: process.env.PGDATABASE || 'freelancing_platform',
   port: parseInt(process.env.PGPORT || '5432')
 };
@@ -109,7 +110,13 @@ app.get('/api/health', (req, res) => {
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    database: dbConfig.type
+    database: dbConfig.type,
+    connection: {
+      host: dbConfig.host,
+      database: dbConfig.database,
+      port: dbConfig.port,
+      user: dbConfig.user
+    }
   });
 });
 

@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Link, useLocation } from 'wouter';
 import { Briefcase, User, Menu, Sun, Moon } from 'lucide-react';
 import { useTheme } from './theme-provider';

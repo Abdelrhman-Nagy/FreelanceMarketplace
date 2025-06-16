@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Briefcase, Users, Award, ArrowRight } from 'lucide-react';
