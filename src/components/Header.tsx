@@ -1,13 +1,14 @@
+import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { Briefcase, User, Menu, Sun, Moon } from 'lucide-react';
-import { useTheme } from '@/components/theme-provider';
-import { Button } from '@/components/ui/button';
+import { useTheme } from './theme-provider';
+import { Button } from './ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from './ui/dropdown-menu';
 
 export default function Header() {
   const [location] = useLocation();
