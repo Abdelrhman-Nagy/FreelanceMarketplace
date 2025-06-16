@@ -146,7 +146,8 @@ app.get('/api/my-jobs', (req, res) => {
   ]);
 });
 
-// Serve static files from public directory
+// Serve static files
+app.use(express.static('dist'));
 app.use(express.static('public'));
 
 // Catch all API routes
@@ -167,9 +168,9 @@ app.use('/api/*', (req, res) => {
   });
 });
 
-// Serve the main page for all other routes
+// Serve the React app for all other routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+  res.sendFile(path.join(__dirname, '../index.html'));
 });
 
 // Start the server
