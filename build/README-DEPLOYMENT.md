@@ -1,8 +1,8 @@
 # Freelancing Platform - IIS Deployment Guide
 
-## Fixed API Routing Issue
+## FINAL SOLUTION: Express-Based API Handler
 
-The API routing has been corrected to return proper JSON responses from your SQL Server database instead of JavaScript code.
+The routing issue has been resolved using a proper Express.js application that returns JSON responses from your SQL Server database.
 
 ## Quick Deployment
 
@@ -16,7 +16,12 @@ The API routing has been corrected to return proper JSON responses from your SQL
    .\deploy-iis-fixed.ps1
    ```
 
-3. **Test API**: Check these endpoints return JSON:
+3. **Test API**: Run the automated test:
+   ```batch
+   .\test-api-json.bat
+   ```
+   
+   Or test manually:
    - http://localhost/api/health
    - http://localhost/api/jobs  
    - http://localhost/api/users
@@ -26,12 +31,13 @@ The API routing has been corrected to return proper JSON responses from your SQL
 
 ```
 FreelancingPlatform/
-├── app.js              # Fixed API server with SQL Server integration
-├── web.config          # Corrected IIS routing configuration
+├── api-express.js      # Express-based API with SQL Server integration  
+├── web.config          # IIS routing to Express handler
 ├── public/index.html   # Diagnostic dashboard
-├── package.json        # Dependencies (express, mssql, cors)
+├── package.json        # Dependencies (express, mssql, cors, tedious)
 ├── iisnode.yml         # Node.js performance settings
-└── deploy-iis-fixed.ps1 # Deployment script
+├── deploy-iis-fixed.ps1 # Deployment script
+└── test-api-json.bat   # API testing script
 ```
 
 ## API Endpoints
@@ -53,13 +59,17 @@ Configured for your SQL Server instance:
 
 ## What Was Fixed
 
-1. **API Routing**: Corrected web.config to route `/api/*` requests to `app.js`
-2. **Response Format**: Ensured all endpoints return proper JSON with correct headers
-3. **SQL Server Integration**: Direct connection using mssql driver
-4. **CORS Headers**: Added proper cross-origin headers for browser access
+1. **Express Framework**: Replaced raw HTTP handler with Express.js for proper routing
+2. **Response Format**: All endpoints now return JSON with correct Content-Type headers
+3. **SQL Server Integration**: Direct connection using mssql and tedious drivers
+4. **CORS Configuration**: Proper middleware for cross-origin requests
+5. **Error Handling**: Comprehensive error responses for all failure scenarios
 
 ## Testing
 
-After deployment, visit http://localhost/ for the diagnostic dashboard. All API endpoints should return JSON data instead of JavaScript code.
+After deployment:
+1. Run `test-api-json.bat` to verify all endpoints return JSON
+2. Visit http://localhost/ for the diagnostic dashboard
+3. Check that `/api/jobs` returns actual database records instead of JavaScript code
 
-The jobs endpoint will now return actual data from your FreelancingPlatform database with client information joined from the users table.
+The Express-based handler eliminates the iisnode routing complexity and ensures proper JSON responses from your FreelancingPlatform database.

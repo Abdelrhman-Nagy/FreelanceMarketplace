@@ -183,5 +183,5 @@ async function handleRequest(req, res) {
 // Initialize database connection
 initDatabase();
 
-// Export for iisnode
+// Export handler function for iisnode
 module.exports = handleRequest;
