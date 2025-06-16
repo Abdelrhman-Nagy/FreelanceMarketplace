@@ -12,6 +12,11 @@ curl -H "Accept: application/json" http://localhost/api/test
 echo.
 echo.
 
+echo Testing /api/db-test endpoint (database connection):
+curl -H "Accept: application/json" http://localhost/api/db-test
+echo.
+echo.
+
 echo Testing /api/jobs endpoint:
 curl -H "Accept: application/json" http://localhost/api/jobs
 echo.

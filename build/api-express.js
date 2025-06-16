@@ -30,6 +30,11 @@ async function initDatabase() {
   try {
     pool = await sql.connect(sqlConfig);
     console.log('Connected to SQL Server');
+    
+    // Test connection with a simple query
+    const testResult = await pool.request().query('SELECT 1 as test');
+    console.log('Database test query successful:', testResult.recordset[0]);
+    
     return true;
   } catch (err) {
     console.error('Database connection failed:', err.message);
@@ -64,6 +69,49 @@ app.get('/api/test', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Database connection test endpoint
+app.get('/api/db-test', async (req, res) => {
+  try {
+    if (!pool || !pool.connected) {
+      return res.status(500).json({ 
+        error: 'Database pool not connected',
+        config: {
+          server: sqlConfig.server,
+          database: sqlConfig.database,
+          user: sqlConfig.user
+        }
+      });
+    }
+
+    // Test with a simple query
+    const result = await pool.request().query('SELECT GETDATE() as current_time, @@VERSION as sql_version');
+    
+    res.json({
+      status: 'success',
+      message: 'Database connection test successful',
+      timestamp: new Date().toISOString(),
+      database_time: result.recordset[0].current_time,
+      sql_version: result.recordset[0].sql_version.split('\n')[0],
+      connection_info: {
+        server: sqlConfig.server,
+        database: sqlConfig.database,
+        connected: pool.connected
+      }
+    });
+  } catch (error) {
+    console.error('Database test error:', error);
+    res.status(500).json({ 
+      error: 'Database test failed',
+      message: error.message,
+      config: {
+        server: sqlConfig.server,
+        database: sqlConfig.database,
+        user: sqlConfig.user
+      }
+    });
   }
 });
 
@@ -165,7 +213,7 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({
     error: 'API endpoint not found',
     path: req.path,
-    availableEndpoints: ['/api/health', '/api/test', '/api/jobs', '/api/users', '/api/stats']
+    availableEndpoints: ['/api/health', '/api/test', '/api/db-test', '/api/jobs', '/api/users', '/api/stats']
   });
 });
 
