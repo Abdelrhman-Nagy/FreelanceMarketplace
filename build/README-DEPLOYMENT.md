@@ -16,13 +16,20 @@ The routing issue has been resolved using a proper Express.js application that r
    .\deploy-iis-fixed.ps1
    ```
 
-3. **Test API**: Run the automated test:
+3. **Test Connection**: Verify your SQL Server setup:
+   ```batch
+   .\test-web-config.bat
+   .\validate-web-config.bat
+   ```
+
+4. **Test API**: Run the automated test:
    ```batch
    .\test-api-json.bat
    ```
    
    Or test manually:
    - http://localhost/api/health
+   - http://localhost/api/db-test
    - http://localhost/api/jobs  
    - http://localhost/api/users
    - http://localhost/api/stats
