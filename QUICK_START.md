@@ -1,16 +1,23 @@
-# Quick Start - Windows IIS Deployment
+# Quick Start - Windows IIS Deployment for Hapi.js
+
+## Prerequisites
+
+1. **Node.js** (v16 or higher) - Download from nodejs.org
+2. **PostgreSQL** with your database:
+   - Host: localhost:5432
+   - Database: freelancing_platform  
+   - User: app_user
+   - Password: Xman@123
 
 ## Deployment Options
 
-Use one of these deployment methods:
-
+**Option 1: PowerShell Script (Recommended)**
 ```powershell
 # Run as Administrator
 .\deploy-clean.ps1
 ```
 
-OR use the batch file (easier):
-
+**Option 2: Batch Script (Easier)**
 ```cmd
 # Right-click and "Run as administrator"  
 deploy-simple.bat

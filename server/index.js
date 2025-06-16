@@ -6,8 +6,8 @@ const path = require('path');
 
 // Initialize Hapi server
 const server = Hapi.server({
-  port: process.env.PORT || 3000,
-  host: '0.0.0.0',
+  port: process.env.PORT || process.env.IISNODE_HTTP_PORT || 3000,
+  host: process.env.IISNODE_HTTP_HOST || '0.0.0.0',
   routes: {
     cors: {
       origin: ['*'],

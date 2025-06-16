@@ -1,40 +1,19 @@
-# iisnode.yml - IIS Node.js configuration
-# This file configures how IIS runs Node.js applications
-
-# Enable logging
-loggingEnabled: true
-logDirectory: logs
-
-# Node.js executable path
-nodeProcessCommandLine: "C:\Program Files\nodejs\node.exe"
-
-# Environment variables
+# iisnode configuration for Hapi.js freelancing platform
 node_env: production
-
-# Performance settings
-maxProcessCountPerApplication: 1
+nodeProcessCountPerApplication: 1
 maxConcurrentRequestsPerProcess: 1024
-maxNamedPipeConnectionRetry: 100
-namedPipeConnectionRetryDelay: 250
-
-# Debugging
-devErrorsEnabled: true
-debuggingEnabled: false
-
-# Request handling
-flushResponse: false
-enableXFF: false
-
-# Watchdog settings
-watchedFiles: "*.js;node_modules\*;dist\*"
-
-# Buffer settings
-initialRequestBufferSize: 4096
-maxRequestBufferSize: 65536
-
-# Connection pooling
+maxNamedPipeConnectionRetry: 3
+namedPipeConnectionRetryDelay: 2000
 maxNamedPipeConnectionPoolSize: 512
 maxNamedPipePooledConnectionAge: 30000
-
-# Server variables to promote
-promoteServerVars: "LOGON_USER,AUTH_USER,AUTH_TYPE"
+asyncCompletionThreadCount: 0
+initialRequestBufferSize: 4096
+maxRequestBufferSize: 65536
+watchedFiles: "*.js"
+uncFileChangesPollingInterval: 5000
+gracefulShutdownTimeout: 60000
+loggingEnabled: true
+logDirectoryNameSuffix: logs
+debuggingEnabled: false
+devErrorsEnabled: false
+enableXFF: true
