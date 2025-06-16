@@ -181,6 +181,7 @@ const init = async () => {
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Database: ${dbConfig.type}`);
   console.log(`Server: Hapi.js`);
+  console.log(`Database Connection: ${dbConfig.connectionString}`);
 };
 
 process.on('unhandledRejection', (err) => {
