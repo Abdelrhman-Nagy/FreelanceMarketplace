@@ -69,8 +69,7 @@ server.route({
 
     try {
       if (!pool || !pool.connected) {
-        pool = new sql.ConnectionPool(sqlConfig);
-        await pool.connect();
+        pool = await sql.connect(sqlConfig);
       }
       // Test database connection with a simple query
       await pool.request().query('SELECT 1 as test');

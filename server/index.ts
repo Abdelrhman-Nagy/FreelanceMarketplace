@@ -3,7 +3,7 @@ import Inert from '@hapi/inert';
 import Vision from '@hapi/vision';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import * as sql from 'mssql';
+import sql from 'mssql';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,8 +71,7 @@ server.route({
     try {
       // Ensure database connection
       if (!pool || !pool.connected) {
-        pool = new sql.ConnectionPool(sqlConfig);
-        await pool.connect();
+        pool = await sql.connect(sqlConfig);
       }
 
       const result = await pool.request().query(`
@@ -162,19 +161,35 @@ server.route({
 server.route({
   method: 'GET',
   path: '/api/health',
-  handler: (request, h) => {
+  handler: async (request, h) => {
+    let dbStatus = 'disconnected';
+    let dbError = null;
+
+    try {
+      if (!pool || !pool.connected) {
+        pool = await sql.connect(sqlConfig);
+      }
+      // Test database connection with a simple query
+      await pool.request().query('SELECT 1 as test');
+      dbStatus = 'connected';
+    } catch (error) {
+      dbError = (error as Error).message;
+    }
+
     return {
       status: 'healthy',
       service: 'Freelancing Platform API',
       version: '1.0.0',
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
-      database: dbConfig.type,
+      database: 'sqlserver',
       connection: {
-        server: dbConfig.server,
-        database: dbConfig.database,
-        port: dbConfig.port,
-        user: dbConfig.user
+        server: sqlConfig.server,
+        database: sqlConfig.database,
+        port: sqlConfig.port,
+        user: sqlConfig.user,
+        status: dbStatus,
+        error: dbError
       }
     };
   }
