@@ -1,19 +1,20 @@
-# iisnode configuration for Hapi.js freelancing platform with SQL Server
+# iisnode configuration for Hapi.js freelancing platform with Node.js 20.21.0
 node_env: production
-nodeProcessCountPerApplication: 1
-maxConcurrentRequestsPerProcess: 1024
-maxNamedPipeConnectionRetry: 3
-namedPipeConnectionRetryDelay: 2000
-maxNamedPipeConnectionPoolSize: 512
-maxNamedPipePooledConnectionAge: 30000
-asyncCompletionThreadCount: 0
-initialRequestBufferSize: 4096
-maxRequestBufferSize: 65536
-watchedFiles: "*.js"
-uncFileChangesPollingInterval: 5000
-gracefulShutdownTimeout: 60000
+nodeProcessCountPerApplication: 2
+maxConcurrentRequestsPerProcess: 2048
+maxNamedPipeConnectionRetry: 5
+namedPipeConnectionRetryDelay: 1500
+maxNamedPipeConnectionPoolSize: 1024
+maxNamedPipePooledConnectionAge: 60000
+asyncCompletionThreadCount: 4
+initialRequestBufferSize: 8192
+maxRequestBufferSize: 131072
+watchedFiles: "*.js;*.json"
+uncFileChangesPollingInterval: 3000
+gracefulShutdownTimeout: 30000
 loggingEnabled: true
 logDirectoryNameSuffix: logs
 debuggingEnabled: false
 devErrorsEnabled: false
 enableXFF: true
+promoteServerVars: "HTTP_X_FORWARDED_FOR,HTTP_X_FORWARDED_PROTO"
