@@ -3,6 +3,7 @@ import Inert from '@hapi/inert';
 import Vision from '@hapi/vision';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { neon } from '@neondatabase/serverless';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,36 +65,77 @@ server.route({
   path: '/api/jobs',
   handler: async (request, h) => {
     try {
-      return {
-        jobs: [
-          {
-            id: 1,
-            title: "React Developer - E-commerce Platform",
-            description: "Build a modern e-commerce platform using React and Node.js",
-            budget: 2500,
-            category: "Web Development",
-            skills: ["React", "Node.js", "SQL Server"],
-            experienceLevel: "Intermediate",
-            clientId: "1",
-            status: "active",
-            createdAt: "2025-06-16T00:00:00Z"
-          },
-          {
-            id: 2,
-            title: "Mobile App Development - iOS/Android",
-            description: "Create a cross-platform mobile application for food delivery",
-            budget: 3500,
-            category: "Mobile Development",
-            skills: ["React Native", "Firebase", "Payment Integration"],
-            experienceLevel: "Expert",
-            clientId: "2",
-            status: "active",
-            createdAt: "2025-06-16T00:00:00Z"
+      const sql = neon(process.env.DATABASE_URL);
+      
+      const jobs = await sql`
+        SELECT 
+          id,
+          title,
+          description,
+          client_id,
+          category,
+          budget_type,
+          budget_min,
+          budget_max,
+          hourly_rate,
+          experience_level,
+          skills,
+          status,
+          remote,
+          proposal_count,
+          created_at,
+          updated_at
+        FROM jobs 
+        WHERE status = 'active'
+        ORDER BY created_at DESC
+      `;
+
+      // Process and format the jobs data
+      const formattedJobs = jobs.map(job => {
+        // Handle skills array conversion
+        let skillsArray = [];
+        if (job.skills) {
+          if (Array.isArray(job.skills)) {
+            skillsArray = job.skills;
+          } else if (typeof job.skills === 'string') {
+            try {
+              skillsArray = JSON.parse(job.skills);
+            } catch (e) {
+              skillsArray = job.skills.split(',').map(s => s.trim());
+            }
           }
-        ],
-        total: 2,
+        }
+
+        // Calculate budget display
+        let budget = 0;
+        if (job.budget_type === 'fixed') {
+          budget = job.budget_max || job.budget_min || 0;
+        } else if (job.budget_type === 'hourly') {
+          budget = job.hourly_rate || 0;
+        }
+
+        return {
+          id: job.id,
+          title: job.title,
+          description: job.description,
+          budget: budget,
+          category: job.category,
+          skills: skillsArray,
+          experienceLevel: job.experience_level,
+          clientId: job.client_id,
+          status: job.status,
+          createdAt: job.created_at,
+          budgetType: job.budget_type,
+          remote: job.remote,
+          proposalCount: job.proposal_count || 0
+        };
+      });
+
+      return {
+        jobs: formattedJobs,
+        total: formattedJobs.length,
         status: "success",
-        database: "Connected to SQL Server"
+        database: "Connected to PostgreSQL"
       };
     } catch (error) {
       console.error('Jobs endpoint error:', error);
@@ -101,7 +143,8 @@ server.route({
         error: (error as Error).message,
         jobs: [],
         total: 0,
-        status: "error"
+        status: "error",
+        database: "Database connection failed"
       }).code(500);
     }
   }
