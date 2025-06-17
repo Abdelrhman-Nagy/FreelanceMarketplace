@@ -53,11 +53,11 @@ server.route({
       message: 'API is working correctly',
       timestamp: new Date().toISOString(),
       server: 'Node.js Hapi',
-      database: dbConfig.type,
+      database: 'sqlserver',
       config: {
-        server: dbConfig.server,
-        database: dbConfig.database,
-        port: dbConfig.port
+        server: sqlConfig.server,
+        database: sqlConfig.database,
+        port: sqlConfig.port
       }
     };
   }
@@ -69,8 +69,13 @@ server.route({
   path: '/api/jobs',
   handler: async (request, h) => {
     try {
-      const sql = neon(process.env.DATABASE_URL || '');
-      const jobs = await sql`
+      // Ensure database connection
+      if (!pool || !pool.connected) {
+        pool = new sql.ConnectionPool(sqlConfig);
+        await pool.connect();
+      }
+
+      const result = await pool.request().query(`
         SELECT 
           id,
           title,
@@ -91,7 +96,7 @@ server.route({
         FROM jobs 
         WHERE status = 'active'
         ORDER BY created_at DESC
-      `;
+      `);
 
       // Process and format the jobs data
       const formattedJobs = jobs.map(job => {
@@ -138,7 +143,7 @@ server.route({
         jobs: formattedJobs,
         total: formattedJobs.length,
         status: "success",
-        database: "Connected to PostgreSQL"
+        database: "Connected to SQL Server"
       };
     } catch (error) {
       console.error('Jobs endpoint error:', error);
@@ -147,7 +152,7 @@ server.route({
         jobs: [],
         total: 0,
         status: "error",
-        database: "Database connection failed"
+        database: "SQL Server connection failed"
       }).code(500);
     }
   }
