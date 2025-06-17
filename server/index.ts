@@ -25,7 +25,7 @@ const server = Hapi.server({
 });
 
 // SQL Server configuration
-const sqlConfig = {
+const sqlConfig: sql.config = {
   server: process.env.DB_SERVER || 'localhost',
   database: process.env.DB_DATABASE || 'freelancing_platform',
   user: process.env.DB_USER || 'app_user',
@@ -35,13 +35,13 @@ const sqlConfig = {
     encrypt: false,
     trustServerCertificate: true,
     enableArithAbort: true,
-    connectionTimeout: 30000,
-    requestTimeout: 30000
+    requestTimeout: 30000,
+    connectTimeout: 30000
   }
 };
 
 // Database connection pool
-let pool: sql.ConnectionPool;
+let pool: sql.ConnectionPool | null = null;
 
 // Test API route
 server.route({
@@ -63,7 +63,7 @@ server.route({
   }
 });
 
-// Jobs endpoint with PostgreSQL integration
+// Jobs endpoint with SQL Server integration
 server.route({
   method: 'GET',
   path: '/api/jobs',
@@ -98,18 +98,18 @@ server.route({
       `);
 
       // Process and format the jobs data
-      const formattedJobs = jobs.map(job => {
+      const formattedJobs = result.recordset.map((job: any) => {
         // Handle skills array conversion
-        let skillsArray = [];
+        let skillsArray: string[] = [];
         if (job.skills) {
-          if (Array.isArray(job.skills)) {
-            skillsArray = job.skills;
-          } else if (typeof job.skills === 'string') {
+          if (typeof job.skills === 'string') {
             try {
               skillsArray = JSON.parse(job.skills);
             } catch (e) {
-              skillsArray = job.skills.split(',').map(s => s.trim());
+              skillsArray = job.skills.split(',').map((s: string) => s.trim());
             }
+          } else if (Array.isArray(job.skills)) {
+            skillsArray = job.skills;
           }
         }
 
@@ -162,7 +162,7 @@ server.route({
   method: 'GET',
   path: '/api/health',
   handler: async (request, h) => {
-    let dbStatus = 'disconnected';
+    let dbStatus = 'configured';
     let dbError = null;
 
     try {
@@ -174,6 +174,7 @@ server.route({
       dbStatus = 'connected';
     } catch (error) {
       dbError = (error as Error).message;
+      dbStatus = 'disconnected';
     }
 
     return {
@@ -210,91 +211,92 @@ server.route({
   }
 });
 
+// Serve source files (for development)
+server.route({
+  method: 'GET',
+  path: '/src/{param*}',
+  handler: (request, h) => {
+    const filePath = request.params.param;
+    const response = h.file(filePath);
+    
+    // Set correct MIME type for TypeScript files
+    if (filePath.endsWith('.tsx') || filePath.endsWith('.ts')) {
+      return response.type('application/javascript');
+    }
+    if (filePath.endsWith('.css')) {
+      return response.type('text/css');
+    }
+    
+    return response;
+  },
+  options: {
+    files: {
+      relativeTo: path.join(__dirname, '../public/src')
+    }
+  }
+});
+
+// Serve assets directory
+server.route({
+  method: 'GET',
+  path: '/assets/{param*}',
+  handler: (request, h) => {
+    const filePath = request.params.param;
+    const response = h.file(filePath);
+    
+    // Set correct MIME type for JavaScript files
+    if (filePath.endsWith('.js')) {
+      return response.type('application/javascript');
+    }
+    
+    return response;
+  },
+  options: {
+    files: {
+      relativeTo: path.join(__dirname, '../public/assets')
+    }
+  }
+});
+
+// Serve other static files and React SPA
+server.route({
+  method: 'GET',
+  path: '/{param*}',
+  handler: (request, h) => {
+    const requestPath = request.path;
+    
+    // Skip API routes
+    if (requestPath.startsWith('/api/')) {
+      return h.continue;
+    }
+    
+    // For specific files, try to serve them
+    if (requestPath.includes('.') && !requestPath.startsWith('/src/') && !requestPath.startsWith('/assets/')) {
+      return h.file(requestPath);
+    }
+    
+    // For all other routes (React SPA), serve index.html
+    return h.file('index.html');
+  },
+  options: {
+    files: {
+      relativeTo: path.join(__dirname, '../public')
+    }
+  }
+});
+
 // Initialize server
-const init = async () => {
+const init = async (): Promise<Hapi.Server> => {
   await server.register([
     Inert,
     Vision
   ]);
 
-  // Serve React source files with proper MIME types
-  server.route({
-    method: 'GET',
-    path: '/src/{param*}',
-    handler: (request, h) => {
-      const filePath = request.params.param;
-      const response = h.file(filePath);
-      
-      // Set correct MIME type for TypeScript files
-      if (filePath.endsWith('.tsx') || filePath.endsWith('.ts')) {
-        return response.type('application/javascript');
-      }
-      if (filePath.endsWith('.css')) {
-        return response.type('text/css');
-      }
-      
-      return response;
-    },
-    options: {
-      files: {
-        relativeTo: path.join(__dirname, '../public/src')
-      }
-    }
-  });
-
-  // Serve assets directory
-  server.route({
-    method: 'GET',
-    path: '/assets/{param*}',
-    handler: (request, h) => {
-      const filePath = request.params.param;
-      const response = h.file(filePath);
-      
-      // Set correct MIME type for JavaScript files
-      if (filePath.endsWith('.js')) {
-        return response.type('application/javascript');
-      }
-      
-      return response;
-    },
-    options: {
-      files: {
-        relativeTo: path.join(__dirname, '../public/assets')
-      }
-    }
-  });
-
-  // Serve other static files and React SPA
-  server.route({
-    method: 'GET',
-    path: '/{param*}',
-    handler: (request, h) => {
-      const requestPath = request.path;
-      
-      // Skip API routes
-      if (requestPath.startsWith('/api/')) {
-        return h.continue;
-      }
-      
-      // For specific files, try to serve them
-      if (requestPath.includes('.') && !requestPath.startsWith('/src/') && !requestPath.startsWith('/assets/')) {
-        return h.file(requestPath);
-      }
-      
-      // For all other routes (React SPA), serve index.html
-      return h.file('index.html');
-    },
-    options: {
-      files: {
-        relativeTo: path.join(__dirname, '../public')
-      }
-    }
-  });
-
   await server.start();
   console.log(`Server running on port ${server.info.port}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Server: Hapi.js`);
+  return server;
 };
 
 process.on('unhandledRejection', (err) => {
