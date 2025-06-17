@@ -165,7 +165,20 @@ server.route({
   }
 });
 
-// Serve other static files
+// Serve assets directory
+server.route({
+  method: 'GET',
+  path: '/assets/{param*}',
+  handler: {
+    directory: {
+      path: path.join(__dirname, '../public/assets'),
+      listing: false,
+      index: false
+    }
+  }
+});
+
+// Serve other static files and React SPA
 server.route({
   method: 'GET',
   path: '/{param*}',
@@ -178,7 +191,7 @@ server.route({
     }
     
     // For specific files, try to serve them
-    if (requestPath.includes('.') && !requestPath.startsWith('/src/')) {
+    if (requestPath.includes('.') && !requestPath.startsWith('/src/') && !requestPath.startsWith('/assets/')) {
       return h.file(requestPath);
     }
     
