@@ -151,7 +151,32 @@ const init = async () => {
     Vision
   ]);
 
-  // Serve static files and React SPA
+  // Serve React source files with proper MIME types
+  server.route({
+    method: 'GET',
+    path: '/src/{param*}',
+    handler: (request, h) => {
+      const filePath = request.params.param;
+      const response = h.file(filePath);
+      
+      // Set correct MIME type for TypeScript files
+      if (filePath.endsWith('.tsx') || filePath.endsWith('.ts')) {
+        return response.type('application/javascript');
+      }
+      if (filePath.endsWith('.css')) {
+        return response.type('text/css');
+      }
+      
+      return response;
+    },
+    options: {
+      files: {
+        relativeTo: path.join(__dirname, '../public/src')
+      }
+    }
+  });
+
+  // Serve other static files
   server.route({
     method: 'GET',
     path: '/{param*}',
@@ -163,15 +188,12 @@ const init = async () => {
         return h.continue;
       }
       
-      // Try to serve static files from public directory first
-      if (requestPath.includes('.')) {
-        return h.file(requestPath).catch(() => {
-          // If file not found, return 404
-          return h.response().code(404);
-        });
+      // For specific files, try to serve them
+      if (requestPath.includes('.') && !requestPath.startsWith('/src/')) {
+        return h.file(requestPath);
       }
       
-      // For SPA routes (no file extension), serve index.html
+      // For all other routes (React SPA), serve index.html
       return h.file('index.html');
     },
     options: {

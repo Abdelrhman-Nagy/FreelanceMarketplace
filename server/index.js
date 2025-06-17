@@ -140,30 +140,50 @@ server.route({
   }
 });
 
-// Serve static files
+// Serve React source files with proper MIME types
 server.route({
   method: 'GET',
-  path: '/{param*}',
-  handler: {
-    directory: {
-      path: '.',
-      redirectToSlash: true,
-      index: true,
-      defaultExtension: 'html'
+  path: '/src/{param*}',
+  handler: (request, h) => {
+    const filePath = request.params.param;
+    const response = h.file(filePath);
+    
+    // Set correct MIME type for TypeScript files
+    if (filePath.endsWith('.tsx') || filePath.endsWith('.ts')) {
+      return response.type('application/javascript');
+    }
+    if (filePath.endsWith('.css')) {
+      return response.type('text/css');
+    }
+    
+    return response;
+  },
+  options: {
+    files: {
+      relativeTo: path.join(__dirname, '../public/src')
     }
   }
 });
 
-// Handle React routing - serve index.html for non-API routes
+// Serve other static files
 server.route({
   method: 'GET',
-  path: '/{path*}',
+  path: '/{param*}',
   handler: (request, h) => {
     const requestPath = request.path;
-    if (!requestPath.startsWith('/api/') && !requestPath.includes('.')) {
-      return h.file('index.html');
+    
+    // Skip API routes
+    if (requestPath.startsWith('/api/')) {
+      return h.continue;
     }
-    return h.continue;
+    
+    // For specific files, try to serve them
+    if (requestPath.includes('.') && !requestPath.startsWith('/src/')) {
+      return h.file(requestPath);
+    }
+    
+    // For all other routes (React SPA), serve index.html
+    return h.file('index.html');
   },
   options: {
     files: {
