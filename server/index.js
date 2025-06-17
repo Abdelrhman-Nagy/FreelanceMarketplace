@@ -2,6 +2,7 @@ const Hapi = require('@hapi/hapi');
 const Inert = require('@hapi/inert');
 const Vision = require('@hapi/vision');
 const path = require('path');
+const { neon } = require('@neondatabase/serverless');
 
 // Initialize Hapi server
 const server = Hapi.server({
