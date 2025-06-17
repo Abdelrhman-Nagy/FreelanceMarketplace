@@ -3,7 +3,7 @@ import Inert from '@hapi/inert';
 import Vision from '@hapi/vision';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { neon } from '@neondatabase/serverless';
+import * as sql from 'mssql';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,20 +24,24 @@ const server = Hapi.server({
   }
 });
 
-// Database configuration from environment variables
-const dbConfig = {
-  type: 'sqlserver',
-  connectionString: process.env.DATABASE_URL || 'Server=localhost;Database=freelancing_platform;User Id=app_user;Password=Xman@123;Encrypt=true;TrustServerCertificate=true;',
+// SQL Server configuration
+const sqlConfig = {
   server: process.env.DB_SERVER || 'localhost',
+  database: process.env.DB_DATABASE || 'freelancing_platform',
   user: process.env.DB_USER || 'app_user',
   password: process.env.DB_PASSWORD || 'Xman@123',
-  database: process.env.DB_DATABASE || 'freelancing_platform',
   port: parseInt(process.env.DB_PORT || '1433'),
   options: {
-    encrypt: true,
-    trustServerCertificate: true
+    encrypt: false,
+    trustServerCertificate: true,
+    enableArithAbort: true,
+    connectionTimeout: 30000,
+    requestTimeout: 30000
   }
 };
+
+// Database connection pool
+let pool: sql.ConnectionPool;
 
 // Test API route
 server.route({
@@ -65,8 +69,7 @@ server.route({
   path: '/api/jobs',
   handler: async (request, h) => {
     try {
-      const sql = neon(process.env.DATABASE_URL);
-      
+      const sql = neon(process.env.DATABASE_URL || '');
       const jobs = await sql`
         SELECT 
           id,

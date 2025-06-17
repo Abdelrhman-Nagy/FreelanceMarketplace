@@ -2,7 +2,7 @@ const Hapi = require('@hapi/hapi');
 const Inert = require('@hapi/inert');
 const Vision = require('@hapi/vision');
 const path = require('path');
-const { neon } = require('@neondatabase/serverless');
+const sql = require('mssql');
 
 // Initialize Hapi server
 const server = Hapi.server({
@@ -20,20 +20,24 @@ const server = Hapi.server({
   }
 });
 
-// Database configuration from environment variables
-const dbConfig = {
-  type: 'sqlserver',
-  connectionString: process.env.DATABASE_URL || 'Server=localhost;Database=freelancing_platform;User Id=app_user;Password=Xman@123;Encrypt=true;TrustServerCertificate=true;',
+// SQL Server configuration
+const sqlConfig = {
   server: process.env.DB_SERVER || 'localhost',
+  database: process.env.DB_DATABASE || 'freelancing_platform',
   user: process.env.DB_USER || 'app_user',
   password: process.env.DB_PASSWORD || 'Xman@123',
-  database: process.env.DB_DATABASE || 'freelancing_platform',
   port: parseInt(process.env.DB_PORT || '1433'),
   options: {
-    encrypt: true,
-    trustServerCertificate: true
+    encrypt: false,
+    trustServerCertificate: true,
+    enableArithAbort: true,
+    connectionTimeout: 30000,
+    requestTimeout: 30000
   }
 };
+
+// Database connection pool
+let pool;
 
 // Test API route
 server.route({
@@ -55,72 +59,40 @@ server.route({
   }
 });
 
-// Jobs endpoint with PostgreSQL integration
-server.route({
-  method: 'GET',
-  path: '/api/jobs',
-  handler: async (request, h) => {
-    try {
-      return {
-        jobs: [
-          {
-            id: 1,
-            title: "React Developer - E-commerce Platform",
-            description: "Build a modern e-commerce platform using React and Node.js",
-            budget: 2500,
-            category: "Web Development",
-            skills: ["React", "Node.js", "SQL Server"],
-            experienceLevel: "Intermediate",
-            clientId: "1",
-            status: "active",
-            createdAt: "2025-06-16T00:00:00Z"
-          },
-          {
-            id: 2,
-            title: "Mobile App Development - iOS/Android",
-            description: "Create a cross-platform mobile application for food delivery",
-            budget: 3500,
-            category: "Mobile Development",
-            skills: ["React Native", "Firebase", "Payment Integration"],
-            experienceLevel: "Expert",
-            clientId: "2",
-            status: "active",
-            createdAt: "2025-06-16T00:00:00Z"
-          }
-        ],
-        total: 2,
-        status: "success",
-        database: "Connected to SQL Server"
-      };
-    } catch (error) {
-      console.error('Jobs endpoint error:', error);
-      return h.response({
-        error: error.message,
-        jobs: [],
-        total: 0,
-        status: "error"
-      }).code(500);
-    }
-  }
-});
-
 // Health check endpoint
 server.route({
   method: 'GET',
   path: '/api/health',
-  handler: (request, h) => {
+  handler: async (request, h) => {
+    let dbStatus = 'disconnected';
+    let dbError = null;
+
+    try {
+      if (!pool || !pool.connected) {
+        pool = new sql.ConnectionPool(sqlConfig);
+        await pool.connect();
+      }
+      // Test database connection with a simple query
+      await pool.request().query('SELECT 1 as test');
+      dbStatus = 'connected';
+    } catch (error) {
+      dbError = error.message;
+    }
+
     return {
       status: 'healthy',
       service: 'Freelancing Platform API',
       version: '1.0.0',
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
-      database: dbConfig.type,
+      database: 'sqlserver',
       connection: {
-        server: dbConfig.server,
-        database: dbConfig.database,
-        port: dbConfig.port,
-        user: dbConfig.user
+        server: sqlConfig.server,
+        database: sqlConfig.database,
+        port: sqlConfig.port,
+        user: sqlConfig.user,
+        status: dbStatus,
+        error: dbError
       }
     };
   }

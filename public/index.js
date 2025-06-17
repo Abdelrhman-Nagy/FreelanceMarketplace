@@ -12,17 +12,25 @@ var server = Hapi.server({
   routes: {
     cors: {
       origin: ["*"],
-      headers: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
-      additionalHeaders: ["cache-control", "x-requested-with"]
+      headers: [
+        "Origin",
+        "X-Requested-With",
+        "Content-Type",
+        "Accept",
+        "Authorization",
+      ],
+      additionalHeaders: ["cache-control", "x-requested-with"],
     },
     files: {
-      relativeTo: path.join(__dirname, "../public")
-    }
-  }
+      relativeTo: path.join(__dirname, "../public"),
+    },
+  },
 });
 var dbConfig = {
   type: "sqlserver",
-  connectionString: process.env.DATABASE_URL || "Server=localhost;Database=freelancing_platform;User Id=app_user;Password=Xman@123;Encrypt=true;TrustServerCertificate=true;",
+  connectionString:
+    process.env.DATABASE_URL ||
+    "Server=localhost;Database=freelancing_platform;User Id=app_user;Password=Xman@123;Encrypt=true;TrustServerCertificate=true;",
   server: process.env.DB_SERVER || "localhost",
   user: process.env.DB_USER || "app_user",
   password: process.env.DB_PASSWORD || "Xman@123",
@@ -30,8 +38,8 @@ var dbConfig = {
   port: parseInt(process.env.DB_PORT || "1433"),
   options: {
     encrypt: true,
-    trustServerCertificate: true
-  }
+    trustServerCertificate: true,
+  },
 };
 server.route({
   method: "GET",
@@ -40,64 +48,18 @@ server.route({
     return {
       status: "success",
       message: "API is working correctly",
-      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      timestamp: /* @__PURE__ */ new Date().toISOString(),
       server: "Node.js Hapi",
       database: dbConfig.type,
       config: {
         server: dbConfig.server,
         database: dbConfig.database,
-        port: dbConfig.port
-      }
+        port: dbConfig.port,
+      },
     };
-  }
+  },
 });
-server.route({
-  method: "GET",
-  path: "/api/jobs",
-  handler: async (request, h) => {
-    try {
-      return {
-        jobs: [
-          {
-            id: 1,
-            title: "React Developer - E-commerce Platform",
-            description: "Build a modern e-commerce platform using React and Node.js",
-            budget: 2500,
-            category: "Web Development",
-            skills: ["React", "Node.js", "SQL Server"],
-            experienceLevel: "Intermediate",
-            clientId: "1",
-            status: "active",
-            createdAt: "2025-06-16T00:00:00Z"
-          },
-          {
-            id: 2,
-            title: "Mobile App Development - iOS/Android",
-            description: "Create a cross-platform mobile application for food delivery",
-            budget: 3500,
-            category: "Mobile Development",
-            skills: ["React Native", "Firebase", "Payment Integration"],
-            experienceLevel: "Expert",
-            clientId: "2",
-            status: "active",
-            createdAt: "2025-06-16T00:00:00Z"
-          }
-        ],
-        total: 2,
-        status: "success",
-        database: "Connected to SQL Server"
-      };
-    } catch (error) {
-      console.error("Jobs endpoint error:", error);
-      return h.response({
-        error: error.message,
-        jobs: [],
-        total: 0,
-        status: "error"
-      }).code(500);
-    }
-  }
-});
+
 server.route({
   method: "GET",
   path: "/api/health",
@@ -106,17 +68,17 @@ server.route({
       status: "healthy",
       service: "Freelancing Platform API",
       version: "1.0.0",
-      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      timestamp: /* @__PURE__ */ new Date().toISOString(),
       environment: process.env.NODE_ENV || "development",
       database: dbConfig.type,
       connection: {
         server: dbConfig.server,
         database: dbConfig.database,
         port: dbConfig.port,
-        user: dbConfig.user
-      }
+        user: dbConfig.user,
+      },
     };
-  }
+  },
 });
 server.route({
   method: "GET",
@@ -127,15 +89,12 @@ server.route({
       activeProposals: 3,
       completedContracts: 8,
       totalEarnings: 12500,
-      status: "success"
+      status: "success",
     };
-  }
+  },
 });
 var init = async () => {
-  await server.register([
-    Inert,
-    Vision
-  ]);
+  await server.register([Inert, Vision]);
   server.route({
     method: "GET",
     path: "/src/{param*}",
@@ -152,9 +111,9 @@ var init = async () => {
     },
     options: {
       files: {
-        relativeTo: path.join(__dirname, "../public/src")
-      }
-    }
+        relativeTo: path.join(__dirname, "../public/src"),
+      },
+    },
   });
   server.route({
     method: "GET",
@@ -171,9 +130,9 @@ var init = async () => {
     },
     options: {
       files: {
-        relativeTo: path.join(__dirname, "../public")
-      }
-    }
+        relativeTo: path.join(__dirname, "../public"),
+      },
+    },
   });
   await server.start();
   console.log(`Server running on port ${server.info.port}`);
