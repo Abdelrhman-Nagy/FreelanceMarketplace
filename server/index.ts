@@ -151,28 +151,27 @@ const init = async () => {
     Vision
   ]);
 
-  // Serve static files and handle React routing
+  // Serve static files and React SPA
   server.route({
     method: 'GET',
     path: '/{param*}',
-    handler: async (request, h) => {
+    handler: (request, h) => {
       const requestPath = request.path;
       
-      // API routes are handled by other routes
+      // Skip API routes
       if (requestPath.startsWith('/api/')) {
         return h.continue;
       }
       
-      // For files with extensions, try to serve them
+      // Try to serve static files from public directory first
       if (requestPath.includes('.')) {
-        try {
-          return h.file(requestPath);
-        } catch (error) {
+        return h.file(requestPath).catch(() => {
+          // If file not found, return 404
           return h.response().code(404);
-        }
+        });
       }
       
-      // For everything else (React routes), serve index.html
+      // For SPA routes (no file extension), serve index.html
       return h.file('index.html');
     },
     options: {
