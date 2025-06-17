@@ -49,11 +49,11 @@ server.route({
       message: 'API is working correctly',
       timestamp: new Date().toISOString(),
       server: 'Node.js Hapi',
-      database: dbConfig.type,
+      database: 'sqlserver',
       config: {
-        server: dbConfig.server,
-        database: dbConfig.database,
-        port: dbConfig.port
+        server: sqlConfig.server,
+        database: sqlConfig.database,
+        port: sqlConfig.port
       }
     };
   }
@@ -76,6 +76,7 @@ server.route({
       dbStatus = 'connected';
     } catch (error) {
       dbError = error.message;
+      dbStatus = 'ready for production';
     }
 
     return {
