@@ -180,11 +180,20 @@ const init = async () => {
   server.route({
     method: 'GET',
     path: '/assets/{param*}',
-    handler: {
-      directory: {
-        path: path.join(__dirname, '../public/assets'),
-        listing: false,
-        index: false
+    handler: (request, h) => {
+      const filePath = request.params.param;
+      const response = h.file(filePath);
+      
+      // Set correct MIME type for JavaScript files
+      if (filePath.endsWith('.js')) {
+        return response.type('application/javascript');
+      }
+      
+      return response;
+    },
+    options: {
+      files: {
+        relativeTo: path.join(__dirname, '../public/assets')
       }
     }
   });
