@@ -10,11 +10,42 @@ let db = null;
 
 if (process.env.DATABASE_URL) {
   try {
-    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    // Clean up the database URL to remove any trailing spaces or formatting issues
+    const cleanDatabaseUrl = process.env.DATABASE_URL.trim();
+    
+    // Parse and reconstruct the URL to ensure proper formatting
+    const url = new URL(cleanDatabaseUrl);
+    const dbName = url.pathname.slice(1).trim(); // Remove leading slash and trim
+    
+    // Reconstruct clean URL
+    const cleanUrl = `postgresql://${url.username}:${url.password}@${url.host}:${url.port}/${dbName}`;
+    
+    console.log('Connecting to database:', dbName);
+    
+    pool = new Pool({ 
+      connectionString: cleanUrl,
+      ssl: {
+        rejectUnauthorized: false // Allow self-signed certificates for development
+      }
+    });
     db = drizzle({ client: pool, schema });
-    console.log("Database configuration successful");
+    console.log('Database configuration successful');
   } catch (error) {
-    console.error("Database configuration failed:", error);
+    console.error('Database initialization failed:', error);
+    
+    // Fallback: try with original URL as-is
+    try {
+      pool = new Pool({ 
+        connectionString: process.env.DATABASE_URL.trim(),
+        ssl: {
+          rejectUnauthorized: false
+        }
+      });
+      db = drizzle({ client: pool, schema });
+      console.log('Database configuration successful (fallback)');
+    } catch (fallbackError) {
+      console.error('Database fallback failed:', fallbackError);
+    }
   }
 } else {
   console.error("DATABASE_URL environment variable is not set!");
@@ -60,11 +91,17 @@ class DatabaseService {
       console.error('Database connection test failed:', error);
       console.error('Error details:', error.stack);
       
-      // Try to reconnect
+      // Try to reconnect with cleaned URL
       try {
         if (process.env.DATABASE_URL && !pool) {
           console.log('Attempting to reconnect to database...');
-          pool = new Pool({ connectionString: process.env.DATABASE_URL });
+          const cleanUrl = process.env.DATABASE_URL.trim();
+          pool = new Pool({ 
+            connectionString: cleanUrl,
+            ssl: {
+              rejectUnauthorized: false
+            }
+          });
           db = drizzle({ client: pool, schema });
           console.log('Database reconnection successful');
         }

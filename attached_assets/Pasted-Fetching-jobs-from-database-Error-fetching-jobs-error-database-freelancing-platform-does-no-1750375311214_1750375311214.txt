@@ -1,0 +1,39 @@
+Fetching jobs from database...
+Error fetching jobs: error: database "freelancing_platform " does not exist
+    at C:\inetpub\wwwroot\freelancing-platform\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/inetpub/wwwroot/freelancing-platform/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async DatabaseService.getJobs (file:///C:/inetpub/wwwroot/freelancing-platform/server/database.js:100:23)
+    at async file:///C:/inetpub/wwwroot/freelancing-platform/server/index.js:52:18 {
+  length: 107,
+  severity: 'FATAL',
+  code: '3D000',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'postinit.c',
+  line: '1023',
+  routine: 'InitPostgres'
+}
+Error details: error: database "freelancing_platform " does not exist
+    at C:\inetpub\wwwroot\freelancing-platform\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/inetpub/wwwroot/freelancing-platform/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async DatabaseService.getJobs (file:///C:/inetpub/wwwroot/freelancing-platform/server/database.js:100:23)
+    at async file:///C:/inetpub/wwwroot/freelancing-platform/server/index.js:52:18
+Jobs endpoint error: Error: Failed to fetch jobs: database "freelancing_platform " does not exist
+    at DatabaseService.getJobs (file:///C:/inetpub/wwwroot/freelancing-platform/server/database.js:145:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/inetpub/wwwroot/freelancing-platform/server/index.js:52:18
+Error stack: Error: Failed to fetch jobs: database "freelancing_platform " does not exist
+    at DatabaseService.getJobs (file:///C:/inetpub/wwwroot/freelancing-platform/server/database.js:145:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/inetpub/wwwroot/freelancing-platform/server/index.js:52:18
