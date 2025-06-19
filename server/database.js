@@ -1,7 +1,9 @@
-import { Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import pg from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq, and, sql, or, inArray } from 'drizzle-orm';
 import * as schema from "../shared/schema.js";
+
+const { Pool } = pg;
 
 let pool = null;
 let db = null;
