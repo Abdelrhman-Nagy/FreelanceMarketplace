@@ -2,7 +2,7 @@ const Hapi = require('@hapi/hapi');
 const Inert = require('@hapi/inert');
 const Vision = require('@hapi/vision');
 const path = require('path');
-const sql = require('mssql');
+const dbService = require('./database.js');
 
 // Initialize Hapi server
 const server = Hapi.server({
@@ -20,24 +20,7 @@ const server = Hapi.server({
   }
 });
 
-// SQL Server configuration
-const sqlConfig = {
-  server: process.env.DB_SERVER || 'localhost',
-  database: process.env.DB_DATABASE || 'freelancing_platform',
-  user: process.env.DB_USER || 'app_user',
-  password: process.env.DB_PASSWORD || 'Xman@123',
-  port: parseInt(process.env.DB_PORT || '1433'),
-  options: {
-    encrypt: false,
-    trustServerCertificate: true,
-    enableArithAbort: true,
-    connectionTimeout: 30000,
-    requestTimeout: 30000
-  }
-};
-
-// Database connection pool
-let pool;
+// Database service handles all SQL Server connections
 
 // Test API route
 server.route({
@@ -51,33 +34,20 @@ server.route({
       server: 'Node.js Hapi',
       database: 'sqlserver',
       config: {
-        server: sqlConfig.server,
-        database: sqlConfig.database,
-        port: sqlConfig.port
+        server: process.env.DB_SERVER || 'localhost',
+        database: process.env.DB_DATABASE || 'freelancing_platform',
+        port: parseInt(process.env.DB_PORT || '1433')
       }
     };
   }
 });
 
-// Health check endpoint
+// Health check endpoint - tests SQL Server connection
 server.route({
   method: 'GET',
   path: '/api/health',
   handler: async (request, h) => {
-    let dbStatus = 'disconnected';
-    let dbError = null;
-
-    try {
-      if (!pool || !pool.connected) {
-        pool = await sql.connect(sqlConfig);
-      }
-      // Test database connection with a simple query
-      await pool.request().query('SELECT 1 as test');
-      dbStatus = 'connected';
-    } catch (error) {
-      dbError = error.message;
-      dbStatus = 'ready for production';
-    }
+    const dbTest = await dbService.testConnection();
 
     return {
       status: 'healthy',
@@ -87,29 +57,68 @@ server.route({
       environment: process.env.NODE_ENV || 'development',
       database: 'sqlserver',
       connection: {
-        server: sqlConfig.server,
-        database: sqlConfig.database,
-        port: sqlConfig.port,
-        user: sqlConfig.user,
-        status: dbStatus,
-        error: dbError
+        server: process.env.DB_SERVER || 'localhost',
+        database: process.env.DB_DATABASE || 'freelancing_platform',
+        port: parseInt(process.env.DB_PORT || '1433'),
+        user: process.env.DB_USER || 'app_user',
+        status: dbTest.status,
+        error: dbTest.error
       }
     };
   }
 });
 
-// User stats endpoint (for dashboard)
+// User stats endpoint - gets data from SQL Server
 server.route({
   method: 'GET',
   path: '/api/my-stats',
-  handler: (request, h) => {
-    return {
-      totalJobs: 15,
-      activeProposals: 3,
-      completedContracts: 8,
-      totalEarnings: 12500,
-      status: 'success'
-    };
+  handler: async (request, h) => {
+    try {
+      // In a real app, this would come from authentication
+      const userId = 'freelancer_001';
+      const stats = await dbService.getUserStats(userId);
+      
+      return {
+        ...stats,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Stats endpoint error:', error);
+      return h.response({
+        error: error.message,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+// Job detail endpoint - gets specific job from SQL Server
+server.route({
+  method: 'GET',
+  path: '/api/jobs/{id}',
+  handler: async (request, h) => {
+    try {
+      const jobId = request.params.id;
+      const job = await dbService.getJobById(jobId);
+      
+      if (!job) {
+        return h.response({
+          error: 'Job not found',
+          status: 'error'
+        }).code(404);
+      }
+      
+      return {
+        job: job,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Job detail endpoint error:', error);
+      return h.response({
+        error: error.message,
+        status: 'error'
+      }).code(500);
+    }
   }
 });
 

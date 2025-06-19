@@ -3,10 +3,12 @@ import Inert from '@hapi/inert';
 import Vision from '@hapi/vision';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import sql from 'mssql';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Import database service (using require for commonjs module)
+const dbService = require('./database.js');
 
 // Initialize Hapi server
 const server = Hapi.server({
@@ -24,24 +26,7 @@ const server = Hapi.server({
   }
 });
 
-// SQL Server configuration
-const sqlConfig: sql.config = {
-  server: process.env.DB_SERVER || 'localhost',
-  database: process.env.DB_DATABASE || 'freelancing_platform',
-  user: process.env.DB_USER || 'app_user',
-  password: process.env.DB_PASSWORD || 'Xman@123',
-  port: parseInt(process.env.DB_PORT || '1433'),
-  options: {
-    encrypt: false,
-    trustServerCertificate: true,
-    enableArithAbort: true,
-    requestTimeout: 30000,
-    connectTimeout: 30000
-  }
-};
-
-// Database connection pool
-let pool: sql.ConnectionPool | null = null;
+// Database service handles all SQL Server connections
 
 // Test API route
 server.route({
@@ -55,144 +40,27 @@ server.route({
       server: 'Node.js Hapi',
       database: 'sqlserver',
       config: {
-        server: sqlConfig.server,
-        database: sqlConfig.database,
-        port: sqlConfig.port
+        server: process.env.DB_SERVER || 'localhost',
+        database: process.env.DB_DATABASE || 'freelancing_platform',
+        port: parseInt(process.env.DB_PORT || '1433')
       }
     };
   }
 });
 
-// Jobs endpoint with SQL Server integration
+// Jobs endpoint - gets data from SQL Server via database service
 server.route({
   method: 'GET',
   path: '/api/jobs',
   handler: async (request, h) => {
     try {
-      // Try SQL Server connection first, fallback to sample data if not available
-      let jobs = [];
-      let dbMessage = "SQL Server configured for production";
+      const jobs = await dbService.getJobs();
       
-      try {
-        if (!pool || !pool.connected) {
-          pool = await sql.connect(sqlConfig);
-        }
-
-        const result = await pool.request().query(`
-          SELECT 
-            id,
-            title,
-            description,
-            client_id,
-            category,
-            budget_type,
-            budget_min,
-            budget_max,
-            hourly_rate,
-            experience_level,
-            skills,
-            status,
-            remote,
-            proposal_count,
-            created_at,
-            updated_at
-          FROM jobs 
-          WHERE status = 'active'
-          ORDER BY created_at DESC
-        `);
-
-        jobs = result.recordset;
-        dbMessage = "Connected to SQL Server";
-      } catch (dbError) {
-        // Fallback to sample data structure when SQL Server unavailable
-        console.log('SQL Server not available, using sample data structure');
-        jobs = [
-          {
-            id: 1,
-            title: "React Developer - E-commerce Platform",
-            description: "Build a modern e-commerce platform using React and Node.js with payment integration and user authentication",
-            client_id: "client_001",
-            category: "Web Development",
-            budget_type: "fixed",
-            budget_min: 2000,
-            budget_max: 2500,
-            hourly_rate: null,
-            experience_level: "Intermediate",
-            skills: '["React", "Node.js", "SQL Server", "Payment Integration"]',
-            status: "active",
-            remote: 1,
-            proposal_count: 3,
-            created_at: new Date(),
-            updated_at: new Date()
-          },
-          {
-            id: 2,
-            title: "Mobile App Development - iOS/Android",
-            description: "Create a cross-platform mobile application for food delivery with real-time tracking",
-            client_id: "client_002",
-            category: "Mobile Development",
-            budget_type: "fixed",
-            budget_min: 3000,
-            budget_max: 3500,
-            hourly_rate: null,
-            experience_level: "Expert",
-            skills: '["React Native", "Firebase", "Payment Integration", "GPS"]',
-            status: "active",
-            remote: 1,
-            proposal_count: 7,
-            created_at: new Date(),
-            updated_at: new Date()
-          }
-        ];
-        dbMessage = "Sample data (SQL Server ready for production)";
-      }
-
-      // Process and format the jobs data
-      const formattedJobs = jobs.map((job: any) => {
-        // Handle skills array conversion
-        let skillsArray: string[] = [];
-        if (job.skills) {
-          if (typeof job.skills === 'string') {
-            try {
-              skillsArray = JSON.parse(job.skills);
-            } catch (e) {
-              skillsArray = job.skills.split(',').map((s: string) => s.trim());
-            }
-          } else if (Array.isArray(job.skills)) {
-            skillsArray = job.skills;
-          }
-        }
-
-        // Calculate budget display
-        let budget = 0;
-        if (job.budget_type === 'fixed') {
-          budget = job.budget_max || job.budget_min || 0;
-        } else if (job.budget_type === 'hourly') {
-          budget = job.hourly_rate || 0;
-        }
-
-        return {
-          id: job.id,
-          title: job.title,
-          description: job.description,
-          budget: budget,
-          category: job.category,
-          skills: skillsArray,
-          experienceLevel: job.experience_level,
-          clientId: job.client_id,
-          status: job.status,
-          createdAt: job.created_at,
-          budgetType: job.budget_type,
-          remote: job.remote,
-          proposalCount: job.proposal_count || 0
-        };
-      });
-
       return {
-        jobs: formattedJobs,
-        total: formattedJobs.length,
+        jobs: jobs,
+        total: jobs.length,
         status: "success",
-        database: dbMessage
+        database: "Connected to SQL Server"
       };
     } catch (error) {
       console.error('Jobs endpoint error:', error);
@@ -207,25 +75,12 @@ server.route({
   }
 });
 
-// Health check endpoint
+// Health check endpoint - tests SQL Server connection
 server.route({
   method: 'GET',
   path: '/api/health',
   handler: async (request, h) => {
-    let dbStatus = 'configured';
-    let dbError = null;
-
-    try {
-      if (!pool || !pool.connected) {
-        pool = await sql.connect(sqlConfig);
-      }
-      // Test database connection with a simple query
-      await pool.request().query('SELECT 1 as test');
-      dbStatus = 'connected';
-    } catch (error) {
-      dbError = (error as Error).message;
-      dbStatus = 'ready for production';
-    }
+    const dbTest = await dbService.testConnection();
 
     return {
       status: 'healthy',
@@ -235,29 +90,68 @@ server.route({
       environment: process.env.NODE_ENV || 'development',
       database: 'sqlserver',
       connection: {
-        server: sqlConfig.server,
-        database: sqlConfig.database,
-        port: sqlConfig.port,
-        user: sqlConfig.user,
-        status: dbStatus,
-        error: dbError
+        server: process.env.DB_SERVER || 'localhost',
+        database: process.env.DB_DATABASE || 'freelancing_platform',
+        port: parseInt(process.env.DB_PORT || '1433'),
+        user: process.env.DB_USER || 'app_user',
+        status: dbTest.status,
+        error: dbTest.error
       }
     };
   }
 });
 
-// User stats endpoint (for dashboard)
+// User stats endpoint - gets data from SQL Server
 server.route({
   method: 'GET',
   path: '/api/my-stats',
-  handler: (request, h) => {
-    return {
-      totalJobs: 15,
-      activeProposals: 3,
-      completedContracts: 8,
-      totalEarnings: 12500,
-      status: 'success'
-    };
+  handler: async (request, h) => {
+    try {
+      // In a real app, this would come from authentication
+      const userId = 'freelancer_001';
+      const stats = await dbService.getUserStats(userId);
+      
+      return {
+        ...stats,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Stats endpoint error:', error);
+      return h.response({
+        error: (error as Error).message,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+// Job detail endpoint - gets specific job from SQL Server
+server.route({
+  method: 'GET',
+  path: '/api/jobs/{id}',
+  handler: async (request, h) => {
+    try {
+      const jobId = request.params.id;
+      const job = await dbService.getJobById(jobId);
+      
+      if (!job) {
+        return h.response({
+          error: 'Job not found',
+          status: 'error'
+        }).code(404);
+      }
+      
+      return {
+        job: job,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Job detail endpoint error:', error);
+      return h.response({
+        error: (error as Error).message,
+        status: 'error'
+      }).code(500);
+    }
   }
 });
 
