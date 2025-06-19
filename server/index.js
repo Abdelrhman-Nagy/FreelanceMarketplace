@@ -30,8 +30,6 @@ const server = Hapi.server({
 server.route({
   method: 'GET',
   path: '/api/projects',
-  options: {
-    pre: [requireAuth]
   },
   handler: async (request, h) => {
     try {
@@ -57,8 +55,6 @@ server.route({
 server.route({
   method: 'GET',
   path: '/api/projects/{id}',
-  options: {
-    pre: [requireAuth]
   },
   handler: async (request, h) => {
     try {
@@ -153,8 +149,6 @@ server.route({
 server.route({
   method: 'POST',
   path: '/api/projects/{id}/messages',
-  options: {
-    pre: [requireAuth]
   },
   handler: async (request, h) => {
     try {
@@ -200,8 +194,6 @@ server.route({
 server.route({
   method: 'POST',
   path: '/api/projects/{id}/tasks',
-  options: {
-    pre: [requireAuth]
   },
   handler: async (request, h) => {
     try {
