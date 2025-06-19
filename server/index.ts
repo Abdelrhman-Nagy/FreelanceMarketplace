@@ -24,11 +24,101 @@ const server = Hapi.server({
   }
 });
 
-import { routes } from './routes.js';
+// Jobs endpoint - gets data from PostgreSQL via database service
+server.route({
+  method: 'GET',
+  path: '/api/jobs',
+  handler: async (request, h) => {
+    try {
+      const jobs = await dbService.getJobs();
+      
+      return {
+        jobs: jobs,
+        total: jobs.length,
+        status: "success",
+        database: "Connected to PostgreSQL"
+      };
+    } catch (error) {
+      console.error('Jobs endpoint error:', error);
+      return h.response({
+        error: (error as Error).message,
+        jobs: [],
+        total: 0,
+        status: "error",
+        database: "PostgreSQL connection failed"
+      }).code(500);
+    }
+  }
+});
 
-// Register all routes
-routes.forEach(route => {
-  server.route(route);
+// Health check endpoint
+server.route({
+  method: 'GET',
+  path: '/api/health',
+  handler: async (request, h) => {
+    const dbTest = await dbService.testConnection();
+
+    return {
+      status: 'healthy',
+      service: 'Freelancing Platform API',
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'postgresql',
+      connection: {
+        host: process.env.PGHOST,
+        database: process.env.PGDATABASE,
+        port: process.env.PGPORT,
+        user: process.env.PGUSER,
+        status: dbTest.status,
+        error: dbTest.error
+      }
+    };
+  }
+});
+
+// User stats endpoint
+server.route({
+  method: 'GET',
+  path: '/api/my-stats',
+  handler: async (request, h) => {
+    try {
+      const userId = 'freelancer_001';
+      const stats = await dbService.getUserStats(userId);
+      
+      return {
+        ...stats,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Stats endpoint error:', error);
+      return h.response({
+        error: (error as Error).message,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+// Test API route
+server.route({
+  method: 'GET',
+  path: '/api/test',
+  handler: (request, h) => {
+    return {
+      status: 'success',
+      message: 'API is working correctly',
+      timestamp: new Date().toISOString(),
+      server: 'Node.js Hapi',
+      database: 'postgresql',
+      config: {
+        host: process.env.PGHOST,
+        database: process.env.PGDATABASE,
+        port: process.env.PGPORT,
+        user: process.env.PGUSER
+      }
+    };
+  }
 });
 
 // Serve source files (for development)
