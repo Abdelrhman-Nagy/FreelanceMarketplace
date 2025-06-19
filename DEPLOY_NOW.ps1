@@ -38,9 +38,14 @@ if (-not (Test-Path ".env")) {
 NODE_ENV=production
 PORT=5000
 # Add your DATABASE_URL here
-# DATABASE_URL=your_postgresql_connection_string
+# DATABASE_URL=postgresql://username:password@localhost:5432/freelancing_platform
 "@ | Out-File -FilePath ".env" -Encoding UTF8
 }
+
+Write-Host ""
+Write-Host "IMPORTANT: Configure your database connection!" -ForegroundColor Red
+Write-Host "Edit web.config and update the DATABASE_URL in the environmentVariables section:" -ForegroundColor Yellow
+Write-Host '  <add name="DATABASE_URL" value="postgresql://username:password@localhost:5432/freelancing_platform" />' -ForegroundColor White
 
 Write-Host "Deployment preparation complete!" -ForegroundColor Green
 Write-Host ""

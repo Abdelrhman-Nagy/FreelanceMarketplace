@@ -14,8 +14,13 @@ if not exist ".env" (
     echo NODE_ENV=production > .env
     echo PORT=5000 >> .env
     echo # Add your DATABASE_URL here >> .env
-    echo # DATABASE_URL=your_postgresql_connection_string >> .env
+    echo # DATABASE_URL=postgresql://username:password@localhost:5432/freelancing_platform >> .env
 )
+
+echo.
+echo IMPORTANT: Configure your database connection!
+echo Edit web.config and update the DATABASE_URL in the environmentVariables section:
+echo   ^<add name="DATABASE_URL" value="postgresql://username:password@localhost:5432/freelancing_platform" /^>
 
 echo Deployment preparation complete!
 echo.

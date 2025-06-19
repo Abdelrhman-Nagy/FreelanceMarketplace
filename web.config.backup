@@ -17,7 +17,13 @@
       </rules>
     </rewrite>
     
-    <iisnode />
+    <iisnode>
+      <environmentVariables>
+        <add name="NODE_ENV" value="production" />
+        <add name="DATABASE_URL" value="postgresql://your_username:your_password@localhost:5432/freelancing_platform" />
+        <add name="PORT" value="5000" />
+      </environmentVariables>
+    </iisnode>
     
     <httpErrors existingResponse="PassThrough" />
   </system.webServer>

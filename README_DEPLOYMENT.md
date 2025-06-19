@@ -68,10 +68,33 @@ Try these different entry point configurations in web.config:
 - `DEPLOY_NOW.ps1` - PowerShell deployment script
 
 ### Environment Variables
-Make sure to set these in your production environment:
+The web.config file includes environment variables configuration. Update the DATABASE_URL in web.config:
+
+```xml
+<environmentVariables>
+  <add name="NODE_ENV" value="production" />
+  <add name="DATABASE_URL" value="postgresql://username:password@localhost:5432/freelancing_platform" />
+  <add name="PORT" value="5000" />
+</environmentVariables>
 ```
-NODE_ENV=production
-DATABASE_URL=your_postgresql_connection_string
+
+Replace the DATABASE_URL value with your actual PostgreSQL connection string:
+- Replace `username` with your PostgreSQL username
+- Replace `password` with your PostgreSQL password  
+- Replace `localhost` with your database server if different
+- Replace `5432` with your PostgreSQL port if different
+- Replace `freelancing_platform` with your database name if different
+
+Example connection strings:
+```
+# Local PostgreSQL
+postgresql://postgres:mypassword@localhost:5432/freelancing_platform
+
+# Remote PostgreSQL
+postgresql://user:pass@hostname:5432/dbname
+
+# PostgreSQL with SSL
+postgresql://user:pass@hostname:5432/dbname?sslmode=require
 ```
 
 ### Common Issues:
