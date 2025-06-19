@@ -44,7 +44,7 @@ class DatabaseService {
 
     try {
       const result = await db.execute(sql`SELECT 1 as test`);
-      console.log('Database connection successful');
+      console.log('Database connection test successful');
       
       return {
         status: 'connected',
@@ -58,7 +58,21 @@ class DatabaseService {
         }
       };
     } catch (error) {
-      console.error('Database connection failed:', error);
+      console.error('Database connection test failed:', error);
+      console.error('Error details:', error.stack);
+      
+      // Try to reconnect
+      try {
+        if (process.env.DATABASE_URL && !pool) {
+          console.log('Attempting to reconnect to database...');
+          pool = new Pool({ connectionString: process.env.DATABASE_URL });
+          db = drizzle({ client: pool, schema });
+          console.log('Database reconnection successful');
+        }
+      } catch (reconnectError) {
+        console.error('Reconnection failed:', reconnectError);
+      }
+      
       return {
         status: 'failed',
         database: 'postgresql',
@@ -77,6 +91,11 @@ class DatabaseService {
     try {
       console.log('Fetching jobs from database...');
       const { jobs, users } = schema;
+      
+      // Test database connection first
+      if (!db) {
+        throw new Error('Database connection not available');
+      }
       
       // First try a simple query to test connection
       const allJobs = await db.select().from(jobs);
