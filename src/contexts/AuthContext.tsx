@@ -107,6 +107,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem('user');
+    // Force redirect to home page
+    window.location.href = '/';
   };
 
   const updateProfile = async (userData: Partial<User>): Promise<boolean> => {
