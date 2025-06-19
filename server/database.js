@@ -1,5 +1,6 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { eq } from 'drizzle-orm';
 import ws from "ws";
 import * as schema from "../shared/schema.js";
 
@@ -164,6 +165,256 @@ class DatabaseService {
       return JSON.parse(skillsString);
     } catch (e) {
       return skillsString.split(',').map(s => s.trim());
+    }
+  }
+
+  // Project Management Methods
+  async getProjects() {
+    try {
+      const projects = await db.query.projects.findMany({
+        with: {
+          client: true,
+          freelancer: true,
+          job: true,
+        },
+        orderBy: (projects, { desc }) => [desc(projects.updatedAt)],
+      });
+
+      return projects.map(project => ({
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        clientId: project.clientId,
+        clientName: project.client ? `${project.client.firstName} ${project.client.lastName}` : 'Unknown Client',
+        freelancerId: project.freelancerId,
+        freelancerName: project.freelancer ? `${project.freelancer.firstName} ${project.freelancer.lastName}` : null,
+        jobId: project.jobId,
+        jobTitle: project.job?.title,
+        status: project.status,
+        deadline: project.deadline,
+        budget: project.budget ? project.budget / 100 : 0,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt
+      }));
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      throw error;
+    }
+  }
+
+  async getProjectById(projectId) {
+    try {
+      const project = await db.query.projects.findFirst({
+        where: (projects, { eq }) => eq(projects.id, projectId),
+        with: {
+          client: true,
+          freelancer: true,
+          job: true,
+          members: {
+            with: {
+              user: true,
+            },
+          },
+        },
+      });
+
+      if (!project) {
+        return null;
+      }
+
+      return {
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        clientId: project.clientId,
+        clientName: project.client ? `${project.client.firstName} ${project.client.lastName}` : 'Unknown Client',
+        freelancerId: project.freelancerId,
+        freelancerName: project.freelancer ? `${project.freelancer.firstName} ${project.freelancer.lastName}` : null,
+        jobId: project.jobId,
+        jobTitle: project.job?.title,
+        status: project.status,
+        deadline: project.deadline,
+        budget: project.budget ? project.budget / 100 : 0,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        members: project.members.map(member => ({
+          id: member.id,
+          userId: member.userId,
+          userName: `${member.user.firstName} ${member.user.lastName}`,
+          userEmail: member.user.email,
+          role: member.role,
+          joinedAt: member.joinedAt
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching project by ID:', error);
+      throw error;
+    }
+  }
+
+  async getProjectTasks(projectId) {
+    try {
+      const tasks = await db.query.tasks.findMany({
+        where: (tasks, { eq }) => eq(tasks.projectId, projectId),
+        with: {
+          assignee: true,
+        },
+        orderBy: (tasks, { asc }) => [asc(tasks.dueDate)],
+      });
+
+      return tasks.map(task => ({
+        id: task.id,
+        projectId: task.projectId,
+        title: task.title,
+        description: task.description,
+        assignedTo: task.assignedTo,
+        assigneeName: task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : null,
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt
+      }));
+    } catch (error) {
+      console.error('Error fetching project tasks:', error);
+      throw error;
+    }
+  }
+
+  async getProjectMessages(projectId) {
+    try {
+      const messages = await db.query.projectMessages.findMany({
+        where: (messages, { eq }) => eq(messages.projectId, projectId),
+        with: {
+          sender: true,
+        },
+        orderBy: (messages, { asc }) => [asc(messages.createdAt)],
+      });
+
+      return messages.map(message => ({
+        id: message.id,
+        projectId: message.projectId,
+        senderId: message.senderId,
+        senderName: `${message.sender.firstName} ${message.sender.lastName}`,
+        senderEmail: message.sender.email,
+        message: message.message,
+        messageType: message.messageType,
+        createdAt: message.createdAt
+      }));
+    } catch (error) {
+      console.error('Error fetching project messages:', error);
+      throw error;
+    }
+  }
+
+  async createProjectMessage(messageData) {
+    try {
+      const [message] = await db.insert(schema.projectMessages).values({
+        projectId: messageData.projectId,
+        senderId: messageData.senderId,
+        message: messageData.message,
+        messageType: messageData.messageType || 'text',
+        createdAt: new Date()
+      }).returning();
+
+      // Get sender info
+      const sender = await db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.id, messageData.senderId),
+      });
+
+      return {
+        id: message.id,
+        projectId: message.projectId,
+        senderId: message.senderId,
+        senderName: sender ? `${sender.firstName} ${sender.lastName}` : 'Unknown User',
+        senderEmail: sender?.email,
+        message: message.message,
+        messageType: message.messageType,
+        createdAt: message.createdAt
+      };
+    } catch (error) {
+      console.error('Error creating project message:', error);
+      throw error;
+    }
+  }
+
+  async createTask(taskData) {
+    try {
+      const [task] = await db.insert(schema.tasks).values({
+        projectId: taskData.projectId,
+        title: taskData.title,
+        description: taskData.description,
+        assignedTo: taskData.assignedTo,
+        status: taskData.status || 'todo',
+        priority: taskData.priority || 'medium',
+        dueDate: taskData.dueDate ? new Date(taskData.dueDate) : null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }).returning();
+
+      // Get assignee info if exists
+      let assigneeName = null;
+      if (task.assignedTo) {
+        const assignee = await db.query.users.findFirst({
+          where: (users, { eq }) => eq(users.id, task.assignedTo),
+        });
+        assigneeName = assignee ? `${assignee.firstName} ${assignee.lastName}` : null;
+      }
+
+      return {
+        id: task.id,
+        projectId: task.projectId,
+        title: task.title,
+        description: task.description,
+        assignedTo: task.assignedTo,
+        assigneeName: assigneeName,
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt
+      };
+    } catch (error) {
+      console.error('Error creating task:', error);
+      throw error;
+    }
+  }
+
+  async updateTask(taskId, updates) {
+    try {
+      const [task] = await db.update(schema.tasks)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.tasks.id, taskId))
+        .returning();
+
+      // Get assignee info if exists
+      let assigneeName = null;
+      if (task.assignedTo) {
+        const assignee = await db.query.users.findFirst({
+          where: (users, { eq }) => eq(users.id, task.assignedTo),
+        });
+        assigneeName = assignee ? `${assignee.firstName} ${assignee.lastName}` : null;
+      }
+
+      return {
+        id: task.id,
+        projectId: task.projectId,
+        title: task.title,
+        description: task.description,
+        assignedTo: task.assignedTo,
+        assigneeName: assigneeName,
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt
+      };
+    } catch (error) {
+      console.error('Error updating task:', error);
+      throw error;
     }
   }
 }

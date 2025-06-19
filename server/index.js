@@ -26,6 +26,186 @@ const server = Hapi.server({
 
 // Database service handles all SQL Server connections
 
+// Project management routes
+server.route({
+  method: 'GET',
+  path: '/api/projects',
+  handler: async (request, h) => {
+    try {
+      const projects = await dbService.getProjects();
+      return {
+        projects: projects,
+        total: projects.length,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Projects endpoint error:', error);
+      return h.response({
+        error: error.message,
+        projects: [],
+        total: 0,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+server.route({
+  method: 'GET',
+  path: '/api/projects/{id}',
+  handler: async (request, h) => {
+    try {
+      const projectId = parseInt(request.params.id);
+      const project = await dbService.getProjectById(projectId);
+      
+      if (!project) {
+        return h.response({
+          error: 'Project not found',
+          status: 'error'
+        }).code(404);
+      }
+      
+      return {
+        project: project,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Project detail endpoint error:', error);
+      return h.response({
+        error: error.message,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+server.route({
+  method: 'GET',
+  path: '/api/projects/{id}/tasks',
+  handler: async (request, h) => {
+    try {
+      const projectId = parseInt(request.params.id);
+      const tasks = await dbService.getProjectTasks(projectId);
+      
+      return {
+        tasks: tasks,
+        total: tasks.length,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Project tasks endpoint error:', error);
+      return h.response({
+        error: error.message,
+        tasks: [],
+        total: 0,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+server.route({
+  method: 'GET',
+  path: '/api/projects/{id}/messages',
+  handler: async (request, h) => {
+    try {
+      const projectId = parseInt(request.params.id);
+      const messages = await dbService.getProjectMessages(projectId);
+      
+      return {
+        messages: messages,
+        total: messages.length,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Project messages endpoint error:', error);
+      return h.response({
+        error: error.message,
+        messages: [],
+        total: 0,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+server.route({
+  method: 'POST',
+  path: '/api/projects/{id}/messages',
+  handler: async (request, h) => {
+    try {
+      const projectId = parseInt(request.params.id);
+      const { senderId, message, messageType = 'text' } = request.payload;
+      
+      const newMessage = await dbService.createProjectMessage({
+        projectId,
+        senderId,
+        message,
+        messageType
+      });
+      
+      return {
+        message: newMessage,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Create message endpoint error:', error);
+      return h.response({
+        error: error.message,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+server.route({
+  method: 'POST',
+  path: '/api/projects/{id}/tasks',
+  handler: async (request, h) => {
+    try {
+      const projectId = parseInt(request.params.id);
+      const taskData = { ...request.payload, projectId };
+      
+      const newTask = await dbService.createTask(taskData);
+      
+      return {
+        task: newTask,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Create task endpoint error:', error);
+      return h.response({
+        error: error.message,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+server.route({
+  method: 'PATCH',
+  path: '/api/tasks/{id}',
+  handler: async (request, h) => {
+    try {
+      const taskId = parseInt(request.params.id);
+      const updates = request.payload;
+      
+      const updatedTask = await dbService.updateTask(taskId, updates);
+      
+      return {
+        task: updatedTask,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Update task endpoint error:', error);
+      return h.response({
+        error: error.message,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
 // Test API route
 server.route({
   method: 'GET',

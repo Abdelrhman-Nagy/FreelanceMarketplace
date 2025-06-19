@@ -86,6 +86,17 @@ export default function Navigation() {
                     </Button>
                   </Link>
                   
+                  <Link href="/projects">
+                    <Button 
+                      variant={isActive('/projects') ? 'default' : 'ghost'} 
+                      size="sm"
+                      className="flex items-center space-x-2"
+                    >
+                      <Briefcase className="h-4 w-4" />
+                      <span>Projects</span>
+                    </Button>
+                  </Link>
+
                   <Link href="/contracts">
                     <Button 
                       variant={isActive('/contracts') ? 'default' : 'ghost'} 

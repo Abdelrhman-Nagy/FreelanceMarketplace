@@ -73,7 +73,132 @@ export const proposalsRelations = relations(proposals, ({ one }) => ({
   }),
 }));
 
+// Project Management Tables
+export const projects = pgTable("projects", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  clientId: text("client_id").notNull().references(() => users.id),
+  freelancerId: text("freelancer_id").references(() => users.id),
+  jobId: integer("job_id").references(() => jobs.id),
+  status: text("status").default("active"),
+  deadline: timestamp("deadline"),
+  budget: integer("budget"), // stored in cents
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const tasks = pgTable("tasks", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  assignedTo: text("assigned_to").references(() => users.id),
+  status: text("status").default("todo"),
+  priority: text("priority").default("medium"),
+  dueDate: timestamp("due_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const projectFiles = pgTable("project_files", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id),
+  uploadedBy: text("uploaded_by").notNull().references(() => users.id),
+  filename: text("filename").notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const projectMessages = pgTable("project_messages", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id),
+  senderId: text("sender_id").notNull().references(() => users.id),
+  message: text("message").notNull(),
+  messageType: text("message_type").default("text"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const projectMembers = pgTable("project_members", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull().references(() => projects.id),
+  userId: text("user_id").notNull().references(() => users.id),
+  role: text("role").default("member"),
+  joinedAt: timestamp("joined_at").defaultNow(),
+});
+
+// Project Relations
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  client: one(users, {
+    fields: [projects.clientId],
+    references: [users.id],
+  }),
+  freelancer: one(users, {
+    fields: [projects.freelancerId],
+    references: [users.id],
+  }),
+  job: one(jobs, {
+    fields: [projects.jobId],
+    references: [jobs.id],
+  }),
+  tasks: many(tasks),
+  files: many(projectFiles),
+  messages: many(projectMessages),
+  members: many(projectMembers),
+}));
+
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  project: one(projects, {
+    fields: [tasks.projectId],
+    references: [projects.id],
+  }),
+  assignee: one(users, {
+    fields: [tasks.assignedTo],
+    references: [users.id],
+  }),
+}));
+
+export const projectFilesRelations = relations(projectFiles, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectFiles.projectId],
+    references: [projects.id],
+  }),
+  uploader: one(users, {
+    fields: [projectFiles.uploadedBy],
+    references: [users.id],
+  }),
+}));
+
+export const projectMessagesRelations = relations(projectMessages, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectMessages.projectId],
+    references: [projects.id],
+  }),
+  sender: one(users, {
+    fields: [projectMessages.senderId],
+    references: [users.id],
+  }),
+}));
+
+export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectMembers.projectId],
+    references: [projects.id],
+  }),
+  user: one(users, {
+    fields: [projectMembers.userId],
+    references: [users.id],
+  }),
+}));
+
 // Zod schemas for validation
 export const insertUserSchema = createInsertSchema(users);
 export const insertJobSchema = createInsertSchema(jobs);
 export const insertProposalSchema = createInsertSchema(proposals);
+export const insertProjectSchema = createInsertSchema(projects);
+export const insertTaskSchema = createInsertSchema(tasks);
+export const insertProjectFileSchema = createInsertSchema(projectFiles);
+export const insertProjectMessageSchema = createInsertSchema(projectMessages);
+export const insertProjectMemberSchema = createInsertSchema(projectMembers);
