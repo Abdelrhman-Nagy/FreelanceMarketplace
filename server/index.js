@@ -3,10 +3,10 @@ import Inert from '@hapi/inert';
 import Vision from '@hapi/vision';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dbService from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import dbService from './database.js';
 
 // Initialize Hapi server
 const server = Hapi.server({
@@ -36,11 +36,12 @@ server.route({
       message: 'API is working correctly',
       timestamp: new Date().toISOString(),
       server: 'Node.js Hapi',
-      database: 'sqlserver',
+      database: 'postgresql',
       config: {
-        server: process.env.DB_SERVER || 'localhost',
-        database: process.env.DB_DATABASE || 'freelancing_platform',
-        port: parseInt(process.env.DB_PORT || '1433')
+        host: process.env.PGHOST,
+        database: process.env.PGDATABASE,
+        port: process.env.PGPORT,
+        user: process.env.PGUSER
       }
     };
   }
@@ -59,12 +60,12 @@ server.route({
       version: '1.0.0',
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
-      database: 'sqlserver',
+      database: 'postgresql',
       connection: {
-        server: process.env.DB_SERVER || 'localhost',
-        database: process.env.DB_DATABASE || 'freelancing_platform',
-        port: parseInt(process.env.DB_PORT || '1433'),
-        user: process.env.DB_USER || 'app_user',
+        host: process.env.PGHOST,
+        database: process.env.PGDATABASE,
+        port: process.env.PGPORT,
+        user: process.env.PGUSER,
         status: dbTest.status,
         error: dbTest.error
       }

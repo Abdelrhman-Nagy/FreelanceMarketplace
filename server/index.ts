@@ -3,12 +3,10 @@ import Inert from '@hapi/inert';
 import Vision from '@hapi/vision';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dbService from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Import database service
-import dbService from './database.js';
 
 // Initialize Hapi server
 const server = Hapi.server({
@@ -26,133 +24,11 @@ const server = Hapi.server({
   }
 });
 
-// Database service handles all SQL Server connections
+import { routes } from './routes.js';
 
-// Test API route
-server.route({
-  method: 'GET',
-  path: '/api/test',
-  handler: (request, h) => {
-    return {
-      status: 'success',
-      message: 'API is working correctly',
-      timestamp: new Date().toISOString(),
-      server: 'Node.js Hapi',
-      database: 'sqlserver',
-      config: {
-        server: process.env.DB_SERVER || 'localhost',
-        database: process.env.DB_DATABASE || 'freelancing_platform',
-        port: parseInt(process.env.DB_PORT || '1433')
-      }
-    };
-  }
-});
-
-// Jobs endpoint - gets data from SQL Server via database service
-server.route({
-  method: 'GET',
-  path: '/api/jobs',
-  handler: async (request, h) => {
-    try {
-      const jobs = await dbService.getJobs();
-      
-      return {
-        jobs: jobs,
-        total: jobs.length,
-        status: "success",
-        database: "Connected to SQL Server"
-      };
-    } catch (error) {
-      console.error('Jobs endpoint error:', error);
-      return h.response({
-        error: (error as Error).message,
-        jobs: [],
-        total: 0,
-        status: "error",
-        database: "SQL Server connection failed"
-      }).code(500);
-    }
-  }
-});
-
-// Health check endpoint - tests SQL Server connection
-server.route({
-  method: 'GET',
-  path: '/api/health',
-  handler: async (request, h) => {
-    const dbTest = await dbService.testConnection();
-
-    return {
-      status: 'healthy',
-      service: 'Freelancing Platform API',
-      version: '1.0.0',
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
-      database: 'sqlserver',
-      connection: {
-        server: process.env.DB_SERVER || 'localhost',
-        database: process.env.DB_DATABASE || 'freelancing_platform',
-        port: parseInt(process.env.DB_PORT || '1433'),
-        user: process.env.DB_USER || 'app_user',
-        status: dbTest.status,
-        error: dbTest.error
-      }
-    };
-  }
-});
-
-// User stats endpoint - gets data from SQL Server
-server.route({
-  method: 'GET',
-  path: '/api/my-stats',
-  handler: async (request, h) => {
-    try {
-      // In a real app, this would come from authentication
-      const userId = 'freelancer_001';
-      const stats = await dbService.getUserStats(userId);
-      
-      return {
-        ...stats,
-        status: 'success'
-      };
-    } catch (error) {
-      console.error('Stats endpoint error:', error);
-      return h.response({
-        error: (error as Error).message,
-        status: 'error'
-      }).code(500);
-    }
-  }
-});
-
-// Job detail endpoint - gets specific job from SQL Server
-server.route({
-  method: 'GET',
-  path: '/api/jobs/{id}',
-  handler: async (request, h) => {
-    try {
-      const jobId = request.params.id;
-      const job = await dbService.getJobById(jobId);
-      
-      if (!job) {
-        return h.response({
-          error: 'Job not found',
-          status: 'error'
-        }).code(404);
-      }
-      
-      return {
-        job: job,
-        status: 'success'
-      };
-    } catch (error) {
-      console.error('Job detail endpoint error:', error);
-      return h.response({
-        error: (error as Error).message,
-        status: 'error'
-      }).code(500);
-    }
-  }
+// Register all routes
+routes.forEach(route => {
+  server.route(route);
 });
 
 // Serve source files (for development)
