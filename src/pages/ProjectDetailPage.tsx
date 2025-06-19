@@ -19,7 +19,8 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import { ProtectedRoute } from '../components/ProtectedRoute';
 import { apiRequest } from '../lib/queryClient';
 
 interface Task {
@@ -62,7 +63,7 @@ interface Project {
   }>;
 }
 
-export default function ProjectDetailPage() {
+function ProjectDetailPageContent() {
   const { id } = useParams();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -446,5 +447,13 @@ export default function ProjectDetailPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+export default function ProjectDetailPage() {
+  return (
+    <ProtectedRoute>
+      <ProjectDetailPageContent />
+    </ProtectedRoute>
   );
 }

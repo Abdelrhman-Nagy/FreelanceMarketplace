@@ -6,7 +6,8 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import { ProtectedRoute, FreelancerOnlyRoute } from '../components/ProtectedRoute';
 
 interface Proposal {
   id: number;
@@ -27,7 +28,7 @@ interface ProposalsResponse {
   status: string;
 }
 
-export default function ProposalsPage() {
+function ProposalsPageContent() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -193,5 +194,13 @@ export default function ProposalsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProposalsPage() {
+  return (
+    <FreelancerOnlyRoute>
+      <ProposalsPageContent />
+    </FreelancerOnlyRoute>
   );
 }

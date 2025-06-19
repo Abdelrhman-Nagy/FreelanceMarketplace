@@ -1,6 +1,6 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, or, inArray } from 'drizzle-orm';
 import ws from "ws";
 import * as schema from "../shared/schema.js";
 
@@ -169,18 +169,68 @@ class DatabaseService {
   }
 
   // Project Management Methods
-  async getProjects() {
+  async getUserProjects(userId, userType) {
     try {
+      let whereClause;
+      
+      if (userType === 'client') {
+        whereClause = (projects, { eq }) => eq(projects.clientId, userId);
+      } else if (userType === 'freelancer') {
+        whereClause = (projects, { eq, or }) => or(
+          eq(projects.freelancerId, userId),
+          // Also include projects where user is a member
+        );
+      } else {
+        // Admin can see all projects
+        whereClause = undefined;
+      }
+      
       const projects = await db.query.projects.findMany({
+        where: whereClause,
         with: {
           client: true,
           freelancer: true,
           job: true,
+          members: {
+            with: {
+              user: true,
+            },
+          },
         },
         orderBy: (projects, { desc }) => [desc(projects.updatedAt)],
       });
 
-      return projects.map(project => ({
+      // For freelancers, also include projects where they are members
+      let additionalProjects = [];
+      if (userType === 'freelancer') {
+        const memberProjects = await db.query.projects.findMany({
+          where: (projects, { eq, and, inArray }) => and(
+            inArray(projects.id, 
+              db.select({ projectId: schema.projectMembers.projectId })
+                .from(schema.projectMembers)
+                .where(eq(schema.projectMembers.userId, userId))
+            )
+          ),
+          with: {
+            client: true,
+            freelancer: true,
+            job: true,
+            members: {
+              with: {
+                user: true,
+              },
+            },
+          },
+        });
+        
+        additionalProjects = memberProjects.filter(
+          mp => !projects.some(p => p.id === mp.id)
+        );
+      }
+
+      const allProjects = [...projects, ...additionalProjects];
+
+      return allProjects.map(project => ({
         id: project.id,
         title: project.title,
         description: project.description,
@@ -194,12 +244,20 @@ class DatabaseService {
         deadline: project.deadline,
         budget: project.budget ? project.budget / 100 : 0,
         createdAt: project.createdAt,
-        updatedAt: project.updatedAt
+        updatedAt: project.updatedAt,
+        userRole: this.getUserProjectRole(project, userId)
       }));
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error('Error fetching user projects:', error);
       throw error;
     }
+  }
+
+  getUserProjectRole(project, userId) {
+    if (project.clientId === userId) return 'client';
+    if (project.freelancerId === userId) return 'freelancer';
+    const member = project.members?.find(m => m.userId === userId);
+    return member ? member.role : 'viewer';
   }
 
   async getProjectById(projectId) {
@@ -539,6 +597,68 @@ class DatabaseService {
       }));
     } catch (error) {
       console.error('Error fetching saved jobs:', error);
+      throw error;
+    }
+  }
+
+  // Get proposals for a specific job (client access)
+  async getJobProposals(jobId) {
+    try {
+      const proposals = await db.query.proposals.findMany({
+        where: (proposals, { eq }) => eq(proposals.jobId, jobId),
+        with: {
+          freelancer: true,
+        },
+        orderBy: (proposals, { desc }) => [desc(proposals.createdAt)],
+      });
+
+      return proposals.map(proposal => ({
+        id: proposal.id,
+        jobId: proposal.jobId,
+        freelancerId: proposal.freelancerId,
+        freelancerName: `${proposal.freelancer.firstName} ${proposal.freelancer.lastName}`,
+        freelancerEmail: proposal.freelancer.email,
+        freelancerTitle: proposal.freelancer.title,
+        freelancerSkills: this.parseSkills(proposal.freelancer.skills),
+        coverLetter: proposal.coverLetter,
+        proposedRate: proposal.proposedRate,
+        estimatedDuration: proposal.estimatedDuration,
+        status: proposal.status,
+        createdAt: proposal.createdAt,
+        updatedAt: proposal.updatedAt
+      }));
+    } catch (error) {
+      console.error('Error fetching job proposals:', error);
+      throw error;
+    }
+  }
+
+  // Update proposal status (client only)
+  async updateProposalStatus(proposalId, status, clientId) {
+    try {
+      // First verify the proposal belongs to the client's job
+      const proposal = await db.query.proposals.findFirst({
+        where: (proposals, { eq }) => eq(proposals.id, proposalId),
+        with: {
+          job: true,
+        },
+      });
+
+      if (!proposal || proposal.job.clientId !== clientId) {
+        throw new Error('Access denied: You can only update proposals for your own jobs');
+      }
+
+      const [updatedProposal] = await db.update(schema.proposals)
+        .set({
+          status: status,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.proposals.id, proposalId))
+        .returning();
+
+      return updatedProposal;
+    } catch (error) {
+      console.error('Error updating proposal status:', error);
       throw error;
     }
   }

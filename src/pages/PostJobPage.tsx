@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../components/ui/checkbox';
 import { Badge } from '../components/ui/badge';
 import { useToast } from '../hooks/use-toast';
+import { ClientOnlyRoute } from '../components/ProtectedRoute';
 import { 
   DollarSign, 
   Clock, 
@@ -20,7 +21,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 
-export default function PostJobPage() {
+function PostJobPageContent() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();

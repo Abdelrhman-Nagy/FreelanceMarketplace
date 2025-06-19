@@ -12,6 +12,11 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import ContractsPage from './pages/ContractsPage';
 import PostJobPage from './pages/PostJobPage';
+import ProjectsPage from './pages/ProjectsPage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
+import SavedJobsPage from './pages/SavedJobsPage';
+import ProposalsPage from './pages/ProposalsPage';
+import ClientProposalsPage from './pages/ClientProposalsPage';
 import Navigation from './components/Navigation';
 import { AuthProvider } from './contexts/AuthContext';
 import { queryClient } from './lib/queryClient';
@@ -35,6 +40,11 @@ function App() {
                   <Route path="/profile" component={ProfilePage} />
                   <Route path="/contracts" component={ContractsPage} />
                   <Route path="/post-job" component={PostJobPage} />
+                  <Route path="/projects" component={ProjectsPage} />
+                  <Route path="/projects/:id" component={ProjectDetailPage} />
+                  <Route path="/saved-jobs" component={SavedJobsPage} />
+                  <Route path="/proposals" component={ProposalsPage} />
+                  <Route path="/jobs/:jobId/proposals" component={ClientProposalsPage} />
                   <Route>
                     <div className="text-center py-20">
                       <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>

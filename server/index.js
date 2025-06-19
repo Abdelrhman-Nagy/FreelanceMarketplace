@@ -30,9 +30,13 @@ const server = Hapi.server({
 server.route({
   method: 'GET',
   path: '/api/projects',
+  options: {
+    pre: [requireAuth]
+  },
   handler: async (request, h) => {
     try {
-      const projects = await dbService.getProjects();
+      const user = request.pre.user;
+      const projects = await dbService.getUserProjects(user.id, user.userType);
       return {
         projects: projects,
         total: projects.length,
@@ -53,9 +57,13 @@ server.route({
 server.route({
   method: 'GET',
   path: '/api/projects/{id}',
+  options: {
+    pre: [requireAuth]
+  },
   handler: async (request, h) => {
     try {
       const projectId = parseInt(request.params.id);
+      const user = request.pre.user;
       const project = await dbService.getProjectById(projectId);
       
       if (!project) {
@@ -63,6 +71,19 @@ server.route({
           error: 'Project not found',
           status: 'error'
         }).code(404);
+      }
+      
+      // Check if user has access to this project
+      const hasAccess = project.clientId === user.id || 
+                       project.freelancerId === user.id ||
+                       project.members?.some(member => member.userId === user.id);
+      
+      if (!hasAccess) {
+        return h.response({
+          error: 'Access denied',
+          message: 'You do not have permission to view this project',
+          status: 'error'
+        }).code(403);
       }
       
       return {
@@ -132,14 +153,32 @@ server.route({
 server.route({
   method: 'POST',
   path: '/api/projects/{id}/messages',
+  options: {
+    pre: [requireAuth]
+  },
   handler: async (request, h) => {
     try {
       const projectId = parseInt(request.params.id);
-      const { senderId, message, messageType = 'text' } = request.payload;
+      const user = request.pre.user;
       
+      // Verify user has access to the project
+      const project = await dbService.getProjectById(projectId);
+      const hasAccess = project.clientId === user.id || 
+                       project.freelancerId === user.id ||
+                       project.members?.some(member => member.userId === user.id);
+      
+      if (!hasAccess) {
+        return h.response({
+          error: 'Access denied',
+          message: 'You do not have permission to send messages in this project',
+          status: 'error'
+        }).code(403);
+      }
+      
+      const { message, messageType = 'text' } = request.payload;
       const newMessage = await dbService.createProjectMessage({
         projectId,
-        senderId,
+        senderId: user.id,
         message,
         messageType
       });
@@ -161,11 +200,29 @@ server.route({
 server.route({
   method: 'POST',
   path: '/api/projects/{id}/tasks',
+  options: {
+    pre: [requireAuth]
+  },
   handler: async (request, h) => {
     try {
       const projectId = parseInt(request.params.id);
-      const taskData = { ...request.payload, projectId };
+      const user = request.pre.user;
       
+      // Verify user has access to the project
+      const project = await dbService.getProjectById(projectId);
+      const hasAccess = project.clientId === user.id || 
+                       project.freelancerId === user.id ||
+                       project.members?.some(member => member.userId === user.id);
+      
+      if (!hasAccess) {
+        return h.response({
+          error: 'Access denied',
+          message: 'You do not have permission to create tasks in this project',
+          status: 'error'
+        }).code(403);
+      }
+      
+      const taskData = { ...request.payload, projectId };
       const newTask = await dbService.createTask(taskData);
       
       return {
@@ -210,9 +267,13 @@ server.route({
 server.route({
   method: 'POST',
   path: '/api/proposals',
+  options: {
+    pre: [requireFreelancerRole]
+  },
   handler: async (request, h) => {
     try {
-      const proposalData = request.payload;
+      const user = request.pre.user;
+      const proposalData = { ...request.payload, freelancerId: user.id };
       const proposal = await dbService.createProposal(proposalData);
       
       return {
@@ -229,9 +290,41 @@ server.route({
   }
 });
 
+// Update proposal status (client only)
+server.route({
+  method: 'PATCH',
+  path: '/api/proposals/{id}/status',
+  options: {
+    pre: [requireClientRole]
+  },
+  handler: async (request, h) => {
+    try {
+      const proposalId = parseInt(request.params.id);
+      const user = request.pre.user;
+      const { status } = request.payload;
+      
+      const updatedProposal = await dbService.updateProposalStatus(proposalId, status, user.id);
+      
+      return {
+        proposal: updatedProposal,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Update proposal status endpoint error:', error);
+      return h.response({
+        error: error.message,
+        status: 'error'
+      }).code(403);
+    }
+  }
+});
+
 server.route({
   method: 'GET',
   path: '/api/proposals/user/{userId}',
+  options: {
+    pre: [requireOwnership('userId')]
+  },
   handler: async (request, h) => {
     try {
       const userId = request.params.userId;
@@ -254,14 +347,59 @@ server.route({
   }
 });
 
-// Saved jobs routes
+// Get proposals for a job (client only)
+server.route({
+  method: 'GET',
+  path: '/api/jobs/{jobId}/proposals',
+  options: {
+    pre: [requireClientRole]
+  },
+  handler: async (request, h) => {
+    try {
+      const jobId = parseInt(request.params.jobId);
+      const user = request.pre.user;
+      
+      // Verify the job belongs to the client
+      const job = await dbService.getJobById(jobId);
+      if (!job || job.clientId !== user.id) {
+        return h.response({
+          error: 'Access denied',
+          message: 'You can only view proposals for your own jobs',
+          status: 'error'
+        }).code(403);
+      }
+      
+      const proposals = await dbService.getJobProposals(jobId);
+      
+      return {
+        proposals: proposals,
+        total: proposals.length,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Get job proposals endpoint error:', error);
+      return h.response({
+        error: error.message,
+        proposals: [],
+        total: 0,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+// Saved jobs routes (freelancers only)
 server.route({
   method: 'POST',
   path: '/api/saved-jobs',
+  options: {
+    pre: [requireFreelancerRole]
+  },
   handler: async (request, h) => {
     try {
-      const { userId, jobId } = request.payload;
-      const savedJob = await dbService.saveJob(userId, jobId);
+      const user = request.pre.user;
+      const { jobId } = request.payload;
+      const savedJob = await dbService.saveJob(user.id, jobId);
       
       return {
         savedJob: savedJob,
@@ -280,13 +418,15 @@ server.route({
 server.route({
   method: 'DELETE',
   path: '/api/saved-jobs/{jobId}',
+  options: {
+    pre: [requireFreelancerRole]
+  },
   handler: async (request, h) => {
     try {
       const jobId = parseInt(request.params.jobId);
-      // In a real app, you'd get userId from authentication
-      const userId = 'freelancer_001'; // This should come from auth
+      const user = request.pre.user;
       
-      await dbService.unsaveJob(userId, jobId);
+      await dbService.unsaveJob(user.id, jobId);
       
       return {
         status: 'success',
@@ -305,11 +445,13 @@ server.route({
 server.route({
   method: 'GET',
   path: '/api/saved-jobs',
+  options: {
+    pre: [requireFreelancerRole]
+  },
   handler: async (request, h) => {
     try {
-      // In a real app, you'd get userId from authentication
-      const userId = 'freelancer_001'; // This should come from auth
-      const savedJobs = await dbService.getSavedJobs(userId);
+      const user = request.pre.user;
+      const savedJobs = await dbService.getSavedJobs(user.id);
       
       return {
         savedJobs: savedJobs,
