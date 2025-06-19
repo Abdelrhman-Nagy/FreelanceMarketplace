@@ -9,13 +9,14 @@ neonConfig.webSocketConstructor = ws;
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL environment variable is not set!");
   console.error("Available environment variables:", Object.keys(process.env).filter(key => key.includes('DATABASE') || key.includes('DB')));
-  throw new Error(
-    "DATABASE_URL must be set. Please configure it in web.config or .env file.",
-  );
+  console.error("Please check your web.config file and ensure DATABASE_URL is configured correctly.");
+  
+  // Continue with a warning but don't crash the server
+  console.warn("Server will continue but database operations will fail until DATABASE_URL is configured.");
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+export const pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
+export const db = pool ? drizzle({ client: pool, schema }) : null;
 
 // Database service for compatibility
 class DatabaseService {
