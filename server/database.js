@@ -6,17 +6,24 @@ import * as schema from "../shared/schema.js";
 
 neonConfig.webSocketConstructor = ws;
 
-if (!process.env.DATABASE_URL) {
+let pool = null;
+let db = null;
+
+if (process.env.DATABASE_URL) {
+  try {
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    db = drizzle({ client: pool, schema });
+    console.log("Database configuration successful");
+  } catch (error) {
+    console.error("Database configuration failed:", error);
+  }
+} else {
   console.error("DATABASE_URL environment variable is not set!");
   console.error("Available environment variables:", Object.keys(process.env).filter(key => key.includes('DATABASE') || key.includes('DB')));
   console.error("Please check your web.config file and ensure DATABASE_URL is configured correctly.");
-  
-  // Continue with a warning but don't crash the server
-  console.warn("Server will continue but database operations will fail until DATABASE_URL is configured.");
 }
 
-export const pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
-export const db = pool ? drizzle({ client: pool, schema }) : null;
+export { pool, db };
 
 // Database service for compatibility
 class DatabaseService {
@@ -25,85 +32,129 @@ class DatabaseService {
   }
 
   async testConnection() {
+    if (!db) {
+      return {
+        status: 'not_configured',
+        database: 'postgresql',
+        timestamp: new Date().toISOString(),
+        error: 'DATABASE_URL not configured',
+        config: {}
+      };
+    }
+
     try {
-      await db.execute('SELECT 1 as test');
-      return { status: 'connected', error: null };
+      const result = await db.execute(sql`SELECT 1 as test`);
+      console.log('Database connection successful');
+      
+      return {
+        status: 'connected',
+        database: 'postgresql',
+        timestamp: new Date().toISOString(),
+        config: {
+          host: process.env.PGHOST || 'localhost',
+          database: process.env.PGDATABASE || 'unknown',
+          port: process.env.PGPORT || '5432',
+          user: process.env.PGUSER || 'unknown'
+        }
+      };
     } catch (error) {
-      return { status: 'disconnected', error: error.message };
+      console.error('Database connection failed:', error);
+      return {
+        status: 'failed',
+        database: 'postgresql',
+        timestamp: new Date().toISOString(),
+        error: error.message,
+        config: {}
+      };
     }
   }
 
   async getJobs() {
-    try {
-      const jobs = await db.query.jobs.findMany({
-        where: (jobs, { eq }) => eq(jobs.status, 'active'),
-        with: {
-          client: true,
-        },
-        orderBy: (jobs, { desc }) => [desc(jobs.createdAt)],
-      });
+    if (!db) {
+      throw new Error('Database not configured. Please set DATABASE_URL in web.config');
+    }
 
-      return jobs.map(job => ({
-        id: job.id,
-        title: job.title,
-        description: job.description,
-        budget: this.calculateBudget(job),
-        category: job.category,
+    try {
+      const { jobs, users } = schema;
+      const jobsWithClients = await db
+        .select({
+          id: jobs.id,
+          title: jobs.title,
+          description: jobs.description,
+          category: jobs.category,
+          skills: jobs.skills,
+          budgetMin: jobs.budgetMin,
+          budgetMax: jobs.budgetMax,
+          budgetType: jobs.budgetType,
+          experienceLevel: jobs.experienceLevel,
+          duration: jobs.duration,
+          status: jobs.status,
+          proposalCount: jobs.proposalCount,
+          createdAt: jobs.createdAt,
+          clientId: jobs.clientId,
+          clientName: sql`${users.firstName} || ' ' || ${users.lastName}`.as('clientName'),
+          clientCompany: users.company,
+          clientRating: users.rating
+        })
+        .from(jobs)
+        .leftJoin(users, eq(jobs.clientId, users.id))
+        .where(eq(jobs.status, 'open'))
+        .orderBy(jobs.createdAt);
+
+      return jobsWithClients.map(job => ({
+        ...job,
         skills: this.parseSkills(job.skills),
-        experienceLevel: job.experienceLevel,
-        clientId: job.clientId,
-        clientName: job.client ? `${job.client.firstName} ${job.client.lastName}` : 'Unknown Client',
-        clientCompany: job.client?.company,
-        clientRating: job.client?.rating ? (job.client.rating / 10) : 0,
-        status: job.status,
-        createdAt: job.createdAt,
-        budgetType: job.budgetType,
-        duration: job.duration,
-        remote: job.remote,
-        proposalCount: job.proposalCount || 0
+        budget: this.calculateBudget(job)
       }));
     } catch (error) {
       console.error('Error fetching jobs:', error);
-      throw error;
+      throw new Error(`Failed to fetch jobs: ${error.message}`);
     }
   }
 
   async getJobById(jobId) {
+    if (!db) {
+      throw new Error('Database not configured. Please set DATABASE_URL in web.config');
+    }
+
     try {
-      const job = await db.query.jobs.findFirst({
-        where: (jobs, { eq }) => eq(jobs.id, parseInt(jobId)),
-        with: {
-          client: true,
-        },
-      });
+      const { jobs, users } = schema;
+      const [job] = await db
+        .select({
+          id: jobs.id,
+          title: jobs.title,
+          description: jobs.description,
+          category: jobs.category,
+          skills: jobs.skills,
+          budgetMin: jobs.budgetMin,
+          budgetMax: jobs.budgetMax,
+          budgetType: jobs.budgetType,
+          experienceLevel: jobs.experienceLevel,
+          duration: jobs.duration,
+          status: jobs.status,
+          proposalCount: jobs.proposalCount,
+          createdAt: jobs.createdAt,
+          clientId: jobs.clientId,
+          clientName: sql`${users.firstName} || ' ' || ${users.lastName}`.as('clientName'),
+          clientCompany: users.company,
+          clientRating: users.rating
+        })
+        .from(jobs)
+        .leftJoin(users, eq(jobs.clientId, users.id))
+        .where(eq(jobs.id, parseInt(jobId)));
 
       if (!job) {
         return null;
       }
 
       return {
-        id: job.id,
-        title: job.title,
-        description: job.description,
-        budget: this.calculateBudget(job),
-        category: job.category,
+        ...job,
         skills: this.parseSkills(job.skills),
-        experienceLevel: job.experienceLevel,
-        clientId: job.clientId,
-        clientName: job.client ? `${job.client.firstName} ${job.client.lastName}` : 'Unknown Client',
-        clientCompany: job.client?.company,
-        clientRating: job.client?.rating ? (job.client.rating / 10) : 0,
-        clientTotalJobs: job.client?.totalJobs || 0,
-        status: job.status,
-        createdAt: job.createdAt,
-        budgetType: job.budgetType,
-        duration: job.duration,
-        remote: job.remote,
-        proposalCount: job.proposalCount || 0
+        budget: this.calculateBudget(job)
       };
     } catch (error) {
       console.error('Error fetching job by ID:', error);
-      throw error;
+      throw new Error(`Failed to fetch job: ${error.message}`);
     }
   }
 
