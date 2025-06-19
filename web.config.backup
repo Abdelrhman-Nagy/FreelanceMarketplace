@@ -17,7 +17,9 @@
       </rules>
     </rewrite>
     
-    <iisnode>
+    <iisnode 
+      debuggingEnabled="true"
+      devErrorsEnabled="true">
       <environmentVariables>
         <add name="NODE_ENV" value="production" />
         <add name="DATABASE_URL" value="postgresql://your_username:your_password@localhost:5432/freelancing_platform" />
