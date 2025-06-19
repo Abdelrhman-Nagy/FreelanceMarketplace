@@ -202,3 +202,25 @@ export const insertTaskSchema = createInsertSchema(tasks);
 export const insertProjectFileSchema = createInsertSchema(projectFiles);
 export const insertProjectMessageSchema = createInsertSchema(projectMessages);
 export const insertProjectMemberSchema = createInsertSchema(projectMembers);
+
+// Saved Jobs Table
+export const savedJobs = pgTable("saved_jobs", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  jobId: integer("job_id").notNull().references(() => jobs.id),
+  savedAt: timestamp("saved_at").defaultNow(),
+});
+
+// Saved Jobs Relations
+export const savedJobsRelations = relations(savedJobs, ({ one }) => ({
+  user: one(users, {
+    fields: [savedJobs.userId],
+    references: [users.id],
+  }),
+  job: one(jobs, {
+    fields: [savedJobs.jobId],
+    references: [jobs.id],
+  }),
+}));
+
+export const insertSavedJobSchema = createInsertSchema(savedJobs);

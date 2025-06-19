@@ -11,7 +11,9 @@ import {
   FileText,
   Plus,
   LogOut,
-  Settings
+  Settings,
+  Send,
+  Bookmark
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -96,6 +98,32 @@ export default function Navigation() {
                       <span>Projects</span>
                     </Button>
                   </Link>
+
+                  {user?.userType === 'freelancer' && (
+                    <>
+                      <Link href="/proposals">
+                        <Button 
+                          variant={isActive('/proposals') ? 'default' : 'ghost'} 
+                          size="sm"
+                          className="flex items-center space-x-2"
+                        >
+                          <Send className="h-4 w-4" />
+                          <span>Proposals</span>
+                        </Button>
+                      </Link>
+
+                      <Link href="/saved-jobs">
+                        <Button 
+                          variant={isActive('/saved-jobs') ? 'default' : 'ghost'} 
+                          size="sm"
+                          className="flex items-center space-x-2"
+                        >
+                          <Bookmark className="h-4 w-4" />
+                          <span>Saved</span>
+                        </Button>
+                      </Link>
+                    </>
+                  )}
 
                   <Link href="/contracts">
                     <Button 

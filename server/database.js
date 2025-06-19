@@ -1,6 +1,6 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { eq } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import ws from "ws";
 import * as schema from "../shared/schema.js";
 
@@ -414,6 +414,131 @@ class DatabaseService {
       };
     } catch (error) {
       console.error('Error updating task:', error);
+      throw error;
+    }
+  }
+
+  // Proposals Management
+  async createProposal(proposalData) {
+    try {
+      const [proposal] = await db.insert(schema.proposals).values({
+        jobId: proposalData.jobId,
+        freelancerId: proposalData.freelancerId,
+        coverLetter: proposalData.coverLetter,
+        proposedRate: proposalData.proposedRate,
+        estimatedDuration: proposalData.estimatedDuration,
+        status: proposalData.status || 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }).returning();
+
+      // Update job proposal count
+      await db.update(schema.jobs)
+        .set({
+          proposalCount: db.select({ count: sql`count(*)` })
+            .from(schema.proposals)
+            .where(eq(schema.proposals.jobId, proposalData.jobId))
+        })
+        .where(eq(schema.jobs.id, proposalData.jobId));
+
+      return proposal;
+    } catch (error) {
+      console.error('Error creating proposal:', error);
+      throw error;
+    }
+  }
+
+  async getUserProposals(userId) {
+    try {
+      const proposals = await db.query.proposals.findMany({
+        where: (proposals, { eq }) => eq(proposals.freelancerId, userId),
+        with: {
+          job: {
+            with: {
+              client: true,
+            },
+          },
+        },
+        orderBy: (proposals, { desc }) => [desc(proposals.createdAt)],
+      });
+
+      return proposals.map(proposal => ({
+        id: proposal.id,
+        jobId: proposal.jobId,
+        jobTitle: proposal.job.title,
+        clientName: proposal.job.client ? `${proposal.job.client.firstName} ${proposal.job.client.lastName}` : 'Unknown Client',
+        coverLetter: proposal.coverLetter,
+        proposedRate: proposal.proposedRate,
+        estimatedDuration: proposal.estimatedDuration,
+        status: proposal.status,
+        createdAt: proposal.createdAt,
+        updatedAt: proposal.updatedAt
+      }));
+    } catch (error) {
+      console.error('Error fetching user proposals:', error);
+      throw error;
+    }
+  }
+
+  // Saved Jobs Management
+  async saveJob(userId, jobId) {
+    try {
+      const [savedJob] = await db.insert(schema.savedJobs).values({
+        userId: userId,
+        jobId: jobId,
+        savedAt: new Date()
+      }).returning();
+
+      return savedJob;
+    } catch (error) {
+      if (error.code === '23505') { // Unique constraint violation
+        throw new Error('Job is already saved');
+      }
+      console.error('Error saving job:', error);
+      throw error;
+    }
+  }
+
+  async unsaveJob(userId, jobId) {
+    try {
+      await db.delete(schema.savedJobs)
+        .where(and(
+          eq(schema.savedJobs.userId, userId),
+          eq(schema.savedJobs.jobId, jobId)
+        ));
+    } catch (error) {
+      console.error('Error unsaving job:', error);
+      throw error;
+    }
+  }
+
+  async getSavedJobs(userId) {
+    try {
+      const savedJobs = await db.query.savedJobs.findMany({
+        where: (savedJobs, { eq }) => eq(savedJobs.userId, userId),
+        with: {
+          job: {
+            with: {
+              client: true,
+            },
+          },
+        },
+        orderBy: (savedJobs, { desc }) => [desc(savedJobs.savedAt)],
+      });
+
+      return savedJobs.map(saved => ({
+        id: saved.id,
+        jobId: saved.job.id,
+        jobTitle: saved.job.title,
+        jobDescription: saved.job.description,
+        budget: this.calculateBudget(saved.job),
+        category: saved.job.category,
+        clientName: saved.job.client ? `${saved.job.client.firstName} ${saved.job.client.lastName}` : 'Unknown Client',
+        clientCompany: saved.job.client?.company,
+        savedAt: saved.savedAt
+      }));
+    } catch (error) {
+      console.error('Error fetching saved jobs:', error);
       throw error;
     }
   }

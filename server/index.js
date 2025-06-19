@@ -206,6 +206,128 @@ server.route({
   }
 });
 
+// Proposals routes
+server.route({
+  method: 'POST',
+  path: '/api/proposals',
+  handler: async (request, h) => {
+    try {
+      const proposalData = request.payload;
+      const proposal = await dbService.createProposal(proposalData);
+      
+      return {
+        proposal: proposal,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Create proposal endpoint error:', error);
+      return h.response({
+        error: error.message,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+server.route({
+  method: 'GET',
+  path: '/api/proposals/user/{userId}',
+  handler: async (request, h) => {
+    try {
+      const userId = request.params.userId;
+      const proposals = await dbService.getUserProposals(userId);
+      
+      return {
+        proposals: proposals,
+        total: proposals.length,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Get user proposals endpoint error:', error);
+      return h.response({
+        error: error.message,
+        proposals: [],
+        total: 0,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+// Saved jobs routes
+server.route({
+  method: 'POST',
+  path: '/api/saved-jobs',
+  handler: async (request, h) => {
+    try {
+      const { userId, jobId } = request.payload;
+      const savedJob = await dbService.saveJob(userId, jobId);
+      
+      return {
+        savedJob: savedJob,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Save job endpoint error:', error);
+      return h.response({
+        error: error.message,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+server.route({
+  method: 'DELETE',
+  path: '/api/saved-jobs/{jobId}',
+  handler: async (request, h) => {
+    try {
+      const jobId = parseInt(request.params.jobId);
+      // In a real app, you'd get userId from authentication
+      const userId = 'freelancer_001'; // This should come from auth
+      
+      await dbService.unsaveJob(userId, jobId);
+      
+      return {
+        status: 'success',
+        message: 'Job removed from saved list'
+      };
+    } catch (error) {
+      console.error('Unsave job endpoint error:', error);
+      return h.response({
+        error: error.message,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
+server.route({
+  method: 'GET',
+  path: '/api/saved-jobs',
+  handler: async (request, h) => {
+    try {
+      // In a real app, you'd get userId from authentication
+      const userId = 'freelancer_001'; // This should come from auth
+      const savedJobs = await dbService.getSavedJobs(userId);
+      
+      return {
+        savedJobs: savedJobs,
+        total: savedJobs.length,
+        status: 'success'
+      };
+    } catch (error) {
+      console.error('Get saved jobs endpoint error:', error);
+      return h.response({
+        error: error.message,
+        savedJobs: [],
+        total: 0,
+        status: 'error'
+      }).code(500);
+    }
+  }
+});
+
 // Test API route
 server.route({
   method: 'GET',
