@@ -75,7 +75,13 @@ class DatabaseService {
     }
 
     try {
+      console.log('Fetching jobs from database...');
       const { jobs, users } = schema;
+      
+      // First try a simple query to test connection
+      const allJobs = await db.select().from(jobs);
+      console.log(`Found ${allJobs.length} total jobs in database`);
+      
       const jobsWithClients = await db
         .select({
           id: jobs.id,
@@ -98,16 +104,22 @@ class DatabaseService {
         })
         .from(jobs)
         .leftJoin(users, eq(jobs.clientId, users.id))
-        .where(eq(jobs.status, 'open'))
+        .where(eq(jobs.status, 'active'))
         .orderBy(jobs.createdAt);
 
-      return jobsWithClients.map(job => ({
+      console.log(`Filtered ${jobsWithClients.length} active jobs`);
+
+      const result = jobsWithClients.map(job => ({
         ...job,
         skills: this.parseSkills(job.skills),
         budget: this.calculateBudget(job)
       }));
+      
+      console.log('Jobs processed successfully');
+      return result;
     } catch (error) {
       console.error('Error fetching jobs:', error);
+      console.error('Error details:', error.stack);
       throw new Error(`Failed to fetch jobs: ${error.message}`);
     }
   }
