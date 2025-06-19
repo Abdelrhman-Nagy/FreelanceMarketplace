@@ -1,8 +1,12 @@
-const Hapi = require('@hapi/hapi');
-const Inert = require('@hapi/inert');
-const Vision = require('@hapi/vision');
-const path = require('path');
-const dbService = require('./database.js');
+import Hapi from '@hapi/hapi';
+import Inert from '@hapi/inert';
+import Vision from '@hapi/vision';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import dbService from './database.js';
 
 // Initialize Hapi server
 const server = Hapi.server({

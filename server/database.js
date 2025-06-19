@@ -1,4 +1,4 @@
-const sql = require('mssql');
+import sql from 'mssql';
 
 // SQL Server configuration
 const sqlConfig = {
@@ -258,4 +258,4 @@ class DatabaseService {
 
 // Export singleton instance
 const dbService = new DatabaseService();
-module.exports = dbService;
+export default dbService;

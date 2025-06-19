@@ -7,8 +7,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Import database service (using require for commonjs module)
-const dbService = require('./database.js');
+// Import database service
+import dbService from './database.js';
 
 // Initialize Hapi server
 const server = Hapi.server({
