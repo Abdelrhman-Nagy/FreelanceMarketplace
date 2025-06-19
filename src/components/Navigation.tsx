@@ -34,6 +34,7 @@ export default function Navigation() {
   };
 
   const handleLogout = () => {
+    console.log('Logout function called');
     logout();
   };
 
