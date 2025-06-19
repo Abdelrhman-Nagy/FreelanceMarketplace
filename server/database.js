@@ -109,13 +109,17 @@ class DatabaseService {
 
       console.log(`Filtered ${jobsWithClients.length} active jobs`);
 
-      const result = jobsWithClients.map(job => ({
-        ...job,
-        skills: this.parseSkills(job.skills),
-        budget: this.calculateBudget(job)
-      }));
+      const result = jobsWithClients.map(job => {
+        console.log('Processing job:', job.id, job.title);
+        return {
+          ...job,
+          skills: this.parseSkills(job.skills),
+          budget: this.calculateBudget(job)
+        };
+      });
       
-      console.log('Jobs processed successfully');
+      console.log('Jobs processed successfully, final count:', result.length);
+      console.log('Sample processed job:', result[0] ? JSON.stringify(result[0], null, 2) : 'No processed jobs');
       return result;
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -214,23 +218,42 @@ class DatabaseService {
 
   // Helper methods
   calculateBudget(job) {
-    if (job.budgetType === 'fixed') {
-      return job.budgetMax || job.budgetMin || 0;
-    } else if (job.budgetType === 'hourly') {
-      return job.hourlyRate || 0;
+    try {
+      if (job.budgetType === 'fixed') {
+        if (job.budgetMin && job.budgetMax) {
+          return `$${job.budgetMin} - $${job.budgetMax}`;
+        } else if (job.budgetMin) {
+          return `$${job.budgetMin}`;
+        }
+        return 'Budget not specified';
+      } else if (job.budgetType === 'hourly') {
+        return job.hourlyRate ? `$${job.hourlyRate}/hour` : 'Rate not specified';
+      }
+      return 'Budget not specified';
+    } catch (error) {
+      console.error('Error calculating budget:', error);
+      return 'Budget not specified';
     }
-    return 0;
   }
 
   parseSkills(skillsString) {
-    if (!skillsString) return [];
-    
-    if (Array.isArray(skillsString)) return skillsString;
-    
     try {
-      return JSON.parse(skillsString);
-    } catch (e) {
-      return skillsString.split(',').map(s => s.trim());
+      if (!skillsString) return [];
+      
+      if (Array.isArray(skillsString)) return skillsString;
+      
+      if (typeof skillsString === 'string') {
+        try {
+          return JSON.parse(skillsString);
+        } catch {
+          return skillsString.split(',').map(s => s.trim());
+        }
+      }
+      
+      return Array.isArray(skillsString) ? skillsString : [];
+    } catch (error) {
+      console.error('Error parsing skills:', error);
+      return [];
     }
   }
 

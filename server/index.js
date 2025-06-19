@@ -49,20 +49,27 @@ server.route({
   path: '/api/jobs',
   handler: async (request, h) => {
     try {
+      console.log('Jobs endpoint called');
       const jobs = await dbService.getJobs();
+      console.log('Jobs retrieved, count:', jobs.length);
+      console.log('First job sample:', jobs[0] ? JSON.stringify(jobs[0], null, 2) : 'No jobs');
+      
       return h.response({
         jobs: jobs,
         total: jobs.length,
-        status: 'success'
+        status: 'success',
+        database: 'Connected to PostgreSQL'
       }).code(200);
     } catch (error) {
       console.error('Jobs endpoint error:', error);
+      console.error('Error stack:', error.stack);
       return h.response({
         error: error.message,
         jobs: [],
         total: 0,
-        status: 'error'
-      }).code(200); // Return 200 with error status instead of 500
+        status: 'error',
+        database: 'Error occurred'
+      }).code(200);
     }
   }
 });
