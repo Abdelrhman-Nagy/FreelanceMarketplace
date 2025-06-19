@@ -1,109 +1,61 @@
-# IIS Deployment for Hapi.js Freelancing Platform
-# Run as Administrator
+# FreelancingPlatform PowerShell Deployment Script
+Write-Host "FreelancingPlatform Deployment Script" -ForegroundColor Green
+Write-Host "=====================================" -ForegroundColor Green
 
-param(
-    [string]$SiteName = "FreelancingPlatform",
-    [string]$TargetPath = "C:\inetpub\wwwroot\freelancing-platform",
-    [int]$Port = 80
-)
-
-Write-Host "=======================================" -ForegroundColor Cyan
-Write-Host "Deploying Hapi.js Freelancing Platform" -ForegroundColor Cyan
-Write-Host "=======================================" -ForegroundColor Cyan
-
-# Check Administrator privileges
-$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-$isAdmin = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
-if (-not $isAdmin) {
-    Write-Host "ERROR: Must run as Administrator!" -ForegroundColor Red
-    Write-Host "Right-click PowerShell and 'Run as administrator'" -ForegroundColor Yellow
-    Read-Host "Press Enter to exit"
+# Check if Node.js is installed
+try {
+    $nodeVersion = node --version
+    Write-Host "Node.js version: $nodeVersion" -ForegroundColor Yellow
+} catch {
+    Write-Host "ERROR: Node.js is not installed or not in PATH" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "Site: $SiteName" -ForegroundColor Yellow
-Write-Host "Target: $TargetPath" -ForegroundColor Yellow
-Write-Host "Port: $Port" -ForegroundColor Yellow
-Write-Host ""
-
-# Stop IIS
-Write-Host "Stopping IIS..." -ForegroundColor Yellow
+# Check if npm is available
 try {
-    iisreset /stop
-    Write-Host "IIS stopped successfully" -ForegroundColor Green
+    $npmVersion = npm --version
+    Write-Host "npm version: $npmVersion" -ForegroundColor Yellow
 } catch {
-    Write-Host "Warning: Could not stop IIS" -ForegroundColor Yellow
-}
-
-# Remove old deployment
-Write-Host "Removing old deployment..." -ForegroundColor Yellow
-if (Test-Path $TargetPath) {
-    Remove-Item -Path $TargetPath -Recurse -Force
-    Write-Host "Old deployment removed" -ForegroundColor Green
-}
-
-# Create deployment directory
-Write-Host "Creating deployment directory..." -ForegroundColor Yellow
-New-Item -Path $TargetPath -ItemType Directory -Force | Out-Null
-
-# Copy files
-Write-Host "Copying application files..." -ForegroundColor Yellow
-try {
-    Copy-Item -Path ".\*" -Destination $TargetPath -Recurse -Force
-    Write-Host "Files copied successfully" -ForegroundColor Green
-} catch {
-    Write-Host "ERROR: Failed to copy files - $($_.Exception.Message)" -ForegroundColor Red
-    Read-Host "Press Enter to exit"
+    Write-Host "ERROR: npm is not available" -ForegroundColor Red
     exit 1
 }
 
-# Set permissions
-Write-Host "Setting IIS permissions..." -ForegroundColor Yellow
-icacls $TargetPath /grant IIS_IUSRS:`(OI`)`(CI`)F /T
+Write-Host "Installing dependencies..." -ForegroundColor Cyan
+npm install --production
 
-# Import IIS module
-Write-Host "Configuring IIS..." -ForegroundColor Yellow
-Import-Module WebAdministration
-
-# Remove existing site if present
-if (Get-Website -Name $SiteName -ErrorAction SilentlyContinue) {
-    Write-Host "Removing existing website..." -ForegroundColor Yellow
-    Remove-Website -Name $SiteName
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: Failed to install dependencies" -ForegroundColor Red
+    exit 1
 }
 
-# Remove existing app pool if present
-if (Get-IISAppPool -Name $SiteName -ErrorAction SilentlyContinue) {
-    Write-Host "Removing existing application pool..." -ForegroundColor Yellow
-    Remove-IISAppPool -Name $SiteName
+Write-Host "Building the application..." -ForegroundColor Cyan
+npm run build
+
+# Create .env file if it doesn't exist
+if (-not (Test-Path ".env")) {
+    Write-Host "Creating .env file..." -ForegroundColor Cyan
+    @"
+NODE_ENV=production
+PORT=5000
+# Add your DATABASE_URL here
+# DATABASE_URL=your_postgresql_connection_string
+"@ | Out-File -FilePath ".env" -Encoding UTF8
 }
 
-# Create application pool
-Write-Host "Creating application pool..." -ForegroundColor Yellow
-New-IISAppPool -Name $SiteName -Force
-Set-IISAppPool -Name $SiteName -ProcessModel @{identityType='ApplicationPoolIdentity'} -ManagedRuntimeVersion ""
-Write-Host "Application pool created" -ForegroundColor Green
+Write-Host "Deployment preparation complete!" -ForegroundColor Green
+Write-Host ""
+Write-Host "NEXT STEPS:" -ForegroundColor Yellow
+Write-Host "1. Update .env file with your database connection string" -ForegroundColor White
+Write-Host "2. Ensure Node.js is installed on your server" -ForegroundColor White
+Write-Host "3. Configure IIS with iisnode module" -ForegroundColor White
+Write-Host "4. Set up application pool for Node.js" -ForegroundColor White
+Write-Host "5. Deploy files to your IIS website directory" -ForegroundColor White
+Write-Host ""
+Write-Host "For IIS deployment:" -ForegroundColor Yellow
+Write-Host "- Copy all files to your website directory" -ForegroundColor White
+Write-Host "- Ensure iisnode is installed and configured" -ForegroundColor White
+Write-Host "- Set application pool to 'No Managed Code'" -ForegroundColor White
+Write-Host "- Verify web.config permissions" -ForegroundColor White
+Write-Host ""
 
-# Create website
-Write-Host "Creating IIS website..." -ForegroundColor Yellow
-New-IISSite -Name $SiteName -PhysicalPath $TargetPath -Port $Port -ApplicationPool $SiteName
-Write-Host "Website created" -ForegroundColor Green
-
-# Start IIS
-Write-Host "Starting IIS..." -ForegroundColor Yellow
-iisreset /start
-Write-Host "IIS started" -ForegroundColor Green
-
-Write-Host ""
-Write-Host "=======================================" -ForegroundColor Green
-Write-Host "Deployment Complete!" -ForegroundColor Green
-Write-Host "=======================================" -ForegroundColor Green
-Write-Host ""
-Write-Host "Test URLs:" -ForegroundColor Cyan
-Write-Host "Main App: http://localhost/" -ForegroundColor White
-Write-Host "API Health: http://localhost/api/health" -ForegroundColor White
-Write-Host "Jobs API: http://localhost/api/jobs" -ForegroundColor White
-Write-Host ""
-Write-Host "Database: Server=localhost;Database=freelancing_platform;User Id=app_user;Password=Xman@123;" -ForegroundColor Cyan
-Write-Host ""
-Read-Host "Press Enter to exit"
+Read-Host "Press Enter to continue..."

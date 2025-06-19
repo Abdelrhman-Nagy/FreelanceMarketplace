@@ -10,12 +10,12 @@ const __dirname = path.dirname(__filename);
 
 // Initialize Hapi server
 const server = Hapi.server({
-  port: process.env.PORT || 5000,
-  host: '0.0.0.0',
+  port: process.env.PORT || process.env.IISNODE_PORT || 5000,
+  host: process.env.HOST || '0.0.0.0',
   routes: {
     cors: {
       origin: ['*'],
-      headers: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+      headers: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-user-id', 'x-user-type'],
       additionalHeaders: ['cache-control', 'x-requested-with']
     },
     files: {
