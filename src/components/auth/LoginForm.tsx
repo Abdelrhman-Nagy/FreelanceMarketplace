@@ -104,7 +104,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         </form>
 
         <div className="mt-6 space-y-2">
-          <p className="text-sm text-gray-600 text-center">Quick Demo Access:</p>
+          <p className="text-sm text-gray-600 text-center">Demo Accounts:</p>
+          <div className="text-xs text-gray-500 space-y-1">
+            <div>Admin: admin@demo.com</div>
+            <div>Client: client@demo.com</div>
+            <div>Freelancer: freelancer@demo.com</div>
+          </div>
           <div className="grid grid-cols-3 gap-2">
             <Button
               variant="outline"

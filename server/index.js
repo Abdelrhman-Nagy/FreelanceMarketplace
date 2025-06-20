@@ -188,7 +188,7 @@ app.post('/api/auth/register', async (req, res) => {
       });
     }
 
-    const existingUser = await dbService.getUserByEmail ? await dbService.getUserByEmail(email) : null;
+    const existingUser = await dbService.getUserByEmail(email);
     if (existingUser) {
       return res.status(409).json({
         status: 'error',
@@ -256,17 +256,13 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
 
-    let user = await dbService.getUserByEmail(email);
+    const user = await dbService.getUserByEmail(email);
     
     if (!user) {
-      const userData = {
-        id: crypto.randomUUID(),
-        email,
-        firstName: email.split('@')[0],
-        lastName: 'User',
-        role: role || 'freelancer'
-      };
-      user = await dbService.createUser(userData);
+      return res.status(401).json({
+        status: 'error',
+        message: 'Invalid email address. Please register first or check your email.'
+      });
     }
 
     if (user.status && user.status !== 'active') {
