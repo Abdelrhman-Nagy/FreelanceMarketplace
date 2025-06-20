@@ -177,26 +177,69 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Serve React app for all non-API routes (must be last)
-app.get('*', (req, res) => {
-  // Skip API routes - they're handled above
+// Serve React app for specific routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/jobs', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/jobs/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/profile', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/contracts', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/post-job', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/projects', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/projects/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/saved-jobs', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.get('/proposals', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+// 404 handler
+app.use((req, res) => {
   if (req.path.startsWith('/api')) {
-    return res.status(404).json({
+    res.status(404).json({
       status: 'error',
       message: 'API endpoint not found',
       path: req.path
     });
-  }
-  
-  // Serve the React app
-  try {
+  } else {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to serve application',
-      error: error.message
-    });
   }
 });
 
