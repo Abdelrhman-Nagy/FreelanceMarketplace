@@ -110,41 +110,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
             Forgot your password?
           </a>
         </div>
-
-        <div className="mt-6 space-y-2">
-          <p className="text-sm text-gray-600 text-center">Demo Accounts:</p>
-          <div className="text-xs text-gray-500 space-y-1">
-            <div>Admin: admin@demo.com / admin123</div>
-            <div>Client: client@demo.com / client123</div>
-            <div>Freelancer: freelancer@demo.com / freelancer123</div>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDemoLogin('admin')}
-              disabled={loading}
-            >
-              Admin Demo
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDemoLogin('client')}
-              disabled={loading}
-            >
-              Client Demo
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDemoLogin('freelancer')}
-              disabled={loading}
-            >
-              Freelancer Demo
-            </Button>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
