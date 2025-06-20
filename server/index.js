@@ -1,5 +1,10 @@
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import dbService from './database.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || process.env.IISNODE_PORT || 5000;
@@ -142,8 +147,11 @@ app.get('/api/proposals', async (req, res) => {
   }
 });
 
-// Root endpoint
-app.get('/', (req, res) => {
+// Serve static files from dist directory
+app.use(express.static('dist'));
+
+// API root endpoint for health check
+app.get('/api', (req, res) => {
   res.json({
     message: 'FreelancingPlatform API',
     status: 'running',
@@ -169,13 +177,27 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    status: 'error',
-    message: 'Endpoint not found',
-    path: req.path
-  });
+// Serve React app for all non-API routes (must be last)
+app.get('*', (req, res) => {
+  // Skip API routes - they're handled above
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'API endpoint not found',
+      path: req.path
+    });
+  }
+  
+  // Serve the React app
+  try {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to serve application',
+      error: error.message
+    });
+  }
 });
 
 // Start server
