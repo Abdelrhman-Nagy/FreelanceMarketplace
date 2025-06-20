@@ -282,9 +282,3 @@ export const savedJobsRelations = relations(savedJobs, ({ one }) => ({
 }));
 
 export const insertSavedJobSchema = createInsertSchema(savedJobs);
-
-// Type exports
-export type User = typeof users.$inferSelect;
-export type UpsertUser = typeof users.$inferInsert;
-export type UserSession = typeof userSessions.$inferSelect;
-export type UserPermission = typeof userPermissions.$inferSelect;
