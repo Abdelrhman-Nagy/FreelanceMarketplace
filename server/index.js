@@ -188,7 +188,7 @@ app.post('/api/auth/register', async (req, res) => {
       });
     }
 
-    const existingUser = await dbService.getUserByEmail(email);
+    const existingUser = await dbService.getUserByEmail ? await dbService.getUserByEmail(email) : null;
     if (existingUser) {
       return res.status(409).json({
         status: 'error',

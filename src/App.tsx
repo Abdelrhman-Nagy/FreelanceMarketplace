@@ -3,6 +3,7 @@ import { Router, Route, Switch } from 'wouter';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './components/theme-provider';
 import { Toaster } from './components/ui/toaster';
+import Navigation from './components/Navigation';
 import HomePage from './pages/HomePage';
 import JobsPage from './pages/JobsPage';
 import JobDetailPage from './pages/JobDetailPage';
@@ -14,7 +15,6 @@ import ClientDashboard from './pages/ClientDashboard';
 import FreelancerDashboard from './pages/FreelancerDashboard';
 import ProfilePage from './pages/ProfilePage';
 import ContractsPage from './pages/ContractsPage';
-import PostJobPage from './pages/PostJobPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import SavedJobsPage from './pages/SavedJobsPage';
@@ -39,9 +39,11 @@ function App() {
                   <Route path="/dashboard" component={DashboardPage} />
                   <Route path="/login" component={LoginPage} />
                   <Route path="/register" component={RegisterPage} />
+                  <Route path="/admin" component={AdminDashboard} />
+                  <Route path="/client-dashboard" component={ClientDashboard} />
+                  <Route path="/freelancer-dashboard" component={FreelancerDashboard} />
                   <Route path="/profile" component={ProfilePage} />
                   <Route path="/contracts" component={ContractsPage} />
-                  <Route path="/post-job" component={PostJobPage} />
                   <Route path="/projects" component={ProjectsPage} />
                   <Route path="/projects/:id" component={ProjectDetailPage} />
                   <Route path="/saved-jobs" component={SavedJobsPage} />

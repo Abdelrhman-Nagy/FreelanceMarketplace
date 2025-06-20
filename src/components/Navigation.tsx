@@ -1,211 +1,67 @@
+import React from 'react';
 import { Link, useLocation } from 'wouter';
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from './ui/button';
-import { ModeToggle } from './mode-toggle';
-import { 
-  Briefcase, 
-  Search, 
-  LayoutDashboard, 
-  Home,
-  User,
-  FileText,
-  Plus,
-  LogOut,
-  Settings,
-  Send,
-  Bookmark
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { LogoutButton } from '@/components/LogoutButton';
+import { Briefcase, User, Settings, Menu } from 'lucide-react';
 
 export default function Navigation() {
+  const { user, isAuthenticated } = useAuth();
   const [location] = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
 
-  const isActive = (path: string) => {
-    if (path === '/' && location === '/') return true;
-    if (path !== '/' && location.startsWith(path)) return true;
-    return false;
-  };
-
-  const handleLogout = () => {
-    console.log('Logout function called');
-    logout();
+  const getDashboardRoute = () => {
+    if (!user) return '/dashboard';
+    
+    switch (user.role) {
+      case 'admin':
+        return '/admin';
+      case 'client':
+        return '/client-dashboard';
+      case 'freelancer':
+        return '/freelancer-dashboard';
+      default:
+        return '/dashboard';
+    }
   };
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center space-x-8">
-            <Link href="/">
-              <div className="flex items-center space-x-2">
-                <Briefcase className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold">FreelanceHub</span>
-              </div>
+    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center space-x-2">
+              <Briefcase className="h-8 w-8 text-blue-600" />
+              <span className="text-xl font-bold text-gray-900">FreelancingPlatform</span>
             </Link>
-            
-            <div className="hidden md:flex items-center space-x-6">
-              <Link href="/">
-                <Button 
-                  variant={isActive('/') ? 'default' : 'ghost'} 
-                  size="sm"
-                  className="flex items-center space-x-2"
-                >
-                  <Home className="h-4 w-4" />
-                  <span>Home</span>
-                </Button>
-              </Link>
-              
-              <Link href="/jobs">
-                <Button 
-                  variant={isActive('/jobs') ? 'default' : 'ghost'} 
-                  size="sm"
-                  className="flex items-center space-x-2"
-                >
-                  <Search className="h-4 w-4" />
-                  <span>Find Jobs</span>
-                </Button>
-              </Link>
-              
-              {isAuthenticated && (
-                <>
-                  <Link href="/dashboard">
-                    <Button 
-                      variant={isActive('/dashboard') ? 'default' : 'ghost'} 
-                      size="sm"
-                      className="flex items-center space-x-2"
-                    >
-                      <LayoutDashboard className="h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Button>
-                  </Link>
-                  
-                  <Link href="/projects">
-                    <Button 
-                      variant={isActive('/projects') ? 'default' : 'ghost'} 
-                      size="sm"
-                      className="flex items-center space-x-2"
-                    >
-                      <Briefcase className="h-4 w-4" />
-                      <span>Projects</span>
-                    </Button>
-                  </Link>
-
-                  {user?.userType === 'freelancer' && (
-                    <>
-                      <Link href="/proposals">
-                        <Button 
-                          variant={isActive('/proposals') ? 'default' : 'ghost'} 
-                          size="sm"
-                          className="flex items-center space-x-2"
-                        >
-                          <Send className="h-4 w-4" />
-                          <span>Proposals</span>
-                        </Button>
-                      </Link>
-
-                      <Link href="/saved-jobs">
-                        <Button 
-                          variant={isActive('/saved-jobs') ? 'default' : 'ghost'} 
-                          size="sm"
-                          className="flex items-center space-x-2"
-                        >
-                          <Bookmark className="h-4 w-4" />
-                          <span>Saved</span>
-                        </Button>
-                      </Link>
-                    </>
-                  )}
-
-                  <Link href="/contracts">
-                    <Button 
-                      variant={isActive('/contracts') ? 'default' : 'ghost'} 
-                      size="sm"
-                      className="flex items-center space-x-2"
-                    >
-                      <FileText className="h-4 w-4" />
-                      <span>Contracts</span>
-                    </Button>
-                  </Link>
-
-                  {user?.userType === 'client' && (
-                    <Link href="/post-job">
-                      <Button 
-                        variant={isActive('/post-job') ? 'default' : 'ghost'} 
-                        size="sm"
-                        className="flex items-center space-x-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Post Job</span>
-                      </Button>
-                    </Link>
-                  )}
-                </>
-              )}
-            </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <ModeToggle />
+          <div className="hidden md:flex items-center space-x-8">
+            <Link href="/jobs" className={`text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium ${location === '/jobs' ? 'text-blue-600 border-b-2 border-blue-600' : ''}`}>
+              Browse Jobs
+            </Link>
             
-            {isAuthenticated && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        {user.firstName[0]}{user.lastName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {user.firstName} {user.lastName}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="flex items-center">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/contracts" className="flex items-center">
-                      <FileText className="mr-2 h-4 w-4" />
-                      <span>Contracts</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            {isAuthenticated ? (
+              <>
+                <Link href={getDashboardRoute()} className={`text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium ${location.includes('dashboard') || location.includes('admin') ? 'text-blue-600 border-b-2 border-blue-600' : ''}`}>
+                  Dashboard
+                </Link>
+                <Link href="/profile" className={`text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium ${location === '/profile' ? 'text-blue-600 border-b-2 border-blue-600' : ''}`}>
+                  Profile
+                </Link>
+                {user?.role === 'client' && (
+                  <Link href="/post-job" className={`text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium ${location === '/post-job' ? 'text-blue-600 border-b-2 border-blue-600' : ''}`}>
+                    Post Job
+                  </Link>
+                )}
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-600">
+                    Welcome, {user?.firstName}!
+                  </span>
+                  <LogoutButton />
+                </div>
+              </>
             ) : (
-              <div className="flex items-center space-x-2">
+              <>
                 <Link href="/login">
                   <Button variant="ghost" size="sm">
                     Sign In
@@ -213,12 +69,18 @@ export default function Navigation() {
                 </Link>
                 <Link href="/register">
                   <Button size="sm">
-                    <User className="h-4 w-4 mr-2" />
                     Sign Up
                   </Button>
                 </Link>
-              </div>
+              </>
             )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center">
+            <Button variant="ghost" size="sm">
+              <Menu className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </div>
