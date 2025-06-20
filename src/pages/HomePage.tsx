@@ -1,186 +1,213 @@
 
+import React from 'react';
 import { Link } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
-import { Search, Briefcase, Users, Award, ArrowRight } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Search, DollarSign, Star, Users, Briefcase, CheckCircle } from 'lucide-react';
 
-interface Job {
-  id: number;
-  title: string;
-  description: string;
-  budget: number;
-  category: string;
-  skills: string[];
-  experienceLevel: string;
-  clientId: string;
-  status: string;
-  createdAt: string;
-}
+const HomePage = () => {
+  const { isAuthenticated, user } = useAuth();
 
-interface JobsResponse {
-  jobs: Job[];
-  total: number;
-  status: string;
-}
+  // Always show the landing page for non-authenticated users
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        {/* Hero Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+              Find the Perfect 
+              <span className="text-blue-600"> Freelancer</span>
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Connect with talented professionals and get your projects done right. 
+              Join thousands of successful collaborations on our platform.
+            </p>
+            
+            <div className="space-x-4">
+              <Link href="/register">
+                <Button size="lg" className="px-8 py-3">
+                  Get Started
+                </Button>
+              </Link>
+              <Link href="/jobs">
+                <Button variant="outline" size="lg" className="px-8 py-3">
+                  Browse Jobs
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
 
-export default function HomePage() {
-  const { data: jobsData, isLoading } = useQuery<JobsResponse>({
-    queryKey: ['/api/jobs'],
-  });
+        {/* Features Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Why Choose Our Platform?
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              We provide everything you need to succeed in the freelance marketplace
+            </p>
+          </div>
 
-  const featuredJobs = jobsData?.jobs?.slice(0, 3) || [];
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="text-center">
+              <CardHeader>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-6 w-6 text-blue-600" />
+                </div>
+                <CardTitle>Find the Right Talent</CardTitle>
+                <CardDescription>
+                  Browse through thousands of skilled freelancers and find the perfect match for your project
+                </CardDescription>
+              </CardHeader>
+            </Card>
 
+            <Card className="text-center">
+              <CardHeader>
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <DollarSign className="h-6 w-6 text-green-600" />
+                </div>
+                <CardTitle>Secure Payments</CardTitle>
+                <CardDescription>
+                  Protected transactions with milestone-based payments ensure everyone gets paid fairly
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Star className="h-6 w-6 text-purple-600" />
+                </div>
+                <CardTitle>Quality Assurance</CardTitle>
+                <CardDescription>
+                  Review system and portfolio verification ensure you work with top-quality professionals
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+
+        {/* Stats Section */}
+        <div className="bg-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid md:grid-cols-4 gap-8 text-center">
+              <div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">10,000+</div>
+                <div className="text-gray-600">Active Freelancers</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">5,000+</div>
+                <div className="text-gray-600">Completed Projects</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">98%</div>
+                <div className="text-gray-600">Client Satisfaction</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">24/7</div>
+                <div className="text-gray-600">Support Available</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* How it Works */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              How It Works
+            </h2>
+            <p className="text-lg text-gray-600">
+              Get started in just a few simple steps
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                1
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Post Your Project</h3>
+              <p className="text-gray-600">
+                Describe your project requirements and set your budget
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                2
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Review Proposals</h3>
+              <p className="text-gray-600">
+                Receive proposals from qualified freelancers and choose the best fit
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                3
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Get Results</h3>
+              <p className="text-gray-600">
+                Work with your chosen freelancer and receive high-quality results
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="bg-blue-600 py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Ready to Get Started?
+            </h2>
+            <p className="text-xl text-blue-100 mb-8">
+              Join thousands of successful projects on our platform
+            </p>
+            <div className="space-x-4">
+              <Link href="/register">
+                <Button size="lg" variant="secondary" className="px-8 py-3">
+                  Sign Up Now
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button size="lg" variant="outline" className="px-8 py-3 border-white text-white hover:bg-white hover:text-blue-600">
+                  Sign In
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // For authenticated users, show dashboard redirect
   return (
-    <div className="space-y-16">
-      {/* Hero Section */}
-      <section className="text-center space-y-6 py-12">
-        <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Find Your Next Freelance Opportunity
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Connect with top clients, showcase your skills, and build a successful freelance career on FreelanceHub.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/jobs">
-            <Button size="lg" className="w-full sm:w-auto">
-              <Search className="mr-2 h-5 w-5" />
-              Find Jobs
-            </Button>
-          </Link>
-          <Link href="/dashboard">
-            <Button variant="outline" size="lg" className="w-full sm:w-auto">
-              <Briefcase className="mr-2 h-5 w-5" />
-              View Dashboard
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto">
-            <Briefcase className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-          </div>
-          <h3 className="text-2xl font-bold">1,000+</h3>
-          <p className="text-muted-foreground">Active Jobs</p>
-        </div>
-        <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto">
-            <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
-          </div>
-          <h3 className="text-2xl font-bold">10,000+</h3>
-          <p className="text-muted-foreground">Freelancers</p>
-        </div>
-        <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto">
-            <Award className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-          </div>
-          <h3 className="text-2xl font-bold">95%</h3>
-          <p className="text-muted-foreground">Success Rate</p>
-        </div>
-      </section>
-
-      {/* Featured Jobs */}
-      <section className="space-y-8">
-        <div className="text-center space-y-4">
-          <h2 className="text-3xl font-bold">Featured Jobs</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Discover high-quality projects from verified clients across various industries.
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-md w-full space-y-8 text-center">
+        <div>
+          <Briefcase className="mx-auto h-12 w-12 text-blue-600" />
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Welcome back, {user?.firstName}!
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            You're already logged in. Go to your dashboard to manage your projects.
           </p>
         </div>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredJobs.map((job) => (
-              <Card key={job.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-lg">{job.title}</CardTitle>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{job.category}</span>
-                    <span className="font-semibold text-green-600">${job.budget.toLocaleString()}</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    {job.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {job.skills.slice(0, 3).map((skill) => (
-                      <span
-                        key={skill}
-                        className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                    {job.skills.length > 3 && (
-                      <span className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs">
-                        +{job.skills.length - 3} more
-                      </span>
-                    )}
-                  </div>
-                  <Link href={`/jobs/${job.id}`}>
-                    <Button variant="outline" size="sm" className="w-full">
-                      View Details
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        <div className="text-center">
-          <Link href="/jobs">
-            <Button variant="outline" size="lg">
-              View All Jobs
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 md:p-12 text-center text-white">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">
-          Ready to Start Your Freelance Journey?
-        </h2>
-        <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
-          Join thousands of successful freelancers who have built their careers on FreelanceHub.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/jobs">
-            <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-              Browse Jobs
-            </Button>
-          </Link>
+        <div>
           <Link href="/dashboard">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-blue-600">
-              Get Started
+            <Button size="lg" className="w-full">
+              Go to Dashboard
             </Button>
           </Link>
         </div>
-      </section>
+      </div>
     </div>
   );
-}
+};
+
+export default HomePage;
