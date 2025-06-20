@@ -1,4 +1,5 @@
 import express from 'express';
+import session from 'express-session';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
@@ -12,6 +13,18 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || process.env.IISNODE_PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // Simple CORS middleware
 app.use((req, res, next) => {
@@ -286,37 +299,28 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
 
+    // Update last login time
     await dbService.updateUserLoginTime(user.id);
-    const session = await authService.createSession(user.id);
-    const token = authService.generateToken(user);
 
-    res.cookie('authToken', session.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000
-    });
+    // Store user data in session
+    req.session.userId = user.id;
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      role: user.user_type,
+      company: user.company,
+      bio: user.bio,
+      skills: user.skills ? (typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills) : [],
+      hourlyRate: user.hourly_rate,
+      location: user.location
+    };
 
     res.json({
       status: 'success',
       message: 'Login successful',
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        role: user.user_type,
-        company: user.company,
-        title: user.title,
-        bio: user.bio,
-        skills: user.skills,
-        hourlyRate: user.hourly_rate,
-        location: user.location,
-        rating: user.rating,
-        totalJobs: user.total_jobs,
-        completedJobs: user.completed_jobs,
-        totalEarnings: user.total_earnings
-      },
-      token
+      user: req.session.user
     });
 
   } catch (error) {
@@ -543,7 +547,7 @@ app.get('/api/dashboard/:role', async (req, res) => {
 
     const { user } = validation;
 
-    if (user.role !== role && user.role !== 'admin') {
+    if (user.user_type !== role && user.user_type !== 'admin') {
       return res.status(403).json({
         status: 'error',
         message: 'Access denied'
