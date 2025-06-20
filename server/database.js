@@ -1,6 +1,7 @@
 import pg from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq, and, sql, or, inArray } from 'drizzle-orm';
+import crypto from 'crypto';
 import * as schema from "../shared/schema.js";
 
 const { Pool } = pg;
