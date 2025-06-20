@@ -102,6 +102,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           </Button>
         </form>
 
+        <div className="mt-4 text-center">
+          <a 
+            href="/forgot-password" 
+            className="text-sm text-blue-600 hover:text-blue-500"
+          >
+            Forgot your password?
+          </a>
+        </div>
+
         <div className="mt-6 space-y-2">
           <p className="text-sm text-gray-600 text-center">Demo Accounts:</p>
           <div className="text-xs text-gray-500 space-y-1">
