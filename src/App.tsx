@@ -9,6 +9,9 @@ import JobDetailPage from './pages/JobDetailPage';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import AdminDashboard from './pages/AdminDashboard';
+import ClientDashboard from './pages/ClientDashboard';
+import FreelancerDashboard from './pages/FreelancerDashboard';
 import ProfilePage from './pages/ProfilePage';
 import ContractsPage from './pages/ContractsPage';
 import PostJobPage from './pages/PostJobPage';
@@ -17,7 +20,6 @@ import ProjectDetailPage from './pages/ProjectDetailPage';
 import SavedJobsPage from './pages/SavedJobsPage';
 import ProposalsPage from './pages/ProposalsPage';
 import ClientProposalsPage from './pages/ClientProposalsPage';
-import Navigation from './components/Navigation';
 import { AuthProvider } from './contexts/AuthContext';
 import { queryClient } from './lib/queryClient';
 

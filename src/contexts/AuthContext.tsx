@@ -155,15 +155,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      // Call the logout endpoint
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json'
+        }
       });
+
+      if (!response.ok) {
+        console.warn('Logout endpoint failed, but continuing with local cleanup');
+      }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Always clear local state regardless of API response
       setUser(null);
+      setLoading(false);
       localStorage.removeItem('authToken');
+      
+      // Clear all cookies
+      document.cookie.split(";").forEach((c) => {
+        const eqPos = c.indexOf("=");
+        const name = eqPos > -1 ? c.substr(0, eqPos) : c;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      });
     }
   };
 
