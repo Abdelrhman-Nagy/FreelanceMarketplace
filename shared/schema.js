@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, boolean, jsonb, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, boolean, jsonb, serial, varchar } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 
@@ -7,11 +7,26 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  userType: text("user_type").notNull(), // 'client' or 'freelancer'
+  role: text("role").notNull().default("freelancer"), // 'admin', 'client', or 'freelancer'
+  status: text("status").notNull().default("active"), // 'active', 'inactive', 'suspended'
+  userType: text("user_type").notNull(), // backward compatibility
   company: text("company"),
+  title: text("title"),
+  bio: text("bio"),
+  skills: jsonb("skills").default([]),
+  hourlyRate: integer("hourly_rate"),
+  location: text("location"),
+  timezone: text("timezone"),
+  phoneNumber: text("phone_number"),
+  website: text("website"),
+  portfolio: text("portfolio"),
+  experience: text("experience"), // 'entry', 'intermediate', 'expert'
   rating: integer("rating").default(0),
   totalJobs: integer("total_jobs").default(0),
+  completedJobs: integer("completed_jobs").default(0),
+  totalEarnings: integer("total_earnings").default(0),
   profileImage: text("profile_image"),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -52,6 +67,9 @@ export const proposals = pgTable("proposals", {
 export const usersRelations = relations(users, ({ many }) => ({
   jobsAsClient: many(jobs),
   proposals: many(proposals),
+  sessions: many(userSessions),
+  permissions: many(userPermissions),
+  grantedPermissions: many(userPermissions, { relationName: "grantedBy" }),
 }));
 
 export const jobsRelations = relations(jobs, ({ one, many }) => ({
@@ -70,6 +88,46 @@ export const proposalsRelations = relations(proposals, ({ one }) => ({
   freelancer: one(users, {
     fields: [proposals.freelancerId],
     references: [users.id],
+  }),
+}));
+
+// User sessions table for authentication
+export const userSessions = pgTable("user_sessions", {
+  id: varchar("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  token: varchar("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User permissions for role-based access
+export const userPermissions = pgTable("user_permissions", {
+  id: varchar("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  permission: varchar("permission").notNull(),
+  resourceType: varchar("resource_type"),
+  resourceId: varchar("resource_id"),
+  granted: boolean("granted").default(true),
+  grantedBy: text("granted_by").references(() => users.id),
+  grantedAt: timestamp("granted_at").defaultNow(),
+});
+
+export const userSessionsRelations = relations(userSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [userSessions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userPermissionsRelations = relations(userPermissions, ({ one }) => ({
+  user: one(users, {
+    fields: [userPermissions.userId],
+    references: [users.id],
+  }),
+  grantedByUser: one(users, {
+    fields: [userPermissions.grantedBy],
+    references: [users.id],
+    relationName: "grantedBy",
   }),
 }));
 
@@ -224,3 +282,9 @@ export const savedJobsRelations = relations(savedJobs, ({ one }) => ({
 }));
 
 export const insertSavedJobSchema = createInsertSchema(savedJobs);
+
+// Type exports
+export type User = typeof users.$inferSelect;
+export type UpsertUser = typeof users.$inferInsert;
+export type UserSession = typeof userSessions.$inferSelect;
+export type UserPermission = typeof userPermissions.$inferSelect;

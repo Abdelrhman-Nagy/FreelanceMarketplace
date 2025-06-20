@@ -1,32 +1,58 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-interface User {
+export type UserRole = 'admin' | 'client' | 'freelancer';
+export type UserStatus = 'active' | 'inactive' | 'suspended';
+
+export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  userType: 'client' | 'freelancer';
+  role: UserRole;
+  status?: UserStatus;
   company?: string;
-  rating: number;
-  profileImage?: string;
+  title?: string;
+  bio?: string;
+  skills?: string[];
+  hourlyRate?: number;
+  location?: string;
+  timezone?: string;
+  phoneNumber?: string;
+  website?: string;
+  portfolio?: string;
+  experience?: 'entry' | 'intermediate' | 'expert';
+  rating?: number;
+  totalJobs?: number;
+  completedJobs?: number;
+  totalEarnings?: number;
+  lastLoginAt?: string;
+  createdAt?: string;
 }
 
 interface AuthContextType {
   user: User | null;
+  loading: boolean;
+  login: (email: string, role?: UserRole) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (userData: RegisterData) => Promise<boolean>;
-  logout: () => void;
-  updateProfile: (userData: Partial<User>) => Promise<boolean>;
+  hasRole: (roles: UserRole[]) => boolean;
+  hasPermission: (permission: string) => boolean;
 }
 
 interface RegisterData {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
-  userType: 'client' | 'freelancer';
+  role: UserRole;
   company?: string;
+  title?: string;
+  bio?: string;
+  skills?: string[];
+  hourlyRate?: number;
+  location?: string;
+  experience?: 'entry' | 'intermediate' | 'expert';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,100 +65,159 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check for existing authentication on mount
   useEffect(() => {
-    // Check for stored authentication on app load
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        localStorage.removeItem('user');
-      }
-    }
+    checkAuthStatus();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const checkAuthStatus = async () => {
     try {
-      // For development, simulate login with mock data
-      const mockUser: User = {
-        id: 'freelancer_001',
-        email: email,
-        firstName: 'John',
-        lastName: 'Doe',
-        userType: email.includes('client') ? 'client' : 'freelancer',
-        company: email.includes('client') ? 'TechCorp Solutions' : undefined,
-        rating: 4.8
-      };
-      
-      setUser(mockUser);
-      setIsAuthenticated(true);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      return true;
+      const response = await fetch('/api/auth/profile', {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 'success') {
+          setUser(data.user);
+        }
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (email: string, role?: UserRole) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, role }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        setUser(data.user);
+        // Store token in localStorage for API requests
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
+      } else {
+        throw new Error(data.message || 'Login failed');
+      }
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      throw error;
     }
   };
 
-  const register = async (userData: RegisterData): Promise<boolean> => {
+  const register = async (userData: RegisterData) => {
     try {
-      const newUser: User = {
-        id: `${userData.userType}_${Date.now()}`,
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        userType: userData.userType,
-        company: userData.company,
-        rating: 0
-      };
-      
-      setUser(newUser);
-      setIsAuthenticated(true);
-      localStorage.setItem('user', JSON.stringify(newUser));
-      return true;
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        setUser(data.user);
+        // Store token in localStorage for API requests
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
+      } else {
+        throw new Error(data.message || 'Registration failed');
+      }
     } catch (error) {
       console.error('Registration error:', error);
-      return false;
+      throw error;
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('user');
-    // Force redirect to home page
-    window.location.href = '/';
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem('authToken');
+    }
   };
 
-  const updateProfile = async (userData: Partial<User>): Promise<boolean> => {
+  const updateProfile = async (data: Partial<User>) => {
     try {
-      if (user) {
-        const updatedUser = { ...user, ...userData };
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        return true;
+      const response = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        setUser(result.user);
+      } else {
+        throw new Error(result.message || 'Profile update failed');
       }
-      return false;
     } catch (error) {
       console.error('Profile update error:', error);
-      return false;
+      throw error;
     }
   };
 
-  const value = {
+  const isAuthenticated = !!user;
+
+  const hasRole = (roles: UserRole[]): boolean => {
+    return user ? roles.includes(user.role) : false;
+  };
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user) return false;
+    
+    // Admin has all permissions
+    if (user.role === 'admin') return true;
+    
+    // Add specific permission logic here
+    // This would typically check against user permissions from the database
+    return false;
+  };
+
+  const value: AuthContextType = {
     user,
-    isAuthenticated,
+    loading,
     login,
     register,
     logout,
     updateProfile,
+    isAuthenticated,
+    hasRole,
+    hasPermission,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
