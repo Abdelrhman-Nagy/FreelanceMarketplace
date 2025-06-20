@@ -32,7 +32,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, role?: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
@@ -43,6 +43,7 @@ interface AuthContextType {
 
 interface RegisterData {
   email: string;
+  password: string;
   firstName: string;
   lastName: string;
   role: UserRole;
@@ -97,7 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (email: string, role?: UserRole) => {
+  const login = async (email: string, password: string) => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -105,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();

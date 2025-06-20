@@ -15,7 +15,7 @@ interface LoginFormProps {
 export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<UserRole>('freelancer');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,7 +25,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     setError('');
 
     try {
-      await login(email, role);
+      await login(email, password);
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -35,18 +35,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   };
 
   const handleDemoLogin = async (demoRole: UserRole) => {
-    const demoEmails = {
-      admin: 'admin@demo.com',
-      client: 'client@demo.com',
-      freelancer: 'freelancer@demo.com'
+    const demoCredentials = {
+      admin: { email: 'admin@demo.com', password: 'admin123' },
+      client: { email: 'client@demo.com', password: 'client123' },
+      freelancer: { email: 'freelancer@demo.com', password: 'freelancer123' }
     };
 
-    setEmail(demoEmails[demoRole]);
-    setRole(demoRole);
+    const credentials = demoCredentials[demoRole];
+    setEmail(credentials.email);
+    setPassword(credentials.password);
     
     try {
       setLoading(true);
-      await login(demoEmails[demoRole], demoRole);
+      await login(credentials.email, credentials.password);
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Demo login failed');
@@ -84,17 +85,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="freelancer">Freelancer</SelectItem>
-                <SelectItem value="client">Client</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+            />
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
@@ -106,9 +105,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         <div className="mt-6 space-y-2">
           <p className="text-sm text-gray-600 text-center">Demo Accounts:</p>
           <div className="text-xs text-gray-500 space-y-1">
-            <div>Admin: admin@demo.com</div>
-            <div>Client: client@demo.com</div>
-            <div>Freelancer: freelancer@demo.com</div>
+            <div>Admin: admin@demo.com / admin123</div>
+            <div>Client: client@demo.com / client123</div>
+            <div>Freelancer: freelancer@demo.com / freelancer123</div>
           </div>
           <div className="grid grid-cols-3 gap-2">
             <Button

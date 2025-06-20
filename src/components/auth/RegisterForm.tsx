@@ -17,6 +17,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
   const { register } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
+    password: '',
+    confirmPassword: '',
     firstName: '',
     lastName: '',
     role: 'freelancer' as UserRole,
@@ -35,6 +37,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
 
     try {
       const registerData = {
@@ -102,6 +116,31 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               onChange={(e) => updateFormData('email', e.target.value)}
               required
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => updateFormData('password', e.target.value)}
+                placeholder="At least 6 characters"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password *</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => updateFormData('confirmPassword', e.target.value)}
+                placeholder="Confirm your password"
+                required
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

@@ -179,12 +179,19 @@ app.get('/api', (req, res) => {
 // Authentication Routes
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { email, firstName, lastName, role, company, title, bio, skills, hourlyRate, location, experience } = req.body;
+    const { email, password, firstName, lastName, role, company, title, bio, skills, hourlyRate, location, experience } = req.body;
 
-    if (!email || !firstName || !lastName) {
+    if (!email || !password || !firstName || !lastName) {
       return res.status(400).json({
         status: 'error',
-        message: 'Email, first name, and last name are required'
+        message: 'Email, password, first name, and last name are required'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Password must be at least 6 characters long'
       });
     }
 
@@ -196,12 +203,16 @@ app.post('/api/auth/register', async (req, res) => {
       });
     }
 
+    // Hash the password
+    const passwordHash = await authService.hashPassword(password);
+
     const userData = {
       id: crypto.randomUUID(),
       email,
+      passwordHash,
       firstName,
       lastName,
-      role: role || 'freelancer',
+      userType: role || 'freelancer',
       company,
       title,
       bio,
@@ -229,7 +240,7 @@ app.post('/api/auth/register', async (req, res) => {
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
-        role: user.role,
+        role: user.user_type,
         company: user.company,
         title: user.title
       },
@@ -247,12 +258,12 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email, role } = req.body;
+    const { email, password } = req.body;
 
-    if (!email) {
+    if (!email || !password) {
       return res.status(400).json({
         status: 'error',
-        message: 'Email is required'
+        message: 'Email and password are required'
       });
     }
 
@@ -261,14 +272,17 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user) {
       return res.status(401).json({
         status: 'error',
-        message: 'Invalid email address. Please register first or check your email.'
+        message: 'Invalid email or password'
       });
     }
 
-    if (user.status && user.status !== 'active') {
-      return res.status(403).json({
+    // Verify password
+    const isPasswordValid = await authService.verifyPassword(password, user.password_hash);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
         status: 'error',
-        message: 'Account is not active'
+        message: 'Invalid email or password'
       });
     }
 
@@ -290,7 +304,7 @@ app.post('/api/auth/login', async (req, res) => {
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
-        role: user.role,
+        role: user.user_type,
         company: user.company,
         title: user.title,
         bio: user.bio,
