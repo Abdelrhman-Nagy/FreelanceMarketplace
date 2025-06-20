@@ -155,6 +155,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
+    console.log('AuthContext logout called');
     try {
       // Call the logout endpoint
       const response = await fetch('/api/auth/logout', {
@@ -166,23 +167,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       });
 
+      console.log('Logout response status:', response.status);
+      
       if (!response.ok) {
         console.warn('Logout endpoint failed, but continuing with local cleanup');
       }
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Logout API error:', error);
     } finally {
+      console.log('Clearing local state...');
       // Always clear local state regardless of API response
       setUser(null);
       setLoading(false);
-      localStorage.removeItem('authToken');
+      localStorage.clear();
+      sessionStorage.clear();
       
       // Clear all cookies
       document.cookie.split(";").forEach((c) => {
         const eqPos = c.indexOf("=");
-        const name = eqPos > -1 ? c.substr(0, eqPos) : c;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
       });
+      
+      console.log('Local state cleared');
     }
   };
 
