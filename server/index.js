@@ -1,7 +1,10 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
+import crypto from 'crypto';
 import dbService from './database.js';
+import authService from './auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -159,10 +162,16 @@ app.get('/api', (req, res) => {
     server: 'Express.js',
     endpoints: [
       'GET /api/test',
+      'POST /api/auth/register',
+      'POST /api/auth/login',
+      'POST /api/auth/logout',
+      'GET /api/auth/profile',
       'GET /api/jobs',
       'GET /api/jobs/:id',
       'GET /api/projects',
-      'GET /api/proposals'
+      'GET /api/proposals',
+      'GET /api/admin/users',
+      'GET /api/admin/stats'
     ]
   });
 });
