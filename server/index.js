@@ -330,16 +330,22 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.post('/api/auth/logout', async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
+    // Destroy the session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destroy error:', err);
+        return res.status(500).json({
+          status: 'error',
+          message: 'Logout failed'
+        });
+      }
 
-    if (token) {
-      await authService.deleteSession(token);
-    }
-
-    res.clearCookie('authToken');
-    res.json({
-      status: 'success',
-      message: 'Logout successful'
+      // Clear the session cookie
+      res.clearCookie('connect.sid');
+      res.json({
+        status: 'success',
+        message: 'Logout successful'
+      });
     });
 
   } catch (error) {

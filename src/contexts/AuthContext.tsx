@@ -156,21 +156,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     console.log('AuthContext logout called');
-    // Always clear local state first
+    try {
+      // Call logout endpoint to destroy session
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      console.error('Logout API error:', error);
+    }
+    
+    // Clear local state
     setUser(null);
     setLoading(false);
     localStorage.clear();
     sessionStorage.clear();
     
-    // Clear all cookies
-    document.cookie.split(";").forEach((c) => {
-      const eqPos = c.indexOf("=");
-      const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-    });
-    
-    console.log('Local state cleared');
+    console.log('Logout completed');
   };
 
   const updateProfile = async (data: Partial<User>) => {
