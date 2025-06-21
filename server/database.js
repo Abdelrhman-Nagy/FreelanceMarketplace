@@ -585,27 +585,46 @@ class DatabaseService {
   // Proposals Management
   async createProposal(proposalData) {
     try {
-      const [proposal] = await db.insert(schema.proposals).values({
-        jobId: proposalData.jobId,
-        freelancerId: proposalData.freelancerId,
-        coverLetter: proposalData.coverLetter,
-        proposedRate: proposalData.proposedRate,
-        estimatedDuration: proposalData.estimatedDuration,
-        status: proposalData.status || 'pending',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }).returning();
-
+      console.log('Creating proposal with data:', proposalData);
+      
+      const query = `
+        INSERT INTO proposals (freelancer_id, job_id, cover_letter, proposed_rate, estimated_duration, status)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      `;
+      
+      const values = [
+        proposalData.freelancerId,
+        proposalData.jobId,
+        proposalData.coverLetter,
+        proposalData.proposedRate,
+        proposalData.estimatedDuration,
+        proposalData.status || 'pending'
+      ];
+      
+      const result = await this.pool.query(query, values);
+      console.log('Proposal created successfully:', result.rows[0]);
+      
       // Update job proposal count
-      await db.update(schema.jobs)
-        .set({
-          proposalCount: db.select({ count: sql`count(*)` })
-            .from(schema.proposals)
-            .where(eq(schema.proposals.jobId, proposalData.jobId))
-        })
-        .where(eq(schema.jobs.id, proposalData.jobId));
-
-      return proposal;
+      await this.pool.query(`
+        UPDATE jobs 
+        SET proposal_count = (
+          SELECT COUNT(*) FROM proposals WHERE job_id = $1
+        )
+        WHERE id = $1
+      `, [proposalData.jobId]);
+      
+      return {
+        id: result.rows[0].id,
+        freelancerId: result.rows[0].freelancer_id,
+        jobId: result.rows[0].job_id,
+        coverLetter: result.rows[0].cover_letter,
+        proposedRate: result.rows[0].proposed_rate,
+        estimatedDuration: result.rows[0].estimated_duration,
+        status: result.rows[0].status,
+        createdAt: result.rows[0].created_at,
+        updatedAt: result.rows[0].updated_at
+      };
     } catch (error) {
       console.error('Error creating proposal:', error);
       throw error;
