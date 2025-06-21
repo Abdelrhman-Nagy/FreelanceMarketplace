@@ -22,6 +22,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage';
 import SavedJobsPage from './pages/SavedJobsPage';
 import ProposalsPage from './pages/ProposalsPage';
 import ClientProposalsPage from './pages/ClientProposalsPage';
+import PostJobPage from './pages/PostJobPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { queryClient } from './lib/queryClient';
 
@@ -38,6 +39,7 @@ function App() {
                   <Route path="/" component={HomePage} />
                   <Route path="/jobs" component={JobsPage} />
                   <Route path="/jobs/:id" component={JobDetailPage} />
+                  <Route path="/post-job" component={PostJobPage} />
                   <Route path="/dashboard" component={DashboardPage} />
                   <Route path="/login" component={LoginPage} />
                   <Route path="/register" component={RegisterPage} />

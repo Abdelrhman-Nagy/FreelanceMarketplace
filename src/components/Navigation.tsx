@@ -45,6 +45,11 @@ export default function Navigation() {
                 <Link href={getDashboardRoute()} className={`text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium ${location.includes('dashboard') || location.includes('admin') ? 'text-blue-600 border-b-2 border-blue-600' : ''}`}>
                   Dashboard
                 </Link>
+                {user?.role === 'client' && (
+                  <Link href="/post-job" className={`text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium ${location === '/post-job' ? 'text-blue-600 border-b-2 border-blue-600' : ''}`}>
+                    Post Job
+                  </Link>
+                )}
                 <Link href="/profile" className={`text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium ${location === '/profile' ? 'text-blue-600 border-b-2 border-blue-600' : ''}`}>
                   Profile
                 </Link>
