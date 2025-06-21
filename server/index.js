@@ -272,6 +272,52 @@ app.post('/api/auth/logout', handleLogout);
 
 app.get('/api/auth/profile', handleProfile);
 
+app.get('/api/auth/statistics', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = req.session.userId || req.session.user?.id;
+    const userType = req.session.user?.userType || req.session.user?.role;
+
+    if (!userType) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'User type not found'
+      });
+    }
+
+    const statistics = await dbService.getUserStatistics(userId, userType);
+    
+    // Get user creation date for member since
+    const user = await dbService.getUserById(userId);
+    const memberSince = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long' 
+    }) : 'Unknown';
+
+    res.json({
+      status: 'success',
+      statistics: {
+        ...statistics,
+        memberSince,
+        userType
+      }
+    });
+
+  } catch (error) {
+    console.error('Statistics fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch statistics'
+    });
+  }
+});
+
 app.put('/api/auth/profile', async (req, res) => {
   try {
     if (!req.session?.user && !req.session?.userId) {

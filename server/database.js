@@ -893,6 +893,64 @@ class DatabaseService {
       throw error;
     }
   }
+
+  async getUserStatistics(userId, userType) {
+    try {
+      if (!db) {
+        throw new Error('Database not initialized');
+      }
+
+      if (userType === 'client') {
+        // Get client statistics
+        const jobsStats = await db
+          .select({
+            totalJobs: sql`COUNT(*)`,
+            activeJobs: sql`SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END)`,
+            totalSpent: sql`SUM(CASE WHEN budget_min IS NOT NULL AND budget_max IS NOT NULL THEN (budget_min + budget_max) / 2 ELSE 0 END)`
+          })
+          .from(schema.jobs)
+          .where(eq(schema.jobs.clientId, userId));
+
+        return {
+          totalJobsPosted: Number(jobsStats[0]?.totalJobs) || 0,
+          activeJobs: Number(jobsStats[0]?.activeJobs) || 0,
+          totalSpent: Number(jobsStats[0]?.totalSpent) || 0,
+          memberSince: null // Will be set from user creation date
+        };
+      } else {
+        // Get freelancer statistics
+        const proposalsStats = await db
+          .select({
+            totalProposals: sql`COUNT(*)`,
+            acceptedProposals: sql`SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END)`,
+            pendingProposals: sql`SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END)`
+          })
+          .from(schema.proposals)
+          .where(eq(schema.proposals.freelancerId, userId));
+
+        // Get saved jobs count
+        const savedJobsStats = await db
+          .select({
+            savedJobsCount: sql`COUNT(*)`
+          })
+          .from(schema.savedJobs)
+          .where(eq(schema.savedJobs.userId, userId));
+
+        return {
+          totalProposals: Number(proposalsStats[0]?.totalProposals) || 0,
+          acceptedProposals: Number(proposalsStats[0]?.acceptedProposals) || 0,
+          pendingProposals: Number(proposalsStats[0]?.pendingProposals) || 0,
+          savedJobs: Number(savedJobsStats[0]?.savedJobsCount) || 0,
+          totalEarnings: 0, // This would come from completed projects/contracts
+          memberSince: null // Will be set from user creation date
+        };
+      }
+
+    } catch (error) {
+      console.error('Error getting user statistics:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -27,6 +27,8 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [statistics, setStatistics] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -96,6 +98,32 @@ export default function ProfilePage() {
   const userLastName = user.lastName || '';
   const userRating = user.rating || 0;
   const userType = user.userType || 'freelancer';
+
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      if (!user) return;
+      
+      try {
+        setStatsLoading(true);
+        const response = await fetch('/api/auth/statistics', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === 'success') {
+            setStatistics(data.statistics);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch statistics:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchStatistics();
+  }, [user]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -457,29 +485,53 @@ export default function ProfilePage() {
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Member since</span>
-                <span className="text-sm font-medium">January 2024</span>
+                <span className="text-sm font-medium">
+                  {statsLoading ? 'Loading...' : (statistics?.memberSince || 'Unknown')}
+                </span>
               </div>
               <Separator />
-              {userType === 'client' ? (
+              {statsLoading ? (
+                <div className="space-y-2">
+                  <div className="h-4 bg-muted rounded animate-pulse" />
+                  <div className="h-4 bg-muted rounded animate-pulse" />
+                  <div className="h-4 bg-muted rounded animate-pulse" />
+                </div>
+              ) : userType === 'client' ? (
                 <>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Jobs posted</span>
-                    <span className="text-sm font-medium">5</span>
+                    <span className="text-sm font-medium">{statistics?.totalJobsPosted || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Active jobs</span>
+                    <span className="text-sm font-medium">{statistics?.activeJobs || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Total spent</span>
-                    <span className="text-sm font-medium">$2,500</span>
+                    <span className="text-sm font-medium">
+                      ${(statistics?.totalSpent || 0).toLocaleString()}
+                    </span>
                   </div>
                 </>
               ) : (
                 <>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Jobs completed</span>
-                    <span className="text-sm font-medium">12</span>
+                    <span className="text-sm text-muted-foreground">Proposals sent</span>
+                    <span className="text-sm font-medium">{statistics?.totalProposals || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Accepted proposals</span>
+                    <span className="text-sm font-medium">{statistics?.acceptedProposals || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Saved jobs</span>
+                    <span className="text-sm font-medium">{statistics?.savedJobs || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Total earned</span>
-                    <span className="text-sm font-medium">$8,500</span>
+                    <span className="text-sm font-medium">
+                      ${(statistics?.totalEarnings || 0).toLocaleString()}
+                    </span>
                   </div>
                 </>
               )}
