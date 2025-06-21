@@ -36,20 +36,26 @@ interface JobsResponse {
 export default function DashboardPage() {
   const { data: statsData, isLoading: statsLoading } = useQuery<StatsData>({
     queryKey: ['/api/my-stats'],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    enabled: false,
   });
 
   const { data: jobsData, isLoading: jobsLoading } = useQuery<JobsResponse>({
     queryKey: ['/api/my-jobs'],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    enabled: false,
   });
 
   const { data: messagesData } = useQuery<{ count: number }>({
     queryKey: ['/api/messages/unread/count'],
-    staleTime: 2 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    enabled: false,
   });
 
   const stats = [

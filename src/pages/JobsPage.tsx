@@ -32,11 +32,11 @@ export default function JobsPage() {
 
   const { data: jobsData, isLoading, error } = useQuery<JobsResponse>({
     queryKey: ['/api/jobs'],
-    staleTime: 10 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1 hour
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    enabled: true,
+    enabled: false, // Disable until infinite loop is fixed
   });
 
   const jobs = jobsData?.jobs || [];

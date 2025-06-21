@@ -13,14 +13,14 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: ({ queryKey }) => defaultFetcher(queryKey[0] as string),
-      staleTime: 10 * 60 * 1000, // 10 minutes
-      gcTime: 60 * 60 * 1000, // 60 minutes
-      retry: 1,
+      staleTime: 60 * 60 * 1000, // 60 minutes
+      gcTime: 120 * 60 * 1000, // 120 minutes
+      retry: 0,
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,
       refetchInterval: false,
-      enabled: true,
+      enabled: false, // Disable all queries by default
     },
   },
 });
