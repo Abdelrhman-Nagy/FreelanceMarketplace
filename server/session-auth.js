@@ -67,7 +67,14 @@ export const handleLogin = async (req, res) => {
       });
     }
 
-    const isPasswordValid = await authService.verifyPassword(password, user.password_hash);
+    if (!user.passwordHash) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Invalid email or password'
+      });
+    }
+
+    const isPasswordValid = await authService.verifyPassword(password, user.passwordHash);
     if (!isPasswordValid) {
       return res.status(401).json({
         status: 'error',

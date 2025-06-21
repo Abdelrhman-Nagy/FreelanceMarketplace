@@ -857,6 +857,42 @@ class DatabaseService {
       throw error;
     }
   }
+
+  async createUserSession(sessionData) {
+    try {
+      if (!db) {
+        throw new Error('Database not initialized');
+      }
+
+      const result = await db
+        .insert(schema.userSessions)
+        .values(sessionData)
+        .returning();
+
+      return result[0];
+
+    } catch (error) {
+      console.error('Error creating user session:', error);
+      throw error;
+    }
+  }
+
+  async updateUserLoginTime(userId) {
+    try {
+      if (!db) {
+        throw new Error('Database not initialized');
+      }
+
+      await db
+        .update(schema.users)
+        .set({ lastLoginAt: new Date() })
+        .where(eq(schema.users.id, userId));
+
+    } catch (error) {
+      console.error('Error updating user login time:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
