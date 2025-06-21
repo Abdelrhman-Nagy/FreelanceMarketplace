@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Filter, MapPin, Clock, DollarSign, Briefcase } from 'lucide-react';
+import { Search, Filter, MapPin, Clock, DollarSign, Briefcase, AlertTriangle, Zap, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -29,6 +29,7 @@ interface JobsResponse {
 export default function JobsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [urgencyFilter, setUrgencyFilter] = useState('');
 
   const { data: jobsData, isLoading, error } = useQuery<JobsResponse>({
     queryKey: ['/api/jobs'],
@@ -40,13 +41,15 @@ export default function JobsPage() {
 
   const jobs = jobsData?.jobs || [];
   const categories = ['Web Development', 'Mobile Development', 'Design', 'Writing', 'Marketing'];
+  const urgencyLevels = ['urgent', 'high', 'normal', 'low'];
 
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = !selectedCategory || job.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesUrgency = !urgencyFilter || job.urgencyLevel === urgencyFilter;
+    return matchesSearch && matchesCategory && matchesUrgency;
   });
 
   const formatTimeAgo = (dateString: string) => {
@@ -57,6 +60,26 @@ export default function JobsPage() {
     if (diffInHours < 1) return 'Just now';
     if (diffInHours < 24) return `${diffInHours}h ago`;
     return `${Math.floor(diffInHours / 24)}d ago`;
+  };
+
+  const getUrgencyBadge = (urgencyLevel: string, isUrgent: boolean) => {
+    if (urgencyLevel === 'urgent' || isUrgent) {
+      return (
+        <Badge className="bg-red-100 text-red-800 border-red-200 animate-pulse">
+          <Zap className="h-3 w-3 mr-1" />
+          Urgent
+        </Badge>
+      );
+    }
+    if (urgencyLevel === 'high') {
+      return (
+        <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          High Priority
+        </Badge>
+      );
+    }
+    return null;
   };
 
   return (
@@ -86,25 +109,64 @@ export default function JobsPage() {
           </Button>
         </div>
 
-        {/* Category Filter */}
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={selectedCategory === '' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('')}
-          >
-            All Categories
-          </Button>
-          {categories.map((category) => (
+        {/* Filters */}
+        <div className="space-y-4">
+          {/* Category Filter */}
+          <div className="flex flex-wrap gap-2">
             <Button
-              key={category}
-              variant={selectedCategory === category ? 'default' : 'outline'}
+              variant={selectedCategory === '' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => setSelectedCategory('')}
             >
-              {category}
+              All Categories
             </Button>
-          ))}
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+
+          {/* Urgency Filter */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={urgencyFilter === '' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setUrgencyFilter('')}
+            >
+              All Urgency
+            </Button>
+            <Button
+              variant={urgencyFilter === 'urgent' ? 'destructive' : 'outline'}
+              size="sm"
+              onClick={() => setUrgencyFilter('urgent')}
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              <Zap className="h-4 w-4 mr-1" />
+              Urgent
+            </Button>
+            <Button
+              variant={urgencyFilter === 'high' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setUrgencyFilter('high')}
+              className="text-orange-600 border-orange-200 hover:bg-orange-50"
+            >
+              <AlertTriangle className="h-4 w-4 mr-1" />
+              High
+            </Button>
+            <Button
+              variant={urgencyFilter === 'normal' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setUrgencyFilter('normal')}
+            >
+              Normal
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -144,19 +206,28 @@ export default function JobsPage() {
         ) : (
           <div className="space-y-4">
             {filteredJobs.map((job) => (
-              <Card key={job.id} className="hover:shadow-md transition-shadow">
+              <Card key={job.id} className={`hover:shadow-md transition-all duration-300 ${
+                job.urgencyLevel === 'urgent' || job.isUrgent 
+                  ? 'border-l-4 border-l-red-500 bg-red-50/20' 
+                  : job.urgencyLevel === 'high'
+                  ? 'border-l-4 border-l-orange-500 bg-orange-50/20'
+                  : 'hover:shadow-md'
+              }`}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <CardTitle className="text-xl">
-                        <Link href={`/jobs/${job.id}`} className="hover:text-primary transition-colors">
-                          {job.title}
-                        </Link>
-                      </CardTitle>
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-start gap-2">
+                        <CardTitle className="text-xl flex-1">
+                          <Link href={`/jobs/${job.id}`} className="hover:text-primary transition-colors">
+                            {job.title}
+                          </Link>
+                        </CardTitle>
+                        {getUrgencyBadge(job.urgencyLevel, job.isUrgent)}
+                      </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <DollarSign className="h-4 w-4" />
-                          <span className="font-semibold text-green-600">${job.budget.toLocaleString()}</span>
+                          <span className="font-semibold text-green-600">{job.budget}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />

@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Search, DollarSign, Star, Users, Briefcase, CheckCircle, Clock, ArrowRight, Plus } from 'lucide-react';
+import { Search, DollarSign, Star, Users, Briefcase, CheckCircle, Clock, ArrowRight, Plus, Zap, AlertTriangle } from 'lucide-react';
 
 interface Job {
   id: number;
@@ -20,6 +20,9 @@ interface Job {
   clientCompany: string;
   createdAt: string;
   proposalCount: number;
+  isUrgent: boolean;
+  urgencyLevel: string;
+  deadline?: string;
 }
 
 interface JobsResponse {
@@ -67,6 +70,26 @@ const HomePage = () => {
     if (diffInHours < 1) return 'Just posted';
     if (diffInHours < 24) return `${diffInHours}h ago`;
     return `${Math.floor(diffInHours / 24)}d ago`;
+  };
+
+  const getUrgencyBadge = (urgencyLevel: string, isUrgent: boolean) => {
+    if (urgencyLevel === 'urgent' || isUrgent) {
+      return (
+        <Badge className="bg-red-100 text-red-800 border-red-200 animate-pulse">
+          <Zap className="h-3 w-3 mr-1" />
+          Urgent
+        </Badge>
+      );
+    }
+    if (urgencyLevel === 'high') {
+      return (
+        <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          High Priority
+        </Badge>
+      );
+    }
+    return null;
   };
 
   // Show landing page for non-authenticated users
@@ -343,16 +366,25 @@ const HomePage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recentJobs.map((job) => (
-                <Card key={job.id} className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
+                <Card key={job.id} className={`hover:shadow-lg transition-all duration-300 ${
+                  job.urgencyLevel === 'urgent' || job.isUrgent 
+                    ? 'border-l-4 border-l-red-500 bg-red-50/30 animate-pulse' 
+                    : job.urgencyLevel === 'high'
+                    ? 'border-l-4 border-l-orange-500 bg-orange-50/30'
+                    : 'border-l-4 border-l-blue-500'
+                }`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg line-clamp-2 hover:text-blue-600 transition-all duration-300 hover:animate-pulse">
-                          <Link href={`/jobs/${job.id}`}>
-                            {job.title}
-                          </Link>
-                        </CardTitle>
-                        <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                        <div className="flex items-start gap-2 mb-2">
+                          <CardTitle className="text-lg line-clamp-2 hover:text-blue-600 transition-all duration-300 hover:animate-pulse flex-1">
+                            <Link href={`/jobs/${job.id}`}>
+                              {job.title}
+                            </Link>
+                          </CardTitle>
+                          {getUrgencyBadge(job.urgencyLevel, job.isUrgent)}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
                           <span>{job.clientName}</span>
                           {job.clientCompany && (
                             <>
