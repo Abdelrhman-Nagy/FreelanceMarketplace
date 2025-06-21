@@ -966,8 +966,16 @@ app.get('/proposals', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-// Serve static files from public directory for development
-app.use(express.static(path.join(__dirname, '../public')));
+// Serve static files from dist directory with proper MIME types
+app.use(express.static(path.join(__dirname, '../dist'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
 
 // 404 handler for API routes and catch-all for SPA
 app.use((req, res) => {
@@ -978,7 +986,7 @@ app.use((req, res) => {
       path: req.path
     });
   } else {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
   }
 });
 
