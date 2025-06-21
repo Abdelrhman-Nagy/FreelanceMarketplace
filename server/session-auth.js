@@ -85,20 +85,29 @@ export const handleLogin = async (req, res) => {
     // Update login time
     await dbService.updateUserLoginTime(user.id);
 
-    // Store in session
-    req.session.userId = user.id;
-    req.session.user = {
+    // Store in session with proper field mapping
+    const userData = {
       id: user.id,
       email: user.email,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      role: user.user_type,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userType: user.userType,
+      role: user.userType,
       company: user.company,
+      title: user.title,
       bio: user.bio,
       skills: user.skills ? (typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills) : [],
-      hourlyRate: user.hourly_rate,
-      location: user.location
+      hourlyRate: user.hourlyRate,
+      location: user.location,
+      rating: user.rating || 0,
+      totalJobs: user.totalJobs || 0,
+      completedJobs: user.completedJobs || 0,
+      totalEarnings: user.totalEarnings || 0,
+      createdAt: user.createdAt
     };
+
+    req.session.userId = user.id;
+    req.session.user = userData;
 
     res.json({
       status: 'success',
@@ -152,23 +161,32 @@ export const handleProfile = async (req, res) => {
       });
     }
 
-    // Update session with fresh data
-    req.session.user = {
+    // Update session with fresh data using proper field mapping
+    const userData = {
       id: user.id,
       email: user.email,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      role: user.user_type,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userType: user.userType,
+      role: user.userType,
       company: user.company,
+      title: user.title,
       bio: user.bio,
       skills: user.skills ? (typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills) : [],
-      hourlyRate: user.hourly_rate,
-      location: user.location
+      hourlyRate: user.hourlyRate,
+      location: user.location,
+      rating: user.rating || 0,
+      totalJobs: user.totalJobs || 0,
+      completedJobs: user.completedJobs || 0,
+      totalEarnings: user.totalEarnings || 0,
+      createdAt: user.createdAt
     };
+
+    req.session.user = userData;
 
     res.json({
       status: 'success',
-      user: req.session.user
+      user: userData
     });
 
   } catch (error) {

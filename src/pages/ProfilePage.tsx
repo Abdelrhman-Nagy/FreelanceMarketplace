@@ -140,16 +140,16 @@ export default function ProfilePage() {
                   setIsEditing(false);
                   // Reset form data
                   setFormData({
-                    firstName: user.firstName,
-                    lastName: user.lastName,
+                    firstName: userFirstName,
+                    lastName: userLastName,
                     email: user.email,
                     company: user.company || '',
-                    bio: '',
-                    location: '',
+                    bio: user.bio || '',
+                    location: user.location || '',
                     phone: '',
                     website: '',
-                    skills: [],
-                    hourlyRate: '',
+                    skills: user.skills || [],
+                    hourlyRate: user.hourlyRate?.toString() || '',
                   });
                 } else {
                   setIsEditing(true);
@@ -193,7 +193,7 @@ export default function ProfilePage() {
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
                     />
                   ) : (
-                    <p className="text-sm text-muted-foreground">{user.firstName}</p>
+                    <p className="text-sm text-muted-foreground">{userFirstName}</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -205,7 +205,7 @@ export default function ProfilePage() {
                       onChange={(e) => handleInputChange('lastName', e.target.value)}
                     />
                   ) : (
-                    <p className="text-sm text-muted-foreground">{user.lastName}</p>
+                    <p className="text-sm text-muted-foreground">{userLastName}</p>
                   )}
                 </div>
               </div>
@@ -218,7 +218,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {user.userType === 'client' && (
+              {userType === 'client' && (
                 <div className="space-y-2">
                   <Label htmlFor="company">Company</Label>
                   {isEditing ? (
@@ -249,7 +249,7 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    {formData.bio || 'No bio provided'}
+                    {user.bio || 'No bio provided'}
                   </p>
                 )}
               </div>
@@ -268,7 +268,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {user.userType === 'freelancer' && (
+          {userType === 'freelancer' && (
             <Card>
               <CardHeader>
                 <CardTitle>Professional Information</CardTitle>
@@ -341,7 +341,7 @@ export default function ProfilePage() {
                 <span className="text-sm font-medium">January 2024</span>
               </div>
               <Separator />
-              {user.userType === 'client' ? (
+              {userType === 'client' ? (
                 <>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Jobs posted</span>
