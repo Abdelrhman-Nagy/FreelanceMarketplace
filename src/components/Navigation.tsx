@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogoutButton } from '@/components/LogoutButton';
+
 import { Briefcase, User, Settings, Menu } from 'lucide-react';
 
 export default function Navigation() {
@@ -53,12 +53,9 @@ export default function Navigation() {
                     Post Job
                   </Link>
                 )}
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600">
-                    Welcome, {user?.firstName}!
-                  </span>
-                  <LogoutButton />
-                </div>
+                <span className="text-sm text-gray-600">
+                  Welcome, {user?.firstName}!
+                </span>
               </>
             ) : (
               <>

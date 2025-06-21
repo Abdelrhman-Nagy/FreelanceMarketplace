@@ -81,9 +81,7 @@ export default function Header() {
                 <DropdownMenuItem>
                   Profile Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  Sign Out
-                </DropdownMenuItem>
+
               </DropdownMenuContent>
             </DropdownMenu>
 
