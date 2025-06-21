@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Filter, MapPin, Clock, DollarSign } from 'lucide-react';
+import { Search, Filter, MapPin, Clock, DollarSign, Briefcase } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -32,11 +32,10 @@ export default function JobsPage() {
 
   const { data: jobsData, isLoading, error } = useQuery<JobsResponse>({
     queryKey: ['/api/jobs'],
-    staleTime: 60 * 60 * 1000, // 1 hour
-    refetchOnMount: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    enabled: false, // Disable until infinite loop is fixed
+    refetchOnReconnect: true,
   });
 
   const jobs = jobsData?.jobs || [];
