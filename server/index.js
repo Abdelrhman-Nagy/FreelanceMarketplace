@@ -525,27 +525,44 @@ app.get('/api/admin/stats', authService.requireRole(['admin']), async (req, res)
   }
 });
 
-app.get('/api/dashboard/:role', async (req, res) => {
+// Middleware to check authentication
+const requireAuth = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
-    const { role } = req.params;
-
-    if (!token) {
+    // Check if user is logged in via session
+    if (!req.session.userId || !req.session.user) {
       return res.status(401).json({
         status: 'error',
         message: 'Authentication required'
       });
     }
 
-    const validation = await authService.validateSession(token);
-    if (!validation) {
+    // Optionally verify user still exists in database
+    const user = await dbService.getUserById(req.session.userId);
+    if (!user) {
+      // Clear invalid session
+      req.session.destroy(() => {});
       return res.status(401).json({
         status: 'error',
-        message: 'Invalid or expired session'
+        message: 'User not found'
       });
     }
 
-    const { user } = validation;
+    req.user = user;
+    req.sessionUser = req.session.user;
+    next();
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    res.status(401).json({
+      status: 'error',
+      message: 'Authentication failed'
+    });
+  }
+};
+
+app.get('/api/dashboard/:role', requireAuth, async (req, res) => {
+  try {
+    const { role } = req.params;
+    const user = req.user;
 
     if (user.user_type !== role && user.user_type !== 'admin') {
       return res.status(403).json({
