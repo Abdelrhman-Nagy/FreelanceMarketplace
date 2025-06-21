@@ -1,318 +1,255 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Input } from '../components/ui/input';
-import { 
-  Search, 
-  Filter, 
-  Calendar, 
-  DollarSign, 
-  Clock, 
-  User, 
-  FileText,
-  CheckCircle,
-  AlertCircle,
-  XCircle
-} from 'lucide-react';
+import { FileText, Calendar, DollarSign, User, Briefcase, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 interface Contract {
-  id: string;
-  title: string;
-  client: string;
-  freelancer: string;
-  amount: number;
-  status: 'active' | 'completed' | 'cancelled' | 'pending';
+  id: number;
+  proposalId: number;
+  clientId: string;
+  freelancerId: string;
+  jobId: number;
+  jobTitle: string;
+  jobDescription: string;
+  clientName: string;
+  clientCompany: string;
+  freelancerName: string;
+  proposedRate: number;
+  estimatedDuration: string;
+  status: string;
   startDate: string;
   endDate?: string;
-  description: string;
-  milestones: Milestone[];
+  terms?: string;
+  coverLetter: string;
+  proposalStatus: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-interface Milestone {
-  id: string;
-  title: string;
-  amount: number;
-  status: 'pending' | 'completed' | 'approved';
-  dueDate: string;
+interface ContractsResponse {
+  contracts: Contract[];
+  success: boolean;
 }
 
 export default function ContractsPage() {
   const { user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
 
-  // Mock contracts data - in real app, this would come from SQL Server
-  const mockContracts: Contract[] = [
-    {
-      id: '1',
-      title: 'E-commerce Website Development',
-      client: 'TechCorp Solutions',
-      freelancer: 'John Doe',
-      amount: 2500,
-      status: 'active',
-      startDate: '2024-01-15',
-      endDate: '2024-03-15',
-      description: 'Build a modern e-commerce platform with React and Node.js',
-      milestones: [
-        {
-          id: '1-1',
-          title: 'Project Setup & Design',
-          amount: 500,
-          status: 'completed',
-          dueDate: '2024-01-25'
-        },
-        {
-          id: '1-2',
-          title: 'Frontend Development',
-          amount: 1000,
-          status: 'pending',
-          dueDate: '2024-02-15'
-        },
-        {
-          id: '1-3',
-          title: 'Backend & Integration',
-          amount: 1000,
-          status: 'pending',
-          dueDate: '2024-03-10'
-        }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Mobile App Development',
-      client: 'StartupXYZ',
-      freelancer: 'Jane Smith',
-      amount: 3500,
-      status: 'completed',
-      startDate: '2023-11-01',
-      endDate: '2024-01-10',
-      description: 'Cross-platform mobile application for food delivery',
-      milestones: [
-        {
-          id: '2-1',
-          title: 'App Design & Wireframes',
-          amount: 800,
-          status: 'approved',
-          dueDate: '2023-11-15'
-        },
-        {
-          id: '2-2',
-          title: 'Core Functionality',
-          amount: 1500,
-          status: 'approved',
-          dueDate: '2023-12-15'
-        },
-        {
-          id: '2-3',
-          title: 'Testing & Deployment',
-          amount: 1200,
-          status: 'approved',
-          dueDate: '2024-01-05'
-        }
-      ]
-    }
-  ];
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'approved':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'active':
-      case 'pending':
-        return <Clock className="h-4 w-4 text-blue-500" />;
-      case 'cancelled':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'approved':
-        return 'bg-green-500';
-      case 'active':
-      case 'pending':
-        return 'bg-blue-500';
-      case 'cancelled':
-        return 'bg-red-500';
-      default:
-        return 'bg-yellow-500';
-    }
-  };
-
-  const filteredContracts = mockContracts.filter(contract => {
-    const matchesSearch = contract.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contract.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contract.freelancer.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (activeTab === 'all') return matchesSearch;
-    return matchesSearch && contract.status === activeTab;
+  const { data: contractsData, isLoading, error } = useQuery<ContractsResponse>({
+    queryKey: ['/api/contracts'],
+    staleTime: 5 * 60 * 1000,
   });
 
-  if (!user) {
+  const contracts = contractsData?.contracts || [];
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Active
+          </Badge>
+        );
+      case 'completed':
+        return (
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Completed
+          </Badge>
+        );
+      case 'cancelled':
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-200">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Cancelled
+          </Badge>
+        );
+      case 'disputed':
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Disputed
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="secondary">
+            {status}
+          </Badge>
+        );
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  if (isLoading) {
     return (
-      <div className="text-center py-20">
-        <h1 className="text-2xl font-bold mb-4">Please log in to view your contracts</h1>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">My Contracts</h1>
+        </div>
+        <div className="grid gap-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">My Contracts</h1>
+        </div>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p className="text-red-600">Error loading contracts: {error.message}</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="mt-4"
+              variant="outline"
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Contracts</h1>
-          <p className="text-muted-foreground">Manage your active and completed contracts</p>
-        </div>
-        <div className="flex gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search contracts..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
-            />
-          </div>
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
-        </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">My Contracts</h1>
+        <Badge variant="outline" className="text-lg px-3 py-1">
+          {contracts.length} {contracts.length === 1 ? 'Contract' : 'Contracts'}
+        </Badge>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="all">All Contracts</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeTab} className="space-y-4">
-          {filteredContracts.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No contracts found</h3>
-                <p className="text-muted-foreground">
-                  {searchTerm ? 'Try adjusting your search terms' : 'You don\'t have any contracts yet'}
+      {contracts.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No Contracts Yet</h3>
+            <p className="text-gray-600 mb-6">
+              {user?.userType === 'freelancer' 
+                ? "Once clients accept your proposals, your contracts will appear here."
+                : "When you accept freelancer proposals, your contracts will appear here."
+              }
+            </p>
+            <Button variant="outline">
+              {user?.userType === 'freelancer' ? 'Browse Jobs' : 'Post a Job'}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6">
+          {contracts.map((contract) => (
+            <Card key={contract.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2 flex-1">
+                    <CardTitle className="text-xl">
+                      {contract.jobTitle}
+                    </CardTitle>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <User className="h-4 w-4" />
+                        {user?.userType === 'freelancer' 
+                          ? `Client: ${contract.clientName}${contract.clientCompany ? ` (${contract.clientCompany})` : ''}`
+                          : `Freelancer: ${contract.freelancerName}`
+                        }
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        Started: {formatDate(contract.startDate)}
+                      </div>
+                    </div>
+                  </div>
+                  {getStatusBadge(contract.status)}
+                </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                <p className="text-gray-600 line-clamp-2">
+                  {contract.jobDescription}
                 </p>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredContracts.map((contract) => (
-              <Card key={contract.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        {contract.title}
-                        <Badge variant="outline" className="ml-2">
-                          <div className={`w-2 h-2 rounded-full ${getStatusColor(contract.status)} mr-1`} />
-                          {contract.status}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription className="mt-2">
-                        {contract.description}
-                      </CardDescription>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-green-600">
-                        ${contract.amount.toLocaleString()}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Total Value</div>
-                    </div>
-                  </div>
-                </CardHeader>
                 
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">
-                        {user.userType === 'client' ? 'Freelancer:' : 'Client:'}
-                      </span>
-                      <span>
-                        {user.userType === 'client' ? contract.freelancer : contract.client}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">Started:</span>
-                      <span>{new Date(contract.startDate).toLocaleDateString()}</span>
-                    </div>
-                    {contract.endDate && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">
-                          {contract.status === 'completed' ? 'Completed:' : 'Due:'}
-                        </span>
-                        <span>{new Date(contract.endDate).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {contract.milestones.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-green-600" />
                     <div>
-                      <h4 className="font-semibold mb-3">Milestones</h4>
-                      <div className="space-y-2">
-                        {contract.milestones.map((milestone) => (
-                          <div key={milestone.id} className="flex items-center justify-between p-3 border rounded-lg">
-                            <div className="flex items-center gap-3">
-                              {getStatusIcon(milestone.status)}
-                              <div>
-                                <div className="font-medium">{milestone.title}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  Due: {new Date(milestone.dueDate).toLocaleDateString()}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-medium">${milestone.amount.toLocaleString()}</div>
-                              <Badge 
-                                variant={milestone.status === 'approved' ? 'default' : 'secondary'}
-                                className="text-xs"
-                              >
-                                {milestone.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <p className="text-sm text-gray-600">Rate</p>
+                      <p className="font-semibold text-green-600">
+                        {contract.proposedRate ? `$${contract.proposedRate}/hr` : 'Not specified'}
+                      </p>
                     </div>
-                  )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Duration</p>
+                      <p className="font-semibold">
+                        {contract.estimatedDuration || 'Not specified'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-purple-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Contract ID</p>
+                      <p className="font-semibold">#{contract.id}</p>
+                    </div>
+                  </div>
+                </div>
 
-                  <div className="flex gap-2 pt-2">
+                {contract.coverLetter && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">Original Proposal</h4>
+                    <p className="text-sm text-gray-700 line-clamp-3">
+                      {contract.coverLetter}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center pt-4 border-t">
+                  <div className="text-sm text-gray-500">
+                    Contract created: {formatDate(contract.createdAt)}
+                  </div>
+                  <div className="space-x-2">
                     <Button variant="outline" size="sm">
                       View Details
                     </Button>
                     {contract.status === 'active' && (
-                      <>
-                        <Button variant="outline" size="sm">
-                          Message {user.userType === 'client' ? 'Freelancer' : 'Client'}
-                        </Button>
-                        {user.userType === 'client' && (
-                          <Button size="sm">
-                            Release Payment
-                          </Button>
-                        )}
-                      </>
+                      <Button size="sm">
+                        Message {user?.userType === 'freelancer' ? 'Client' : 'Freelancer'}
+                      </Button>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </TabsContent>
-      </Tabs>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

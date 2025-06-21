@@ -204,6 +204,13 @@ export default function Navigation() {
                           </Link>
                         )}
                         
+                        <Link href="/contracts">
+                          <div className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                            <Briefcase className="h-4 w-4 mr-3" />
+                            My Contracts
+                          </div>
+                        </Link>
+                        
                         {user?.role === 'client' && (
                           <Link href="/projects">
                             <div className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200">

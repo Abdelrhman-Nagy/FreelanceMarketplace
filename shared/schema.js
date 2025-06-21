@@ -267,6 +267,25 @@ export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
   }),
 }));
 
+export const contractsRelations = relations(contracts, ({ one }) => ({
+  proposal: one(proposals, {
+    fields: [contracts.proposalId],
+    references: [proposals.id],
+  }),
+  client: one(users, {
+    fields: [contracts.clientId],
+    references: [users.id],
+  }),
+  freelancer: one(users, {
+    fields: [contracts.freelancerId],
+    references: [users.id],
+  }),
+  job: one(jobs, {
+    fields: [contracts.jobId],
+    references: [jobs.id],
+  }),
+}));
+
 // Zod schemas for validation
 export const insertUserSchema = createInsertSchema(users);
 export const insertJobSchema = createInsertSchema(jobs);
@@ -298,3 +317,4 @@ export const savedJobsRelations = relations(savedJobs, ({ one }) => ({
 }));
 
 export const insertSavedJobSchema = createInsertSchema(savedJobs);
+export const insertContractSchema = createInsertSchema(contracts);
