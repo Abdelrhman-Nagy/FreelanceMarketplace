@@ -1,26 +1,38 @@
 import { QueryClient } from '@tanstack/react-query';
 
 const defaultFetcher = async (url: string): Promise<any> => {
-  const response = await fetch(url);
+  console.log('Fetching:', url);
+  const response = await fetch(url, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  console.log('Response status:', response.status);
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unknown error');
+    console.error('Fetch error:', errorText);
     throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
   }
-  return response.json();
+  
+  const data = await response.json();
+  console.log('Fetched data:', data);
+  return data;
 };
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: ({ queryKey }) => defaultFetcher(queryKey[0] as string),
-      staleTime: 60 * 60 * 1000, // 60 minutes
-      gcTime: 120 * 60 * 1000, // 120 minutes
-      retry: 0,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      retry: 1,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
       refetchInterval: false,
-      enabled: false, // Disable all queries by default
+      enabled: true, // Enable queries by default
     },
   },
 });

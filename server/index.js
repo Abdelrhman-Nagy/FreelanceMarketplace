@@ -966,7 +966,10 @@ app.get('/proposals', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-// 404 handler
+// Serve static files from public directory for development
+app.use(express.static(path.join(__dirname, '../public')));
+
+// 404 handler for API routes and catch-all for SPA
 app.use((req, res) => {
   if (req.path.startsWith('/api')) {
     res.status(404).json({
@@ -975,7 +978,7 @@ app.use((req, res) => {
       path: req.path
     });
   } else {
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
+    res.sendFile(path.join(__dirname, '../public/index.html'));
   }
 });
 
