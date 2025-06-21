@@ -768,8 +768,98 @@ class DatabaseService {
       throw error;
     }
   }
+
+  // User management methods
+  async getUserByEmail(email) {
+    try {
+      if (!db) {
+        throw new Error('Database not initialized');
+      }
+
+      const users = await db
+        .select()
+        .from(schema.users)
+        .where(eq(schema.users.email, email))
+        .limit(1);
+
+      return users.length > 0 ? users[0] : null;
+
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      throw error;
+    }
+  }
+
+  async getUserById(userId) {
+    try {
+      if (!db) {
+        throw new Error('Database not initialized');
+      }
+
+      const users = await db
+        .select()
+        .from(schema.users)
+        .where(eq(schema.users.id, userId))
+        .limit(1);
+
+      return users.length > 0 ? users[0] : null;
+
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      throw error;
+    }
+  }
+
+  async createUser(userData) {
+    try {
+      if (!db) {
+        throw new Error('Database not initialized');
+      }
+
+      const result = await db
+        .insert(schema.users)
+        .values(userData)
+        .returning();
+
+      console.log('User created successfully:', result[0].id);
+      return result[0];
+
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  }
+
+  async updateUser(userId, updates) {
+    try {
+      if (!db) {
+        throw new Error('Database not initialized');
+      }
+
+      const result = await db
+        .update(schema.users)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.users.id, userId))
+        .returning();
+
+      if (result.length === 0) {
+        throw new Error('User not found');
+      }
+
+      console.log('User updated successfully:', userId);
+      return result[0];
+
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance
 const dbService = new DatabaseService();
 export default dbService;
+export { dbService };
