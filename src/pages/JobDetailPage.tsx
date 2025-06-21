@@ -252,9 +252,25 @@ export default function JobDetailPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-4">
-                <Button size="lg" className="w-full">
-                  Submit Proposal
-                </Button>
+                {user?.userType === 'freelancer' ? (
+                  <Link href={`/jobs/${job.id}/apply`}>
+                    <Button size="lg" className="w-full">
+                      Submit Proposal
+                    </Button>
+                  </Link>
+                ) : user?.userType === 'client' ? (
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <p className="text-gray-600 text-sm">
+                      You are logged in as a client. Only freelancers can apply to jobs.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <p className="text-gray-600 text-sm">
+                      Please log in as a freelancer to apply for this job.
+                    </p>
+                  </div>
+                )}
                 <Button variant="outline" size="lg" className="w-full">
                   Save Job
                 </Button>

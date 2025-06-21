@@ -23,6 +23,7 @@ import SavedJobsPage from './pages/SavedJobsPage';
 import ProposalsPage from './pages/ProposalsPage';
 import ClientProposalsPage from './pages/ClientProposalsPage';
 import PostJobPage from './pages/PostJobPage';
+import SubmitProposalPage from './pages/SubmitProposalPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { queryClient } from './lib/queryClient';
 

@@ -162,6 +162,22 @@ export const projects = pgTable("projects", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const contracts = pgTable("contracts", {
+  id: serial("id").primaryKey(),
+  proposalId: integer("proposal_id").notNull().references(() => proposals.id),
+  clientId: text("client_id").notNull().references(() => users.id),
+  freelancerId: text("freelancer_id").notNull().references(() => users.id),
+  jobId: integer("job_id").notNull().references(() => jobs.id),
+  proposedRate: integer("proposed_rate"),
+  estimatedDuration: text("estimated_duration"),
+  status: text("status").default("active"), // active, completed, cancelled, disputed
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  terms: text("terms"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").notNull().references(() => projects.id),
@@ -201,6 +217,22 @@ export const projectMembers = pgTable("project_members", {
   userId: text("user_id").notNull().references(() => users.id),
   role: text("role").default("member"),
   joinedAt: timestamp("joined_at").defaultNow(),
+});
+
+export const contracts = pgTable("contracts", {
+  id: serial("id").primaryKey(),
+  proposalId: integer("proposal_id").notNull().references(() => proposals.id),
+  clientId: text("client_id").notNull().references(() => users.id),
+  freelancerId: text("freelancer_id").notNull().references(() => users.id),
+  jobId: integer("job_id").notNull().references(() => jobs.id),
+  proposedRate: integer("proposed_rate"),
+  estimatedDuration: text("estimated_duration"),
+  status: text("status").default("active"), // active, completed, cancelled, disputed
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  terms: text("terms"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Project Relations
@@ -255,6 +287,22 @@ export const projectMessagesRelations = relations(projectMessages, ({ one }) => 
     references: [users.id],
   }),
 }));
+
+export const contracts = pgTable("contracts", {
+  id: serial("id").primaryKey(),
+  proposalId: integer("proposal_id").notNull(),
+  clientId: text("client_id").notNull(),
+  freelancerId: text("freelancer_id").notNull(),
+  jobId: integer("job_id").notNull(),
+  proposedRate: integer("proposed_rate"),
+  estimatedDuration: text("estimated_duration"),
+  status: text("status").default("active"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  terms: text("terms"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
   project: one(projects, {

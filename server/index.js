@@ -293,6 +293,111 @@ app.get('/api/jobs/:id/proposals', async (req, res) => {
   }
 });
 
+// Update proposal status with contract creation
+app.patch('/api/proposals/:id/status', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const proposalId = parseInt(req.params.id);
+    const { status } = req.body;
+    const userId = req.session.userId || req.session.user?.id;
+    const userType = req.session.user?.userType || req.session.user?.role;
+
+    if (userType !== 'client') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Only clients can update proposal status'
+      });
+    }
+
+    console.log(`Updating proposal ${proposalId} status to: ${status} by client: ${userId}`);
+
+    const result = await dbService.updateProposalStatus(proposalId, status, userId);
+    
+    if (!result) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Proposal not found or unauthorized'
+      });
+    }
+
+    // If proposal is accepted, create a contract
+    if (status === 'accepted') {
+      try {
+        const contract = await dbService.createContract({
+          proposalId: proposalId,
+          clientId: userId,
+          freelancerId: result.freelancerId,
+          jobId: result.jobId,
+          proposedRate: result.proposedRate,
+          estimatedDuration: result.estimatedDuration,
+          status: 'active',
+          startDate: new Date().toISOString()
+        });
+        console.log('Contract created:', contract);
+        
+        res.json({
+          status: 'success',
+          message: 'Proposal accepted and contract created successfully',
+          proposal: result,
+          contract: contract
+        });
+      } catch (contractError) {
+        console.error('Error creating contract:', contractError);
+        res.json({
+          status: 'success',
+          message: 'Proposal accepted but contract creation failed',
+          proposal: result,
+          contractError: contractError.message
+        });
+      }
+    } else {
+      res.json({
+        status: 'success',
+        message: `Proposal ${status} successfully`,
+        proposal: result
+      });
+    }
+  } catch (error) {
+    console.error('Error updating proposal status:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update proposal status'
+    });
+  }
+});
+
+// Get contracts for user
+app.get('/api/contracts', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = req.session.userId || req.session.user?.id;
+    const userType = req.session.user?.userType || req.session.user?.role;
+    
+    console.log(`Getting contracts for ${userType}: ${userId}`);
+    
+    const contracts = await dbService.getContracts(userId, userType);
+    res.json({ contracts, success: true });
+  } catch (error) {
+    console.error('Error fetching contracts:', error);
+    res.status(500).json({ 
+      status: 'error',
+      message: 'Failed to fetch contracts' 
+    });
+  }
+});
+
 // Saved jobs endpoints
 app.post('/api/saved-jobs', async (req, res) => {
   try {
@@ -871,6 +976,112 @@ app.use((req, res) => {
     });
   } else {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
+  }
+});
+
+// Get contracts for user
+app.get('/api/contracts', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = req.session.userId || req.session.user?.id;
+    const userType = req.session.user?.userType || req.session.user?.role;
+    
+    console.log(`Getting contracts for ${userType}: ${userId}`);
+    
+    const contracts = await dbService.getContracts(userId, userType);
+    res.json({ contracts, success: true });
+  } catch (error) {
+    console.error('Error fetching contracts:', error);
+    res.status(500).json({ 
+      status: 'error',
+      error: 'Failed to fetch contracts' 
+    });
+  }
+});
+
+// Update proposal status and create contract when accepted
+app.patch('/api/proposals/:id/status', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const { id } = req.params;
+    const { status } = req.body;
+    const userId = req.session.userId || req.session.user?.id;
+    const userType = req.session.user?.userType || req.session.user?.role;
+
+    // Validate that user is a client
+    if (userType !== 'client') {
+      return res.status(403).json({ 
+        status: 'error',
+        error: 'Only clients can update proposal status' 
+      });
+    }
+
+    console.log(`Updating proposal ${id} status to: ${status} by client: ${userId}`);
+
+    const result = await dbService.updateProposalStatus(parseInt(id), status, userId);
+    
+    if (!result) {
+      return res.status(404).json({ 
+        status: 'error',
+        error: 'Proposal not found or unauthorized' 
+      });
+    }
+
+    // If proposal is accepted, create a contract
+    if (status === 'accepted') {
+      try {
+        const contract = await dbService.createContract({
+          proposalId: parseInt(id),
+          clientId: userId,
+          freelancerId: result.freelancerId,
+          jobId: result.jobId,
+          proposedRate: result.proposedRate,
+          estimatedDuration: result.estimatedDuration,
+          status: 'active',
+          startDate: new Date().toISOString()
+        });
+        console.log('Contract created:', contract);
+        
+        res.json({ 
+          status: 'success',
+          message: 'Proposal accepted and contract created successfully',
+          proposal: result,
+          contract: contract
+        });
+      } catch (contractError) {
+        console.error('Error creating contract:', contractError);
+        res.json({ 
+          status: 'success',
+          message: 'Proposal accepted but contract creation failed',
+          proposal: result,
+          contractError: contractError.message
+        });
+      }
+    } else {
+      res.json({ 
+        status: 'success',
+        message: `Proposal ${status} successfully`,
+        proposal: result 
+      });
+    }
+  } catch (error) {
+    console.error('Error updating proposal status:', error);
+    res.status(500).json({ 
+      status: 'error',
+      error: 'Failed to update proposal status' 
+    });
   }
 });
 
