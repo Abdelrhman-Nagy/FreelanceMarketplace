@@ -86,6 +86,12 @@ export default function ProfilePage() {
     );
   }
 
+  // Safe property access with fallbacks
+  const userFirstName = user.firstName || '';
+  const userLastName = user.lastName || '';
+  const userRating = user.rating || 0;
+  const userType = user.userType || 'freelancer';
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Profile Header */}
@@ -95,7 +101,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                  {user.firstName[0]}{user.lastName[0]}
+                  {userFirstName[0] || 'U'}{userLastName[0] || 'U'}
                 </div>
                 <Button
                   size="sm"
@@ -108,10 +114,10 @@ export default function ProfilePage() {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-bold">
-                    {user.firstName} {user.lastName}
+                    {userFirstName} {userLastName}
                   </h1>
-                  <Badge variant={user.userType === 'client' ? 'default' : 'secondary'}>
-                    {user.userType === 'client' ? 'Client' : 'Freelancer'}
+                  <Badge variant={userType === 'client' ? 'default' : 'secondary'}>
+                    {userType === 'client' ? 'Client' : 'Freelancer'}
                   </Badge>
                 </div>
                 <p className="text-muted-foreground">{user.email}</p>
@@ -123,7 +129,7 @@ export default function ProfilePage() {
                 )}
                 <div className="flex items-center gap-1 mt-1">
                   <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span className="text-sm font-medium">{user.rating.toFixed(1)} rating</span>
+                  <span className="text-sm font-medium">{userRating.toFixed(1)} rating</span>
                 </div>
               </div>
             </div>

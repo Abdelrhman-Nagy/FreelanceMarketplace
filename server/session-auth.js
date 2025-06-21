@@ -103,7 +103,7 @@ export const handleLogin = async (req, res) => {
     res.json({
       status: 'success',
       message: 'Login successful',
-      user: req.session.user
+      user: userData
     });
 
   } catch (error) {
