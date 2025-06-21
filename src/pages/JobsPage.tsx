@@ -43,14 +43,21 @@ export default function JobsPage() {
   const categories = ['Web Development', 'Mobile Development', 'Design', 'Writing', 'Marketing'];
   const urgencyLevels = ['urgent', 'high', 'normal', 'low'];
 
+  // Debug logging
+  console.log('JobsPage render - jobsData:', jobsData);
+  console.log('JobsPage render - jobs:', jobs);
+  console.log('JobsPage render - jobs length:', jobs.length);
+
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = !selectedCategory || job.category === selectedCategory;
-    const matchesUrgency = !urgencyFilter || job.urgencyLevel === urgencyFilter;
+    const matchesUrgency = !urgencyFilter || (job.urgencyLevel && job.urgencyLevel === urgencyFilter);
     return matchesSearch && matchesCategory && matchesUrgency;
   });
+
+  console.log('Filtered jobs count:', filteredJobs.length);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -222,7 +229,7 @@ export default function JobsPage() {
                             {job.title}
                           </Link>
                         </CardTitle>
-                        {getUrgencyBadge(job.urgencyLevel, job.isUrgent)}
+                        {getUrgencyBadge(job.priority, job.isUrgent)}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
