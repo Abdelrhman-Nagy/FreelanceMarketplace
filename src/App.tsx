@@ -56,6 +56,7 @@ function App() {
                   <Route path="/saved-jobs" component={SavedJobsPage} />
                   <Route path="/proposals" component={ProposalsPage} />
                   <Route path="/jobs/:jobId/proposals" component={ClientProposalsPage} />
+                  <Route path="/jobs/:id/apply" component={SubmitProposalPage} />
                   <Route>
                     <div className="text-center py-20">
                       <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
