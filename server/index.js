@@ -274,39 +274,79 @@ app.get('/api/auth/profile', handleProfile);
 
 app.put('/api/auth/profile', async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
-
-    if (!token) {
+    if (!req.session?.user && !req.session?.userId) {
       return res.status(401).json({
         status: 'error',
         message: 'Authentication required'
       });
     }
 
-    const validation = await authService.validateSession(token);
-    if (!validation) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Invalid or expired session'
-      });
-    }
+    const userId = req.session.userId || req.session.user?.id;
+    const { 
+      firstName, 
+      lastName, 
+      company, 
+      bio, 
+      skills, 
+      hourlyRate, 
+      location, 
+      phoneNumber, 
+      website, 
+      experience 
+    } = req.body;
 
-    const { user } = validation;
-    const updateData = req.body;
+    const updates = {
+      firstName,
+      lastName,
+      company,
+      bio,
+      skills,
+      hourlyRate,
+      location,
+      phoneNumber,
+      website,
+      experience,
+      updatedAt: new Date()
+    };
 
-    delete updateData.id;
-    delete updateData.email;
-    delete updateData.role;
-    delete updateData.status;
-    delete updateData.created_at;
-    delete updateData.updated_at;
+    // Remove undefined values
+    Object.keys(updates).forEach(key => {
+      if (updates[key] === undefined) {
+        delete updates[key];
+      }
+    });
 
-    const updatedUser = await dbService.updateUser(user.id, updateData);
+    const updatedUser = await dbService.updateUser(userId, updates);
+
+    // Update session with new data including contact information
+    const userData = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      userType: updatedUser.userType,
+      role: updatedUser.userType,
+      company: updatedUser.company,
+      title: updatedUser.title,
+      bio: updatedUser.bio,
+      skills: updatedUser.skills ? (typeof updatedUser.skills === 'string' ? JSON.parse(updatedUser.skills) : updatedUser.skills) : [],
+      hourlyRate: updatedUser.hourlyRate,
+      location: updatedUser.location,
+      phoneNumber: updatedUser.phoneNumber,
+      website: updatedUser.website,
+      rating: updatedUser.rating || 0,
+      totalJobs: updatedUser.totalJobs || 0,
+      completedJobs: updatedUser.completedJobs || 0,
+      totalEarnings: updatedUser.totalEarnings || 0,
+      createdAt: updatedUser.createdAt
+    };
+
+    req.session.user = userData;
 
     res.json({
       status: 'success',
       message: 'Profile updated successfully',
-      user: updatedUser
+      user: userData
     });
 
   } catch (error) {
