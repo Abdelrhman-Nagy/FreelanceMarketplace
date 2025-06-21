@@ -2,8 +2,8 @@
 import React from 'react';
 import { Link } from 'wouter';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '../components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Search, DollarSign, Star, Users, Briefcase, CheckCircle } from 'lucide-react';
 
 const HomePage = () => {
