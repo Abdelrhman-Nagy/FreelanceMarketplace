@@ -199,7 +199,7 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Start by posting your first job to attract talented freelancers.
                 </p>
-                <Button>Post a Job</Button>
+                <Button onClick={() => setLocation('/post-job')}>Post a Job</Button>
               </div>
             )}
           </CardContent>
