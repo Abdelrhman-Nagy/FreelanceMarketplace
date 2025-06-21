@@ -33,12 +33,12 @@ export default function ProfilePage() {
     lastName: user?.lastName || '',
     email: user?.email || '',
     company: user?.company || '',
-    bio: '',
-    location: '',
-    phone: '',
-    website: '',
-    skills: [] as string[],
-    hourlyRate: '',
+    bio: user?.bio || '',
+    location: user?.location || '',
+    phone: user?.phoneNumber || '',
+    website: user?.website || '',
+    skills: user?.skills || [] as string[],
+    hourlyRate: user?.hourlyRate?.toString() || '',
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -52,6 +52,11 @@ export default function ProfilePage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         company: formData.company,
+        bio: formData.bio,
+        location: formData.location,
+        phoneNumber: formData.phone,
+        website: formData.website,
+        hourlyRate: formData.hourlyRate ? parseInt(formData.hourlyRate) : null,
       });
 
       if (success) {
@@ -254,6 +259,72 @@ export default function ProfilePage() {
                 )}
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                {isEditing ? (
+                  <Input
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    placeholder="City, Country"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      {user.location || 'Location not set'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                {isEditing ? (
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      {user.phoneNumber || 'Phone not set'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                {isEditing ? (
+                  <Input
+                    id="website"
+                    value={formData.website}
+                    onChange={(e) => handleInputChange('website', e.target.value)}
+                    placeholder="https://yourwebsite.com"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    {user.website ? (
+                      <a 
+                        href={user.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        {user.website}
+                      </a>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Website not set</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {isEditing && (
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setIsEditing(false)}>
@@ -313,20 +384,68 @@ export default function ProfilePage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Contact Information</CardTitle>
+                {!isEditing && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    Edit
+                  </Button>
+                )}
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Location not set</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Phone not set</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Website not set</span>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1">
+                    <span className="text-xs text-muted-foreground block">Email</span>
+                    <span className="text-sm font-medium">{user.email}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1">
+                    <span className="text-xs text-muted-foreground block">Location</span>
+                    <span className="text-sm font-medium">
+                      {user.location || 'Not specified'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1">
+                    <span className="text-xs text-muted-foreground block">Phone</span>
+                    <span className="text-sm font-medium">
+                      {user.phoneNumber || 'Not specified'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1">
+                    <span className="text-xs text-muted-foreground block">Website</span>
+                    {user.website ? (
+                      <a 
+                        href={user.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-blue-600 hover:underline"
+                      >
+                        {user.website.replace(/^https?:\/\//, '')}
+                      </a>
+                    ) : (
+                      <span className="text-sm font-medium">Not specified</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
