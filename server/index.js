@@ -63,7 +63,7 @@ app.get('/api/test', async (req, res) => {
   }
 });
 
-// Jobs endpoint
+// Jobs endpoints
 app.get('/api/jobs', async (req, res) => {
   try {
     console.log('Jobs endpoint called');
@@ -85,6 +85,76 @@ app.get('/api/jobs', async (req, res) => {
       total: 0,
       status: 'error',
       database: 'Error occurred'
+    });
+  }
+});
+
+app.post('/api/jobs', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = req.session.userId || req.session.user?.id;
+    const userType = req.session.user?.userType || req.session.user?.role;
+
+    if (userType !== 'client') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Only clients can post jobs'
+      });
+    }
+
+    const { 
+      title, 
+      description, 
+      category, 
+      budgetType, 
+      budgetMin, 
+      budgetMax, 
+      experienceLevel, 
+      skills, 
+      duration 
+    } = req.body;
+
+    if (!title || !description || !category) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Title, description, and category are required'
+      });
+    }
+
+    const jobData = {
+      title,
+      description,
+      clientId: userId,
+      category,
+      budgetType: budgetType || 'fixed',
+      budgetMin: budgetMin ? parseInt(budgetMin) : null,
+      budgetMax: budgetMax ? parseInt(budgetMax) : null,
+      experienceLevel: experienceLevel || 'Intermediate',
+      skills: Array.isArray(skills) ? JSON.stringify(skills) : skills,
+      duration,
+      status: 'active',
+      createdAt: new Date()
+    };
+
+    const newJob = await dbService.createJob(jobData);
+
+    res.json({
+      status: 'success',
+      message: 'Job posted successfully',
+      job: newJob
+    });
+
+  } catch (error) {
+    console.error('Job creation error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to create job'
     });
   }
 });
@@ -111,6 +181,176 @@ app.get('/api/jobs/:id', async (req, res) => {
     res.json({
       error: error.message,
       status: 'error'
+    });
+  }
+});
+
+// Proposals endpoints
+app.post('/api/proposals', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = req.session.userId || req.session.user?.id;
+    const userType = req.session.user?.userType || req.session.user?.role;
+
+    if (userType !== 'freelancer') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Only freelancers can submit proposals'
+      });
+    }
+
+    const { jobId, coverLetter, proposedRate, estimatedDuration } = req.body;
+
+    if (!jobId || !coverLetter) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Job ID and cover letter are required'
+      });
+    }
+
+    const proposalData = {
+      freelancerId: userId,
+      jobId: parseInt(jobId),
+      coverLetter,
+      proposedRate: proposedRate ? parseInt(proposedRate) : null,
+      estimatedDuration,
+      status: 'pending',
+      createdAt: new Date()
+    };
+
+    const newProposal = await dbService.createProposal(proposalData);
+
+    res.json({
+      status: 'success',
+      message: 'Proposal submitted successfully',
+      proposal: newProposal
+    });
+
+  } catch (error) {
+    console.error('Proposal creation error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to submit proposal'
+    });
+  }
+});
+
+app.get('/api/proposals/user', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = req.session.userId || req.session.user?.id;
+    const proposals = await dbService.getUserProposals(userId);
+
+    res.json({
+      status: 'success',
+      proposals: proposals
+    });
+
+  } catch (error) {
+    console.error('Error fetching user proposals:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch proposals'
+    });
+  }
+});
+
+app.get('/api/jobs/:id/proposals', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const jobId = parseInt(req.params.id);
+    const proposals = await dbService.getJobProposals(jobId);
+
+    res.json({
+      status: 'success',
+      proposals: proposals
+    });
+
+  } catch (error) {
+    console.error('Error fetching job proposals:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch proposals'
+    });
+  }
+});
+
+// Saved jobs endpoints
+app.post('/api/saved-jobs', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = req.session.userId || req.session.user?.id;
+    const { jobId } = req.body;
+
+    if (!jobId) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Job ID is required'
+      });
+    }
+
+    await dbService.saveJob(userId, parseInt(jobId));
+
+    res.json({
+      status: 'success',
+      message: 'Job saved successfully'
+    });
+
+  } catch (error) {
+    console.error('Error saving job:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to save job'
+    });
+  }
+});
+
+app.get('/api/saved-jobs', async (req, res) => {
+  try {
+    if (!req.session?.user && !req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = req.session.userId || req.session.user?.id;
+    const savedJobs = await dbService.getSavedJobs(userId);
+
+    res.json({
+      status: 'success',
+      savedJobs: savedJobs
+    });
+
+  } catch (error) {
+    console.error('Error fetching saved jobs:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch saved jobs'
     });
   }
 });

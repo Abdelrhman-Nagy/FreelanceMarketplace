@@ -894,6 +894,26 @@ class DatabaseService {
     }
   }
 
+  async createJob(jobData) {
+    try {
+      if (!db) {
+        throw new Error('Database not initialized');
+      }
+
+      const [newJob] = await db
+        .insert(schema.jobs)
+        .values(jobData)
+        .returning();
+
+      console.log('Job created successfully:', newJob.id);
+      return newJob;
+
+    } catch (error) {
+      console.error('Error creating job:', error);
+      throw error;
+    }
+  }
+
   async getUserStatistics(userId, userType) {
     try {
       if (!db) {
