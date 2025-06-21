@@ -113,10 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (data.status === 'success') {
         setUser(data.user);
-        // Store token in localStorage for API requests
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
-        }
+        // Session handles authentication, no tokens needed
       } else {
         throw new Error(data.message || 'Login failed');
       }
@@ -141,10 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (data.status === 'success') {
         setUser(data.user);
-        // Store token in localStorage for API requests
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
-        }
+        // Session handles authentication, no tokens needed
       } else {
         throw new Error(data.message || 'Registration failed');
       }
