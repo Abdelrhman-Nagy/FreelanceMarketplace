@@ -1,6 +1,8 @@
 
-import { useRoute } from 'wouter';
+import React from 'react';
+import { useRoute, Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   ArrowLeft, 
   DollarSign, 
@@ -11,18 +13,9 @@ import {
   Users,
   Calendar
 } from 'lucide-react';
-import { Link } from 'wouter';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Textarea } from '../components/ui/textarea';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { useAuth } from '../contexts/AuthContext';
-import { apiRequest } from '../lib/queryClient';
-import { useToast } from '../hooks/use-toast';
-import React from 'react';
 import { Separator } from '../components/ui/separator';
 
 interface Job {
@@ -47,6 +40,7 @@ interface JobsResponse {
 export default function JobDetailPage() {
   const [match, params] = useRoute('/jobs/:id');
   const jobId = params?.id;
+  const { user } = useAuth();
 
   const { data: jobsData, isLoading } = useQuery<JobsResponse>({
     queryKey: ['/api/jobs'],
