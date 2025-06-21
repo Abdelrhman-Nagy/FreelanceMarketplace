@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'wouter';
-import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
+import { ForgotPasswordForm } from '../components/auth/ForgotPasswordForm';
 import { Link } from 'wouter';
 
 const ForgotPasswordPage: React.FC = () => {

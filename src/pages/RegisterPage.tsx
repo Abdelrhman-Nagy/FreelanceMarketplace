@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation } from 'wouter';
-import { useAuth } from '@/contexts/AuthContext';
-import { RegisterForm } from '@/components/auth/RegisterForm';
+import { useAuth } from '../contexts/AuthContext';
+import { RegisterForm } from '../components/auth/RegisterForm';
 import { Link } from 'wouter';
 
 const RegisterPage: React.FC = () => {

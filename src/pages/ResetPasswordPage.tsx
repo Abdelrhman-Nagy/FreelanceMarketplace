@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useLocation } from 'wouter';
-import { ResetPasswordForm } from '@/components/auth/ResetPasswordForm';
+import { ResetPasswordForm } from '../components/auth/ResetPasswordForm';
 import { Link } from 'wouter';
 
 const ResetPasswordPage: React.FC = () => {
