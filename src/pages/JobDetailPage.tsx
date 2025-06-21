@@ -253,14 +253,14 @@ export default function JobDetailPage() {
                     </Button>
                   </Link>
                 ) : user?.userType === 'client' ? (
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600 text-sm">
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
                       You are logged in as a client. Only freelancers can apply to jobs.
                     </p>
                   </div>
                 ) : (
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600 text-sm">
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
                       Please log in as a freelancer to apply for this job.
                     </p>
                   </div>
