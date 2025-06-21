@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
@@ -30,6 +30,8 @@ interface JobsResponse {
 
 const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
 
   const { data: jobsData } = useQuery<JobsResponse>({
     queryKey: ['/api/jobs'],
@@ -38,6 +40,24 @@ const HomePage = () => {
   });
 
   const recentJobs = jobsData?.jobs?.slice(0, 6) || [];
+
+  // Animated words for non-authenticated users
+  const animatedWords = ['Perfect', 'Dream', 'Ideal', 'Amazing'];
+  
+  // Animated words for authenticated users
+  const welcomeWords = ['Welcome back', 'Great to see you', 'Ready to work', 'Time to shine'];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsVisible(false);
+      setTimeout(() => {
+        setCurrentWordIndex((prev) => (prev + 1) % (isAuthenticated ? welcomeWords.length : animatedWords.length));
+        setIsVisible(true);
+      }, 300);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, welcomeWords.length, animatedWords.length]);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -57,8 +77,18 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              Find Your Perfect
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Freelance Match</span>
+              Find Your{' '}
+              <span 
+                className={`inline-block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent transition-all duration-500 transform ${
+                  isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95'
+                }`}
+              >
+                {animatedWords[currentWordIndex]}
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent animate-pulse">
+                Freelance Match
+              </span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Connect with talented professionals and get your projects done right. 
@@ -232,8 +262,17 @@ const HomePage = () => {
       <section className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900 py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            Welcome back,
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> {user?.firstName}!</span>
+            <span 
+              className={`inline-block transition-all duration-500 transform ${
+                isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95'
+              }`}
+            >
+              {welcomeWords[currentWordIndex]}
+            </span>
+            <br />
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-bounce">
+              {user?.firstName}!
+            </span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
             {user?.role === 'client' 
@@ -282,7 +321,14 @@ const HomePage = () => {
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Latest Opportunities</h2>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  <span className="animate-pulse bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                    Latest
+                  </span>{' '}
+                  <span className="animate-bounce">
+                    Opportunities
+                  </span>
+                </h2>
                 <p className="text-gray-600 dark:text-gray-300">
                   Fresh job postings that match your expertise
                 </p>
@@ -301,7 +347,7 @@ const HomePage = () => {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg line-clamp-2 hover:text-blue-600 transition-colors">
+                        <CardTitle className="text-lg line-clamp-2 hover:text-blue-600 transition-all duration-300 hover:animate-pulse">
                           <Link href={`/jobs/${job.id}`}>
                             {job.title}
                           </Link>
@@ -381,7 +427,7 @@ const HomePage = () => {
                   <Briefcase className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2 animate-bounce">
                 {jobsData?.total || 0}
               </div>
               <div className="text-gray-600 dark:text-gray-300">
@@ -394,7 +440,7 @@ const HomePage = () => {
                   <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
               </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2 animate-pulse">
                 50,000+
               </div>
               <div className="text-gray-600 dark:text-gray-300">
@@ -407,7 +453,7 @@ const HomePage = () => {
                   <DollarSign className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2 animate-bounce">
                 $2M+
               </div>
               <div className="text-gray-600 dark:text-gray-300">
@@ -420,7 +466,7 @@ const HomePage = () => {
                   <CheckCircle className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2 animate-pulse">
                 98%
               </div>
               <div className="text-gray-600 dark:text-gray-300">
@@ -435,7 +481,10 @@ const HomePage = () => {
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold text-white mb-4">
-            Ready for Your Next Project?
+            <span className="animate-pulse">Ready for Your</span>{' '}
+            <span className="animate-bounce bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
+              Next Project?
+            </span>
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             {user?.role === 'client' 
