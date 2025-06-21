@@ -1,15 +1,55 @@
 
 import React from 'react';
 import { Link } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Search, DollarSign, Star, Users, Briefcase, CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Search, DollarSign, Star, Users, Briefcase, CheckCircle, Clock, ArrowRight, Plus } from 'lucide-react';
+
+interface Job {
+  id: number;
+  title: string;
+  description: string;
+  budget: string;
+  category: string;
+  skills: string[];
+  experienceLevel: string;
+  clientName: string;
+  clientCompany: string;
+  createdAt: string;
+  proposalCount: number;
+}
+
+interface JobsResponse {
+  jobs: Job[];
+  total: number;
+  status: string;
+}
 
 const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
 
-  // Always show the landing page for non-authenticated users
+  const { data: jobsData } = useQuery<JobsResponse>({
+    queryKey: ['/api/jobs'],
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const recentJobs = jobsData?.jobs?.slice(0, 6) || [];
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just posted';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    return `${Math.floor(diffInHours / 24)}d ago`;
+  };
+
+  // Show landing page for non-authenticated users
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -17,8 +57,8 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              Find the Perfect 
-              <span className="text-blue-600"> Freelancer</span>
+              Find Your Perfect
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Freelance Match</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Connect with talented professionals and get your projects done right. 
@@ -185,27 +225,256 @@ const HomePage = () => {
     );
   }
 
-  // For authenticated users, show dashboard redirect
+  // For authenticated users, show personalized home with jobs
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full space-y-8 text-center">
-        <div>
-          <Briefcase className="mx-auto h-12 w-12 text-blue-600" />
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Welcome back, {user?.firstName}!
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            You're already logged in. Go to your dashboard to manage your projects.
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900 py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+            Welcome back,
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> {user?.firstName}!</span>
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+            {user?.role === 'client' 
+              ? "Manage your projects and find talented freelancers to bring your vision to life"
+              : "Discover new opportunities and take your freelancing career to the next level"
+            }
           </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {user?.role === 'client' ? (
+              <>
+                <Link href="/post-job">
+                  <Button size="lg" className="w-full sm:w-auto">
+                    <Plus className="mr-2 h-5 w-5" />
+                    Post a Job
+                  </Button>
+                </Link>
+                <Link href="/jobs">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                    Browse Talent
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/jobs">
+                  <Button size="lg" className="w-full sm:w-auto">
+                    Find Jobs
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link href="/dashboard">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-        <div>
-          <Link href="/dashboard">
-            <Button size="lg" className="w-full">
-              Go to Dashboard
-            </Button>
-          </Link>
+      </section>
+
+      {/* Recent Jobs Section */}
+      {recentJobs.length > 0 && (
+        <section className="py-16 bg-white dark:bg-gray-950">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Latest Opportunities</h2>
+                <p className="text-gray-600 dark:text-gray-300">
+                  Fresh job postings that match your expertise
+                </p>
+              </div>
+              <Link href="/jobs">
+                <Button variant="outline">
+                  View All Jobs
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recentJobs.map((job) => (
+                <Card key={job.id} className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg line-clamp-2 hover:text-blue-600 transition-colors">
+                          <Link href={`/jobs/${job.id}`}>
+                            {job.title}
+                          </Link>
+                        </CardTitle>
+                        <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                          <span>{job.clientName}</span>
+                          {job.clientCompany && (
+                            <>
+                              <span>•</span>
+                              <span>{job.clientCompany}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="ml-2">
+                        {job.category}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="pt-0">
+                    <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">
+                      {job.description}
+                    </p>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-1 text-green-600 font-semibold">
+                          <DollarSign className="h-4 w-4" />
+                          {job.budget}
+                        </div>
+                        <div className="flex items-center gap-1 text-gray-500">
+                          <Clock className="h-4 w-4" />
+                          {formatTimeAgo(job.createdAt)}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <Badge variant="outline" className="text-xs">
+                          {job.experienceLevel}
+                        </Badge>
+                        <span className="text-gray-500">
+                          {job.proposalCount} {job.proposalCount === 1 ? 'proposal' : 'proposals'}
+                        </span>
+                      </div>
+
+                      {job.skills && job.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {job.skills.slice(0, 3).map((skill, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {skill}
+                            </Badge>
+                          ))}
+                          {job.skills.length > 3 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{job.skills.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Quick Stats */}
+      <section className="py-16 bg-gray-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                  <Briefcase className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                {jobsData?.total || 0}
+              </div>
+              <div className="text-gray-600 dark:text-gray-300">
+                Active Jobs
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                  <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                50,000+
+              </div>
+              <div className="text-gray-600 dark:text-gray-300">
+                Freelancers
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+                  <DollarSign className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                $2M+
+              </div>
+              <div className="text-gray-600 dark:text-gray-300">
+                Total Earned
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+                  <CheckCircle className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                98%
+              </div>
+              <div className="text-gray-600 dark:text-gray-300">
+                Success Rate
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold text-white mb-4">
+            Ready for Your Next Project?
+          </h2>
+          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            {user?.role === 'client' 
+              ? "Post your project and connect with talented freelancers ready to bring your vision to life"
+              : "Explore new opportunities and take your freelancing career to the next level"
+            }
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {user?.role === 'client' ? (
+              <>
+                <Link href="/post-job">
+                  <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                    <Plus className="mr-2 h-5 w-5" />
+                    Post a Job
+                  </Button>
+                </Link>
+                <Link href="/jobs">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-blue-600">
+                    Browse Talent
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/jobs">
+                  <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                    Find Jobs
+                  </Button>
+                </Link>
+                <Link href="/profile">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-blue-600">
+                    Update Profile
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
