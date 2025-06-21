@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from './ui/button';
 
 import { Briefcase, User, Settings, Menu } from 'lucide-react';
 
