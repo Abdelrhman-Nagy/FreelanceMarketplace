@@ -21,21 +21,16 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({
   const handleLogout = async () => {
     try {
       console.log('Starting logout process...');
+      
+      // Call logout to destroy session
       await logout();
+      
       console.log('Logout completed, redirecting...');
-      // Force a complete page refresh to clear all cached state
+      // Force refresh to ensure clean state
       window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);
-      // Fallback: clear localStorage and redirect
-      localStorage.clear();
-      sessionStorage.clear();
-      // Clear all cookies
-      document.cookie.split(";").forEach((c) => {
-        const eqPos = c.indexOf("=");
-        const name = eqPos > -1 ? c.substr(0, eqPos) : c;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-      });
+      // Fallback: just redirect
       window.location.href = '/';
     }
   };
