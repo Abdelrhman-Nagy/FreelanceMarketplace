@@ -3,7 +3,8 @@ import { QueryClient } from '@tanstack/react-query';
 const defaultFetcher = async (url: string): Promise<any> => {
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const errorText = await response.text().catch(() => 'Unknown error');
+    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
   }
   return response.json();
 };
@@ -13,7 +14,12 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: ({ queryKey }) => defaultFetcher(queryKey[0] as string),
       staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
       retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchInterval: false,
     },
   },
 });

@@ -30,8 +30,11 @@ export default function JobsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
 
-  const { data: jobsData, isLoading } = useQuery<JobsResponse>({
+  const { data: jobsData, isLoading, error } = useQuery<JobsResponse>({
     queryKey: ['/api/jobs'],
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
   const jobs = jobsData?.jobs || [];
@@ -112,7 +115,15 @@ export default function JobsPage() {
           </p>
         </div>
 
-        {isLoading ? (
+        {error ? (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h3 className="text-xl font-semibold mb-2">Error loading jobs</h3>
+            <p className="text-muted-foreground">
+              Unable to load jobs at the moment. Please try again later.
+            </p>
+          </div>
+        ) : isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <Card key={i} className="animate-pulse">
