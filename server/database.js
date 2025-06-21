@@ -602,11 +602,11 @@ class DatabaseService {
         proposalData.status || 'pending'
       ];
       
-      const result = await this.pool.query(query, values);
+      const result = await pool.query(query, values);
       console.log('Proposal created successfully:', result.rows[0]);
       
       // Update job proposal count
-      await this.pool.query(`
+      await pool.query(`
         UPDATE jobs 
         SET proposal_count = (
           SELECT COUNT(*) FROM proposals WHERE job_id = $1
