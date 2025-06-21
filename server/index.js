@@ -1,11 +1,17 @@
 import express from 'express';
-import session from 'express-session';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 import dbService from './database.js';
 import authService from './auth.js';
+import { 
+  sessionConfig, 
+  requireSessionAuth, 
+  handleLogin, 
+  handleLogout, 
+  handleProfile 
+} from './session-auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,17 +20,8 @@ const app = express();
 const PORT = process.env.PORT || process.env.IISNODE_PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// Session configuration
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
+// Session middleware
+app.use(sessionConfig);
 
 // Simple CORS middleware
 app.use((req, res, next) => {
@@ -269,155 +266,11 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
+app.post('/api/auth/login', handleLogin);
 
-    if (!email || !password) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Email and password are required'
-      });
-    }
+app.post('/api/auth/logout', handleLogout);
 
-    const user = await dbService.getUserByEmail(email);
-    
-    if (!user) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Invalid email or password'
-      });
-    }
-
-    // Verify password
-    const isPasswordValid = await authService.verifyPassword(password, user.password_hash);
-    
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Invalid email or password'
-      });
-    }
-
-    // Update last login time
-    await dbService.updateUserLoginTime(user.id);
-
-    // Store user data in session
-    req.session.userId = user.id;
-    req.session.user = {
-      id: user.id,
-      email: user.email,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      role: user.user_type,
-      company: user.company,
-      bio: user.bio,
-      skills: user.skills ? (typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills) : [],
-      hourlyRate: user.hourly_rate,
-      location: user.location
-    };
-
-    res.json({
-      status: 'success',
-      message: 'Login successful',
-      user: req.session.user
-    });
-
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Login failed'
-    });
-  }
-});
-
-app.post('/api/auth/logout', async (req, res) => {
-  try {
-    // Destroy the session
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Session destroy error:', err);
-        return res.status(500).json({
-          status: 'error',
-          message: 'Logout failed'
-        });
-      }
-
-      // Clear the session cookie
-      res.clearCookie('connect.sid');
-      res.json({
-        status: 'success',
-        message: 'Logout successful'
-      });
-    });
-
-  } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Logout failed'
-    });
-  }
-});
-
-app.get('/api/auth/profile', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.replace('Bearer ', '') || req.cookies?.authToken;
-
-    if (!token) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Authentication required'
-      });
-    }
-
-    const validation = await authService.validateSession(token);
-    if (!validation) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Invalid or expired session'
-      });
-    }
-
-    const { user } = validation;
-    
-    res.json({
-      status: 'success',
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        role: user.role,
-        company: user.company,
-        title: user.title,
-        bio: user.bio,
-        skills: user.skills,
-        hourlyRate: user.hourly_rate,
-        location: user.location,
-        timezone: user.timezone,
-        phoneNumber: user.phone_number,
-        website: user.website,
-        portfolio: user.portfolio,
-        experience: user.experience,
-        rating: user.rating,
-        totalJobs: user.total_jobs,
-        completedJobs: user.completed_jobs,
-        totalEarnings: user.total_earnings,
-        lastLoginAt: user.last_login_at,
-        createdAt: user.created_at
-      }
-    });
-
-  } catch (error) {
-    console.error('Profile fetch error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch profile'
-    });
-  }
-});
+app.get('/api/auth/profile', handleProfile);
 
 app.put('/api/auth/profile', async (req, res) => {
   try {
@@ -525,41 +378,7 @@ app.get('/api/admin/stats', authService.requireRole(['admin']), async (req, res)
   }
 });
 
-// Middleware to check authentication
-const requireAuth = async (req, res, next) => {
-  try {
-    // Check if user is logged in via session
-    if (!req.session.userId || !req.session.user) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Authentication required'
-      });
-    }
-
-    // Optionally verify user still exists in database
-    const user = await dbService.getUserById(req.session.userId);
-    if (!user) {
-      // Clear invalid session
-      req.session.destroy(() => {});
-      return res.status(401).json({
-        status: 'error',
-        message: 'User not found'
-      });
-    }
-
-    req.user = user;
-    req.sessionUser = req.session.user;
-    next();
-  } catch (error) {
-    console.error('Auth middleware error:', error);
-    res.status(401).json({
-      status: 'error',
-      message: 'Authentication failed'
-    });
-  }
-};
-
-app.get('/api/dashboard/:role', requireAuth, async (req, res) => {
+app.get('/api/dashboard/:role', requireSessionAuth, async (req, res) => {
   try {
     const { role } = req.params;
     const user = req.user;

@@ -172,8 +172,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear local state
     setUser(null);
     setLoading(false);
-    localStorage.clear();
-    sessionStorage.clear();
     
     console.log('Logout completed');
   };
