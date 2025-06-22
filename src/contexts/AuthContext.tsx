@@ -1,23 +1,32 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-interface User {
+export type UserRole = 'admin' | 'client' | 'freelancer';
+export type UserStatus = 'active' | 'inactive' | 'suspended';
+
+export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  userType: 'freelancer' | 'client' | 'admin';
+  role: UserRole;
+  status?: UserStatus;
   company?: string;
   title?: string;
   bio?: string;
   skills?: string[];
   hourlyRate?: number;
   location?: string;
+  timezone?: string;
   phoneNumber?: string;
   website?: string;
+  portfolio?: string;
+  experience?: 'entry' | 'intermediate' | 'expert';
   rating?: number;
   totalJobs?: number;
   completedJobs?: number;
   totalEarnings?: number;
+  lastLoginAt?: string;
+  createdAt?: string;
 }
 
 interface AuthContextType {
@@ -25,8 +34,11 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
-  logout: () => void;
-  updateUser: (userData: Partial<User>) => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
+  isAuthenticated: boolean;
+  hasRole: (roles: UserRole[]) => boolean;
+  hasPermission: (permission: string) => boolean;
 }
 
 interface RegisterData {
@@ -34,13 +46,14 @@ interface RegisterData {
   password: string;
   firstName: string;
   lastName: string;
-  role: 'freelancer' | 'client';
+  role: UserRole;
   company?: string;
   title?: string;
   bio?: string;
   skills?: string[];
   hourlyRate?: number;
   location?: string;
+  experience?: 'entry' | 'intermediate' | 'expert';
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,6 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Check for existing authentication on mount
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -68,12 +82,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuthStatus = async () => {
     try {
       const response = await fetch('/api/auth/profile', {
-        credentials: 'include',
+        credentials: 'include'
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.status === 'success' && data.user) {
+        if (data.status === 'success') {
           setUser(data.user);
         }
       }
@@ -85,73 +99,116 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const login = async (email: string, password: string) => {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.status === 'success') {
-      setUser(data.user);
-    } else {
-      throw new Error(data.message || 'Login failed');
+      if (data.status === 'success') {
+        setUser(data.user);
+        // Session handles authentication, no tokens needed
+      } else {
+        throw new Error(data.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
   };
 
   const register = async (userData: RegisterData) => {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(userData),
-    });
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(userData),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (data.status === 'success') {
-      setUser(data.user);
-    } else {
-      throw new Error(data.message || 'Registration failed');
+      if (data.status === 'success') {
+        setUser(data.user);
+        // Session handles authentication, no tokens needed
+      } else {
+        throw new Error(data.message || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
     }
   };
 
   const logout = async () => {
+    console.log('AuthContext logout called');
     try {
+      // Call logout endpoint to destroy session
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
     } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setUser(null);
+      console.error('Logout API error:', error);
+    }
+    
+    // Clear local state
+    setUser(null);
+    setLoading(false);
+    
+    console.log('Logout completed');
+  };
+
+  const updateProfile = async (data: Partial<User>) => {
+    try {
+      const response = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        setUser(result.user);
+      } else {
+        throw new Error(result.message || 'Profile update failed');
+      }
+    } catch (error) {
+      console.error('Profile update error:', error);
+      throw error;
     }
   };
 
-  const updateUser = async (userData: Partial<User>) => {
-    const response = await fetch('/api/auth/profile', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(userData),
-    });
+  const isAuthenticated = !!user;
 
-    const data = await response.json();
+  const hasRole = (roles: UserRole[]): boolean => {
+    return user ? roles.includes(user.role) : false;
+  };
 
-    if (data.status === 'success') {
-      setUser(data.user);
-    } else {
-      throw new Error(data.message || 'Profile update failed');
-    }
+  const hasPermission = (permission: string): boolean => {
+    if (!user) return false;
+    
+    // Admin has all permissions
+    if (user.role === 'admin') return true;
+    
+    // Add specific permission logic here
+    // This would typically check against user permissions from the database
+    return false;
   };
 
   const value: AuthContextType = {
@@ -160,12 +217,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
-    updateUser,
+    updateProfile,
+    isAuthenticated,
+    hasRole,
+    hasPermission,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

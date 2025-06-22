@@ -18,7 +18,7 @@ import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { Separator } from '../components/ui/separator';
 import { useAuth } from '../hooks/useAuth';
-import ProtectedRoute from '../components/ProtectedRoute';
+import { ClientOnlyRoute } from '../components/ProtectedRoute';
 import { apiRequest } from '../lib/queryClient';
 import { useToast } from '../hooks/use-toast';
 
@@ -268,8 +268,8 @@ function ClientProposalsPageContent() {
 
 export default function ClientProposalsPage() {
   return (
-    <ProtectedRoute requiredRole="client">
+    <ClientOnlyRoute>
       <ClientProposalsPageContent />
-    </ProtectedRoute>
+    </ClientOnlyRoute>
   );
 }

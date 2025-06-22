@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import ProtectedRoute from '../components/ProtectedRoute';
+import { FreelancerOnlyRoute } from '../components/ProtectedRoute';
 
 interface SavedJob {
   id: number;
@@ -159,8 +159,8 @@ function SavedJobsPageContent() {
 
 export default function SavedJobsPage() {
   return (
-    <ProtectedRoute requiredRole="freelancer">
+    <FreelancerOnlyRoute>
       <SavedJobsPageContent />
-    </ProtectedRoute>
+    </FreelancerOnlyRoute>
   );
 }
