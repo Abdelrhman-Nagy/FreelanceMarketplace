@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { useAuth } from '../hooks/useAuth';
-import { ProtectedRoute, FreelancerOnlyRoute } from '../components/ProtectedRoute';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 interface Proposal {
   id: number;
@@ -199,8 +199,8 @@ function ProposalsPageContent() {
 
 export default function ProposalsPage() {
   return (
-    <FreelancerOnlyRoute>
+    <ProtectedRoute requiredRole="freelancer">
       <ProposalsPageContent />
-    </FreelancerOnlyRoute>
+    </ProtectedRoute>
   );
 }

@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
-import { Search, Users, Shield, Star, ArrowRight, Briefcase, Code, Palette, Writing } from 'lucide-react';
+import { Search, Users, Shield, Star, ArrowRight, Briefcase, Code, Palette, PenTool } from 'lucide-react';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
@@ -34,8 +34,8 @@ const HomePage: React.FC = () => {
 
   const categories = [
     { name: "Web Development", icon: <Code className="h-8 w-8" />, jobs: 1240 },
-    { name: "Graphic Design", icon: <Design className="h-8 w-8" />, jobs: 856 },
-    { name: "Content Writing", icon: <Writing className="h-8 w-8" />, jobs: 634 },
+    { name: "Graphic Design", icon: <Palette className="h-8 w-8" />, jobs: 856 },
+    { name: "Content Writing", icon: <PenTool className="h-8 w-8" />, jobs: 634 },
     { name: "Digital Marketing", icon: <Briefcase className="h-8 w-8" />, jobs: 421 }
   ];
 
