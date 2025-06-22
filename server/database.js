@@ -2,6 +2,9 @@ import pg from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq, and, sql, or, inArray } from 'drizzle-orm';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import session from 'express-session';
 import * as schema from "../shared/schema.js";
 
 const { Pool } = pg;
@@ -22,6 +25,24 @@ if (process.env.DATABASE_URL) {
 }
 
 export { pool, db };
+
+// Authentication constants
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// Session middleware configuration
+export const sessionConfig = session({
+  secret: process.env.SESSION_SECRET || 'freelance-platform-dev-secret-2024',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax'
+  },
+  name: 'sessionId'
+});
 
 // Database service for compatibility
 class DatabaseService {
@@ -930,6 +951,92 @@ class DatabaseService {
     } catch (error) {
       console.error('Error creating job:', error);
       throw error;
+    }
+  }
+
+  // Authentication methods
+  generateToken(user) {
+    return jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role 
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+  }
+
+  verifyToken(token) {
+    try {
+      return jwt.verify(token, JWT_SECRET);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async hashPassword(password) {
+    return await bcrypt.hash(password, 12);
+  }
+
+  async verifyPassword(password, hashedPassword) {
+    return await bcrypt.compare(password, hashedPassword);
+  }
+
+  async createSession(userId) {
+    const sessionId = crypto.randomUUID();
+    const token = crypto.randomBytes(64).toString('hex');
+    const expiresAt = new Date(Date.now() + SESSION_DURATION);
+
+    await this.createUserSession({
+      id: sessionId,
+      userId,
+      token,
+      expiresAt
+    });
+
+    return { sessionId, token, expiresAt };
+  }
+
+  async validateSession(token) {
+    try {
+      const query = `
+        SELECT us.*, u.id as user_id, u.email, u.user_type, u.first_name, u.last_name
+        FROM user_sessions us
+        JOIN users u ON us.user_id = u.id
+        WHERE us.token = $1 AND us.expires_at > NOW()
+      `;
+      
+      const result = await pool.query(query, [token]);
+      
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return {
+        session: result.rows[0],
+        user: {
+          id: result.rows[0].user_id,
+          email: result.rows[0].email,
+          userType: result.rows[0].user_type,
+          firstName: result.rows[0].first_name,
+          lastName: result.rows[0].last_name
+        }
+      };
+    } catch (error) {
+      console.error('Session validation error:', error);
+      return null;
+    }
+  }
+
+  async deleteSession(token) {
+    try {
+      const query = 'DELETE FROM user_sessions WHERE token = $1';
+      await pool.query(query, [token]);
+      return true;
+    } catch (error) {
+      console.error('Session deletion error:', error);
+      return false;
     }
   }
 
