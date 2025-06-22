@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <appSettings>
+    <add key="DATABASE_URL" value="postgresql://app_user:Nagy1998@localhost:5432/freelancing_platform?sslmode=disable" />
+  </appSettings>
+  <system.webServer>
+
+    <!-- Node.js application handler -->
+    <handlers>
+        <add name="iisnode" path="server/index.js" verb="*" modules="iisnode" />
+    </handlers>
+
+    <!-- iisnode configuration (merged into a single block) -->
+   <iisnode      
+      node_env="%node_env%"
+      nodeProcessCommandLine="%programfiles%\nodejs\node.exe"
+      nodeProcessCountPerApplication="1"
+      maxConcurrentRequestsPerProcess="1024"
+      maxNamedPipeConnectionRetry="100"
+      namedPipeConnectionRetryDelay="250"      
+      maxNamedPipeConnectionPoolSize="512"
+      maxNamedPipePooledConnectionAge="30000"
+      asyncCompletionThreadCount="0"
+      initialRequestBufferSize="4096"
+      maxRequestBufferSize="65536"
+      watchedFiles="*.js;iisnode.yml"
+      uncFileChangesPollingInterval="5000"      
+      gracefulShutdownTimeout="60000"
+      loggingEnabled="true"
+      logDirectory="iisnode"
+      debuggingEnabled="true"
+      debugHeaderEnabled="false"
+      debuggerPortRange="5058-6058"
+      debuggerPathSegment="debug"
+      maxLogFileSizeInKB="128"
+      maxTotalLogFileSizeInKB="1024"
+      maxLogFiles="20"
+      devErrorsEnabled="false"
+      flushResponse="false"      
+      enableXFF="false"
+      promoteServerVars=""
+      configOverrides="iisnode.yml"
+     />
+
+    <!-- Default documents -->
+    <defaultDocument>
+      <files>
+        <clear />
+        <add value="server/index.html" />
+        <add value="index.js" />
+      </files>
+    </defaultDocument>
+
+    <!-- Disable directory browsing -->
+    <directoryBrowse enabled="false" />
+
+    <!-- Static content caching -->
+    <staticContent>
+      <clientCache cacheControlMode="UseMaxAge" cacheControlMaxAge="30.00:00:00" />
+    </staticContent>
+
+    <!-- URL rewrite rules -->
+    <rewrite>
+      <rules>
+
+        <!-- API routes handled by Node.js -->
+<rule name="API Routes" stopProcessing="true">
+  <match url="^api/(.*)" />
+  <action type="Rewrite" url="server/index.js/{R:1}" />
+</rule>
+
+        <!-- Static assets (e.g., /assets/logo.png) -->
+        <rule name="Static Assets" stopProcessing="true">
+          <match url="^assets/.*" />
+          <action type="Rewrite" url="public/{R:0}" />
+        </rule>
+
+        <!-- Direct access to static files in /public -->
+        <rule name="Static Files" stopProcessing="true">
+          <match url="^public/.*" />
+          <action type="None" />
+        </rule>
+
+        <!-- Root URL – serve React index.html -->
+        <rule name="Root to React" stopProcessing="true">
+          <match url="^$" />
+          <action type="Rewrite" url="public/index.html" />
+        </rule>
+
+        <!-- React SPA fallback routes -->
+        <rule name="React SPA Routes" stopProcessing="true">
+          <match url="^(?!api/).*" />
+          <conditions>
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="public/index.html" />
+        </rule>
+
+      </rules>
+    </rewrite>
+
+    <!-- Handle 404 errors with SPA fallback -->
+    <httpErrors>
+      <remove statusCode="404" subStatusCode="-1" />
+      <error statusCode="404" path="public/index.html" responseMode="ExecuteURL" />
+    </httpErrors>
+
+    <!-- Security headers -->
+    <httpProtocol>
+      <customHeaders>
+        <add name="X-Content-Type-Options" value="nosniff" />
+        <add name="X-Frame-Options" value="DENY" />
+        <add name="X-XSS-Protection" value="1; mode=block" />
+      </customHeaders>
+    </httpProtocol>
+
+  </system.webServer>
+</configuration>
