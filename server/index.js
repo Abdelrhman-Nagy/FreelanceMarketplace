@@ -557,7 +557,7 @@ app.post('/api/auth/register', async (req, res) => {
     }
 
     // Hash the password
-    const passwordHash = await authService.hashPassword(password);
+    const passwordHash = await dbService.hashPassword(password);
 
     const userData = {
       id: crypto.randomUUID(),
@@ -576,8 +576,8 @@ app.post('/api/auth/register', async (req, res) => {
     };
 
     const user = await dbService.createUser(userData);
-    const session = await authService.createSession(user.id);
-    const token = authService.generateToken(user);
+    const session = await dbService.createSession(user.id);
+    const token = dbService.generateToken(user);
 
     res.cookie('authToken', session.token, {
       httpOnly: true,
@@ -747,7 +747,7 @@ app.put('/api/auth/profile', async (req, res) => {
   }
 });
 
-app.get('/api/admin/users', authService.requireRole(['admin']), async (req, res) => {
+app.get('/api/admin/users', requireSessionAuth, async (req, res) => {
   try {
     const { role, status, limit } = req.query;
     const filters = { role, status, limit: limit ? parseInt(limit) : null };
@@ -769,7 +769,7 @@ app.get('/api/admin/users', authService.requireRole(['admin']), async (req, res)
   }
 });
 
-app.get('/api/admin/stats', authService.requireRole(['admin']), async (req, res) => {
+app.get('/api/admin/stats', requireSessionAuth, async (req, res) => {
   try {
     const userStats = await dbService.getUserStats();
     const jobStats = await dbService.getJobs();
