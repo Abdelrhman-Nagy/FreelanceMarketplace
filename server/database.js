@@ -980,7 +980,16 @@ class DatabaseService {
   }
 
   async verifyPassword(password, hashedPassword) {
-    return await bcrypt.compare(password, hashedPassword);
+    if (!hashedPassword || typeof hashedPassword !== 'string') {
+      console.log('Invalid hashed password provided');
+      return false;
+    }
+    try {
+      return await bcrypt.compare(password, hashedPassword);
+    } catch (error) {
+      console.error('Password verification error:', error);
+      return false;
+    }
   }
 
   async createSession(userId) {
