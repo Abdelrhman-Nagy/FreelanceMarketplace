@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
-import { Search, Users, Shield, Star, ArrowRight, Briefcase, Code, Design, Writing } from 'lucide-react';
+import { Search, Users, Shield, Star, ArrowRight, Briefcase, Code, Palette, Writing } from 'lucide-react';
 
 const HomePage: React.FC = () => {
   const { user } = useAuth();
