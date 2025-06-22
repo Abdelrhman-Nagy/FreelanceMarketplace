@@ -1,8 +1,10 @@
 import { QueryClient } from '@tanstack/react-query';
 
 const defaultFetcher = async (url: string): Promise<any> => {
-  console.log('Fetching:', url);
-  const response = await fetch(url, {
+  // Auto-detect API base URL
+  const apiUrl = window.location.port === '5000' ? url : `http://localhost:5000${url}`;
+  console.log('Fetching:', apiUrl);
+  const response = await fetch(apiUrl, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -56,7 +58,10 @@ export const apiRequest = async (
     headers['x-user-type'] = user.userType;
   }
 
-  const response = await fetch(url, {
+  // Auto-detect API base URL
+  const apiUrl = window.location.port === '5000' ? url : `http://localhost:5000${url}`;
+  
+  const response = await fetch(apiUrl, {
     headers,
     ...options,
   });
