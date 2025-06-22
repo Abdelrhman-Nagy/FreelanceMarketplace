@@ -81,7 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const apiUrl = 'http://localhost:5000/api/auth/profile';
+      const apiUrl = '/api/auth/profile';
       const response = await fetch(apiUrl, {
         credentials: 'include'
       });
@@ -192,7 +192,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (data: Partial<User>) => {
     try {
-      const apiUrl = 'http://localhost:5000/api/auth/profile';
+      const apiUrl = '/api/auth/profile';
       const response = await fetch(apiUrl, {
         method: 'PUT',
         headers: {
