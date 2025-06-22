@@ -81,7 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const apiUrl = (window.location.port === '5000' || window.location.hostname === '0.0.0.0') ? '/api/auth/profile' : 'http://localhost:5000/api/auth/profile';
+      const apiUrl = 'http://localhost:5000/api/auth/profile';
       const response = await fetch(apiUrl, {
         credentials: 'include'
       });
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const apiUrl = 'http://localhost:5000/api/auth/login';
+      const apiUrl = '/api/auth/login';
       console.log('Attempting login to:', apiUrl);
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -140,7 +140,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData) => {
     try {
-      const apiUrl = 'http://localhost:5000/api/auth/register';
+      const apiUrl = '/api/auth/register';
       console.log('Attempting registration to:', apiUrl);
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -176,7 +176,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('AuthContext logout called');
     try {
       // Call logout endpoint to destroy session
-      const apiUrl = 'http://localhost:5000/api/auth/logout';
+      const apiUrl = '/api/auth/logout';
       await fetch(apiUrl, {
         method: 'POST',
         credentials: 'include',
@@ -197,7 +197,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (data: Partial<User>) => {
     try {
-      const apiUrl = (window.location.port === '5000' || window.location.hostname === '0.0.0.0') ? '/api/auth/profile' : 'http://localhost:5000/api/auth/profile';
+      const apiUrl = 'http://localhost:5000/api/auth/profile';
       const response = await fetch(apiUrl, {
         method: 'PUT',
         headers: {

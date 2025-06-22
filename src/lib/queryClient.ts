@@ -1,8 +1,8 @@
 import { QueryClient } from '@tanstack/react-query';
 
 const defaultFetcher = async (url: string): Promise<any> => {
-  // Smart port detection for API requests
-  const apiUrl = (window.location.port === '5000' || window.location.hostname === '0.0.0.0') ? url : `http://localhost:5000${url}`;
+  // Use relative URLs
+  const apiUrl = url;
   console.log('Fetching:', apiUrl);
   const response = await fetch(apiUrl, {
     credentials: 'include',
@@ -58,8 +58,8 @@ export const apiRequest = async (
     headers['x-user-type'] = user.userType;
   }
 
-  // Smart port detection for API requests
-  const apiUrl = (window.location.port === '5000' || window.location.hostname === '0.0.0.0') ? url : `http://localhost:5000${url}`;
+  // Use relative URLs
+  const apiUrl = url;
   
   const response = await fetch(apiUrl, {
     headers,
