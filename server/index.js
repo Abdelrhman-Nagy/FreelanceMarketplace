@@ -18,6 +18,10 @@ const app = express();
 const PORT = process.env.PORT || process.env.IISNODE_PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
+// Parse JSON bodies
+app.use(express.json());
+app.use(cookieParser());
+
 // Session middleware
 app.use(sessionConfig);
 
@@ -31,6 +35,12 @@ app.use((req, res, next) => {
   } else {
     next();
   }
+});
+
+// Add request logging for debugging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
 });
 
 app.use(express.json());
