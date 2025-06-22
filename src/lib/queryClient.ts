@@ -1,8 +1,8 @@
 import { QueryClient } from '@tanstack/react-query';
 
 const defaultFetcher = async (url: string): Promise<any> => {
-  // Auto-detect API base URL
-  const apiUrl = window.location.port === '5000' ? url : `http://localhost:5000${url}`;
+  // Always use absolute URL pointing to port 5000
+  const apiUrl = `http://localhost:5000${url}`;
   console.log('Fetching:', apiUrl);
   const response = await fetch(apiUrl, {
     credentials: 'include',
@@ -58,8 +58,8 @@ export const apiRequest = async (
     headers['x-user-type'] = user.userType;
   }
 
-  // Auto-detect API base URL
-  const apiUrl = window.location.port === '5000' ? url : `http://localhost:5000${url}`;
+  // Always use absolute URL pointing to port 5000
+  const apiUrl = `http://localhost:5000${url}`;
   
   const response = await fetch(apiUrl, {
     headers,
