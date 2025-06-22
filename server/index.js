@@ -3,15 +3,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
-import dbService from './database.js';
-import authService from './auth.js';
-import { 
+import dbService, { 
   sessionConfig, 
   requireSessionAuth, 
   handleLogin, 
   handleLogout, 
   handleProfile 
-} from './session-auth.js';
+} from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
