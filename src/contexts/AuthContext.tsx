@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const apiUrl = (window.location.port === '5000' || window.location.hostname === '0.0.0.0') ? '/api/auth/login' : 'http://localhost:5000/api/auth/login';
+      const apiUrl = 'http://localhost:5000/api/auth/login';
       console.log('Attempting login to:', apiUrl);
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -140,7 +140,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData) => {
     try {
-      const apiUrl = (window.location.port === '5000' || window.location.hostname === '0.0.0.0') ? '/api/auth/register' : 'http://localhost:5000/api/auth/register';
+      const apiUrl = 'http://localhost:5000/api/auth/register';
       console.log('Attempting registration to:', apiUrl);
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -176,7 +176,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('AuthContext logout called');
     try {
       // Call logout endpoint to destroy session
-      const apiUrl = (window.location.port === '5000' || window.location.hostname === '0.0.0.0') ? '/api/auth/logout' : 'http://localhost:5000/api/auth/logout';
+      const apiUrl = 'http://localhost:5000/api/auth/logout';
       await fetch(apiUrl, {
         method: 'POST',
         credentials: 'include',
