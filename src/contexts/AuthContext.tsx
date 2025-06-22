@@ -87,13 +87,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        if (data.status === 'success') {
-          setUser(data.user);
+        const text = await response.text();
+        if (text) {
+          const data = JSON.parse(text);
+          if (data.status === 'success') {
+            setUser(data.user);
+          }
         }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      // Clear any existing user data on auth failure
+      setUser(null);
     } finally {
       setLoading(false);
     }
