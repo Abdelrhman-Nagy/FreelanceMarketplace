@@ -1,11 +1,6 @@
 // API configuration utility
 export const getApiUrl = (endpoint: string): string => {
-  // Check if we're running on the same port as the server
-  if (window.location.port === '5000' || window.location.hostname === 'localhost' && window.location.port === '') {
-    return endpoint; // Use relative URL
-  }
-  
-  // Otherwise, explicitly point to localhost:5000
+  // Always use absolute URL pointing to port 5000 where the API server runs
   return `http://localhost:5000${endpoint}`;
 };
 
