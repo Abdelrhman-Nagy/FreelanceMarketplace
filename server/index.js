@@ -225,6 +225,16 @@ app.post('/api/proposals', async (req, res) => {
       });
     }
 
+    console.log('Creating proposal with data:', {
+      freelancerId: userId,
+      jobId: parseInt(jobId),
+      coverLetter,
+      proposedRate: proposedRate ? parseInt(proposedRate) : null,
+      estimatedDuration,
+      status: 'pending',
+      createdAt: new Date()
+    });
+
     const proposalData = {
       freelancerId: userId,
       jobId: parseInt(jobId),
@@ -236,6 +246,7 @@ app.post('/api/proposals', async (req, res) => {
     };
 
     const newProposal = await dbService.createProposal(proposalData);
+    console.log('Proposal created successfully:', newProposal);
 
     res.json({
       status: 'success',
