@@ -1,6 +1,6 @@
 import pg from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { eq, and, sql, or, inArray } from 'drizzle-orm';
+import { eq, and, sql, or, inArray, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -1125,6 +1125,50 @@ class DatabaseService {
 
     } catch (error) {
       console.error('Error getting user statistics:', error);
+      throw error;
+    }
+  }
+
+  async getContracts(userId, userType) {
+    try {
+      if (!db) {
+        throw new Error('Database not initialized');
+      }
+
+      // Get accepted proposals that serve as contracts
+      const contracts = await db
+        .select({
+          id: schema.proposals.id,
+          proposalId: schema.proposals.id,
+          clientId: schema.jobs.clientId,
+          freelancerId: schema.proposals.freelancerId,
+          jobId: schema.jobs.id,
+          jobTitle: schema.jobs.title,
+          jobDescription: schema.jobs.description,
+          proposedRate: schema.proposals.proposedRate,
+          estimatedDuration: schema.proposals.estimatedDuration,
+          status: sql`'active'`,
+          startDate: schema.proposals.updatedAt,
+          coverLetter: schema.proposals.coverLetter,
+          proposalStatus: schema.proposals.status,
+          createdAt: schema.proposals.createdAt,
+          updatedAt: schema.proposals.updatedAt
+        })
+        .from(schema.proposals)
+        .leftJoin(schema.jobs, eq(schema.proposals.jobId, schema.jobs.id))
+        .where(
+          and(
+            eq(schema.proposals.status, 'accepted'),
+            userType === 'client' 
+              ? eq(schema.jobs.clientId, userId)
+              : eq(schema.proposals.freelancerId, userId)
+          )
+        )
+        .orderBy(desc(schema.proposals.updatedAt));
+
+      return contracts;
+    } catch (error) {
+      console.error('Error getting contracts:', error);
       throw error;
     }
   }
