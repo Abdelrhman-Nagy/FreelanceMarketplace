@@ -519,6 +519,120 @@ app.get('/api/proposals', async (req, res) => {
 // Serve static files from dist directory
 app.use(express.static('dist'));
 
+// Admin endpoints - require admin authentication
+app.get('/api/admin/stats', async (req, res) => {
+  try {
+    if (!req.session?.user || req.session.user.userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    // Get user statistics
+    const totalUsers = await dbService.getTotalUsers();
+    const usersByStatus = await dbService.getUsersByStatus();
+    const jobStats = await dbService.getJobStatistics();
+    
+    res.json({
+      status: 'success',
+      stats: {
+        totalUsers: totalUsers.count,
+        activeUsers: usersByStatus.active,
+        pendingUsers: usersByStatus.pending,
+        totalJobs: jobStats.total,
+        activeJobs: jobStats.active,
+        totalRevenue: 0, // TODO: Implement revenue tracking
+        monthlyGrowth: 15 // TODO: Calculate actual growth
+      }
+    });
+  } catch (error) {
+    console.error('Admin stats error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch admin statistics'
+    });
+  }
+});
+
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    if (!req.session?.user || req.session.user.userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const users = await dbService.getAllUsersForAdmin();
+    
+    res.json({
+      status: 'success',
+      users: users
+    });
+  } catch (error) {
+    console.error('Admin users fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch users'
+    });
+  }
+});
+
+app.put('/api/admin/users/:id', async (req, res) => {
+  try {
+    if (!req.session?.user || req.session.user.userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const userId = req.params.id;
+    const updates = req.body;
+    
+    const updatedUser = await dbService.updateUser(userId, updates);
+    
+    res.json({
+      status: 'success',
+      message: 'User updated successfully',
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Admin user update error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update user'
+    });
+  }
+});
+
+app.delete('/api/admin/users/:id', async (req, res) => {
+  try {
+    if (!req.session?.user || req.session.user.userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const userId = req.params.id;
+    
+    await dbService.deleteUser(userId);
+    
+    res.json({
+      status: 'success',
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    console.error('Admin user delete error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to delete user'
+    });
+  }
+});
+
 // API root endpoint for health check
 app.get('/api', (req, res) => {
   res.json({
@@ -537,7 +651,9 @@ app.get('/api', (req, res) => {
       'GET /api/projects',
       'GET /api/proposals',
       'GET /api/admin/users',
-      'GET /api/admin/stats'
+      'GET /api/admin/stats',
+      'PUT /api/admin/users/:id',
+      'DELETE /api/admin/users/:id'
     ]
   });
 });

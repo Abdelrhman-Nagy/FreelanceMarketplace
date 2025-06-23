@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   userType: text("user_type").notNull(), // 'admin', 'client', or 'freelancer'
+  status: text("status").default("active"), // 'active', 'pending', 'suspended'
   company: text("company"),
   title: text("title"),
   bio: text("bio"),
