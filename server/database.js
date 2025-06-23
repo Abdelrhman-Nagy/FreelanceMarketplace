@@ -1219,7 +1219,8 @@ export const handleLogout = (req, res) => {
 // Profile handler
 export const handleProfile = async (req, res) => {
   try {
-    console.log('Profile request - Session:', req.session?.userId ? 'exists' : 'missing');
+    console.log('Profile request - Session userId:', req.session?.userId);
+    console.log('Profile request - Session user:', req.session?.user);
     
     if (!req.session?.userId) {
       return res.status(401).json({
@@ -1243,14 +1244,14 @@ export const handleProfile = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.first_name || user.firstName,
-        lastName: user.last_name || user.lastName,
-        userType: user.user_type || user.userType,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userType: user.userType,
         company: user.company,
         title: user.title,
         bio: user.bio,
         skills: user.skills,
-        hourlyRate: user.hourly_rate || user.hourlyRate,
+        hourlyRate: user.hourlyRate,
         location: user.location
       }
     });

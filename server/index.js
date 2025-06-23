@@ -596,12 +596,14 @@ app.post('/api/auth/register', async (req, res) => {
     req.session.user = {
       id: user.id,
       email: user.email,
-      firstName: user.first_name || user.firstName,
-      lastName: user.last_name || user.lastName,
-      userType: user.user_type || user.userType,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userType: user.userType,
       company: user.company,
       title: user.title
     };
+    
+    console.log('Session created for user:', user.id, 'Email:', user.email);
 
     res.status(201).json({
       status: 'success',
@@ -609,9 +611,9 @@ app.post('/api/auth/register', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.first_name || user.firstName,
-        lastName: user.last_name || user.lastName,
-        userType: user.user_type || user.userType,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        userType: user.userType,
         company: user.company,
         title: user.title
       }
