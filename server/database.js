@@ -813,19 +813,31 @@ class DatabaseService {
   async getUserByEmail(email) {
     try {
       if (!db) {
+        console.error('Database not initialized - check DATABASE_URL in web.config');
         throw new Error('Database not initialized');
       }
 
+      console.log('Searching for user with email:', email);
+      
       const users = await db
         .select()
         .from(schema.users)
         .where(eq(schema.users.email, email))
         .limit(1);
 
-      return users.length > 0 ? users[0] : null;
+      console.log('Database query result count:', users.length);
+      
+      if (users.length > 0) {
+        console.log('User found:', users[0].id, users[0].email);
+        return users[0];
+      } else {
+        console.log('No user found with email:', email);
+        return null;
+      }
 
     } catch (error) {
       console.error('Error getting user by email:', error);
+      console.error('Database error details:', error.message);
       throw error;
     }
   }
@@ -981,13 +993,23 @@ class DatabaseService {
 
   async verifyPassword(password, hashedPassword) {
     if (!hashedPassword || typeof hashedPassword !== 'string') {
-      console.log('Invalid hashed password provided');
+      console.log('Invalid hashed password provided:', typeof hashedPassword);
       return false;
     }
+    
+    if (!password || typeof password !== 'string') {
+      console.log('Invalid password provided:', typeof password);
+      return false;
+    }
+    
     try {
-      return await bcrypt.compare(password, hashedPassword);
+      console.log('Comparing password with hash...');
+      const result = await bcrypt.compare(password, hashedPassword);
+      console.log('Password comparison result:', result);
+      return result;
     } catch (error) {
       console.error('Password verification error:', error);
+      console.error('Password verification error details:', error.message);
       return false;
     }
   }
@@ -1142,9 +1164,11 @@ export const requireSessionAuth = async (req, res, next) => {
 // Login handler
 export const handleLogin = async (req, res) => {
   try {
+    console.log('Login attempt for:', req.body.email);
     const { email, password } = req.body;
 
     if (!email || !password) {
+      console.log('Missing email or password');
       return res.status(400).json({
         status: 'error',
         message: 'Email and password are required'
@@ -1153,7 +1177,10 @@ export const handleLogin = async (req, res) => {
 
     // Find user by email
     const user = await dbService.getUserByEmail(email);
+    console.log('User found:', user ? 'Yes' : 'No');
+    
     if (!user) {
+      console.log('User not found for email:', email);
       return res.status(401).json({
         status: 'error',
         message: 'Invalid credentials'
@@ -1161,8 +1188,12 @@ export const handleLogin = async (req, res) => {
     }
 
     // Verify password
+    console.log('Verifying password for user:', user.id);
     const isValidPassword = await dbService.verifyPassword(password, user.passwordHash);
+    console.log('Password valid:', isValidPassword);
+    
     if (!isValidPassword) {
+      console.log('Invalid password for user:', email);
       return res.status(401).json({
         status: 'error',
         message: 'Invalid credentials'
@@ -1171,28 +1202,61 @@ export const handleLogin = async (req, res) => {
 
     // Create session
     req.session.userId = user.id;
-    req.session.userType = user.userType;
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userType: user.userType,
+      role: user.userType,
+      company: user.company,
+      title: user.title
+    };
+
+    console.log('Session created for user:', user.id, 'Email:', user.email);
 
     // Update last login
-    await dbService.updateUserLoginTime(user.id);
+    try {
+      await dbService.updateUserLoginTime(user.id);
+    } catch (loginTimeError) {
+      console.error('Error updating login time:', loginTimeError);
+      // Don't fail login if this fails
+    }
 
+    const userResponse = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.userType,
+      userType: user.userType,
+      company: user.company,
+      title: user.title,
+      bio: user.bio,
+      skills: user.skills ? (typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills) : [],
+      hourlyRate: user.hourlyRate,
+      location: user.location,
+      phoneNumber: user.phoneNumber,
+      website: user.website,
+      rating: user.rating || 0,
+      totalJobs: user.totalJobs || 0,
+      completedJobs: user.completedJobs || 0,
+      totalEarnings: user.totalEarnings || 0,
+      createdAt: user.createdAt
+    };
+
+    console.log('Login successful for user:', user.email);
     res.json({
       status: 'success',
       message: 'Login successful',
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        userType: user.userType,
-        company: user.company
-      }
+      user: userResponse
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', error);
+    console.error('Login error stack:', error.stack);
     res.status(500).json({
       status: 'error',
-      message: 'Login failed'
+      message: 'Login failed: ' + error.message
     });
   }
 };
