@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Users, Briefcase, FileText, TrendingUp } from 'lucide-react';
+import { UserManagementModal } from '../components/admin/UserManagementModal';
 
 const AdminDashboard: React.FC = () => {
   const { user, isAuthenticated, hasRole, logout } = useAuth();
   const [, setLocation] = useLocation();
+  const [showUserManagement, setShowUserManagement] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !hasRole(['admin'])) {
@@ -23,6 +25,37 @@ const AdminDashboard: React.FC = () => {
   const handleLogout = async () => {
     await logout();
     setLocation('/');
+  };
+
+  // User Management handlers
+  const handleViewAllUsers = () => {
+    setShowUserManagement(true);
+  };
+
+  const handleManagePermissions = () => {
+    console.log('Manage Permissions clicked');
+    alert('User Management feature: Manage Permissions');
+  };
+
+  const handleUserAnalytics = () => {
+    console.log('User Analytics clicked');
+    alert('User Management feature: User Analytics');
+  };
+
+  // Platform Management handlers
+  const handleJobModeration = () => {
+    console.log('Job Moderation clicked');
+    alert('Platform Management feature: Job Moderation');
+  };
+
+  const handlePaymentOversight = () => {
+    console.log('Payment Oversight clicked');
+    alert('Platform Management feature: Payment Oversight');
+  };
+
+  const handleSystemReports = () => {
+    console.log('System Reports clicked');
+    alert('Platform Management feature: System Reports');
   };
 
   const stats = [
@@ -83,13 +116,13 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" onClick={handleViewAllUsers}>
                     View All Users
                   </Button>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" onClick={handleManagePermissions}>
                     Manage Permissions
                   </Button>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" onClick={handleUserAnalytics}>
                     User Analytics
                   </Button>
                 </div>
@@ -103,13 +136,13 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" onClick={handleJobModeration}>
                     Job Moderation
                   </Button>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" onClick={handlePaymentOversight}>
                     Payment Oversight
                   </Button>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" onClick={handleSystemReports}>
                     System Reports
                   </Button>
                 </div>
@@ -164,6 +197,11 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       </main>
+
+      <UserManagementModal 
+        isOpen={showUserManagement} 
+        onClose={() => setShowUserManagement(false)} 
+      />
     </div>
   );
 };
