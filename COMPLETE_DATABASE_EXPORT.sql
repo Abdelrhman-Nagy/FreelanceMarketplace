@@ -1,229 +1,228 @@
--- FreelanceHub Complete Database Export
--- Generated on 2025-06-21
+-- ========================================
+-- FREELANCEHUB PLATFORM - COMPLETE DATABASE EXPORT
+-- Generated on: 2025-06-23
+-- Database: PostgreSQL with Drizzle ORM
+-- ========================================
+
+-- Drop existing tables if they exist
+DROP TABLE IF EXISTS saved_jobs CASCADE;
+DROP TABLE IF EXISTS project_messages CASCADE;
+DROP TABLE IF EXISTS project_members CASCADE;
+DROP TABLE IF EXISTS project_files CASCADE;
+DROP TABLE IF EXISTS tasks CASCADE;
+DROP TABLE IF EXISTS contracts CASCADE;
+DROP TABLE IF EXISTS projects CASCADE;
+DROP TABLE IF EXISTS password_reset_tokens CASCADE;
+DROP TABLE IF EXISTS user_permissions CASCADE;
+DROP TABLE IF EXISTS user_sessions CASCADE;
+DROP TABLE IF EXISTS proposals CASCADE;
+DROP TABLE IF EXISTS jobs CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 
 -- ========================================
 -- TABLE STRUCTURES
 -- ========================================
 
--- Users table
+-- Users table - Core user management
 CREATE TABLE users (
     id TEXT PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    first_name TEXT,
-    last_name TEXT,
-    user_type TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    user_type TEXT NOT NULL, -- 'client', 'freelancer', 'admin'
+    status TEXT DEFAULT 'active', -- 'active', 'inactive', 'suspended'
     company TEXT,
-    rating INTEGER DEFAULT 0,
-    total_jobs INTEGER DEFAULT 0,
-    profile_image TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    password_hash TEXT,
     title TEXT,
     bio TEXT,
-    skills JSONB DEFAULT '[]',
-    hourly_rate DECIMAL,
+    skills JSONB DEFAULT '[]'::jsonb,
+    hourly_rate INTEGER,
     location TEXT,
     timezone TEXT,
     phone_number TEXT,
     website TEXT,
     portfolio TEXT,
-    experience TEXT,
+    experience TEXT, -- 'entry', 'intermediate', 'expert'
+    rating INTEGER DEFAULT 0,
+    total_jobs INTEGER DEFAULT 0,
     completed_jobs INTEGER DEFAULT 0,
-    total_earnings DECIMAL DEFAULT 0,
-    last_login_at TIMESTAMP
+    total_earnings INTEGER DEFAULT 0,
+    profile_image TEXT,
+    password_hash VARCHAR,
+    last_login_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Jobs table
+-- Jobs table - Job postings by clients
 CREATE TABLE jobs (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
-    description TEXT,
-    client_id TEXT NOT NULL REFERENCES users(id),
-    category TEXT,
-    budget_type TEXT,
-    budget_min INTEGER,
-    budget_max INTEGER,
-    hourly_rate DECIMAL,
-    experience_level TEXT,
-    skills JSONB DEFAULT '[]',
-    status TEXT DEFAULT 'active',
-    remote BOOLEAN DEFAULT true,
-    duration TEXT,
-    proposal_count INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    description TEXT NOT NULL,
+    budget INTEGER NOT NULL,
+    category TEXT NOT NULL,
+    skills JSONB DEFAULT '[]'::jsonb,
+    experience_level TEXT NOT NULL, -- 'entry', 'intermediate', 'expert'
+    client_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'active', -- 'active', 'closed', 'completed'
+    deadline TIMESTAMP,
+    urgency_level TEXT DEFAULT 'normal', -- 'low', 'normal', 'high', 'urgent'
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Proposals table
+-- Proposals table - Freelancer applications to jobs
 CREATE TABLE proposals (
     id SERIAL PRIMARY KEY,
-    job_id INTEGER NOT NULL REFERENCES jobs(id),
-    freelancer_id TEXT NOT NULL REFERENCES users(id),
-    cover_letter TEXT,
-    proposed_rate DECIMAL,
-    estimated_duration TEXT,
-    status TEXT DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Contracts table
-CREATE TABLE contracts (
-    id SERIAL PRIMARY KEY,
-    proposal_id INTEGER REFERENCES proposals(id),
-    client_id TEXT NOT NULL REFERENCES users(id),
-    freelancer_id TEXT NOT NULL REFERENCES users(id),
-    job_id INTEGER NOT NULL REFERENCES jobs(id),
+    job_id INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    freelancer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    cover_letter TEXT NOT NULL,
     proposed_rate INTEGER,
     estimated_duration TEXT,
-    status TEXT DEFAULT 'active',
-    start_date TIMESTAMP,
-    end_date TIMESTAMP,
-    terms TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    status TEXT DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(job_id, freelancer_id)
 );
 
--- Saved Jobs table
-CREATE TABLE saved_jobs (
-    id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id),
-    job_id INTEGER NOT NULL REFERENCES jobs(id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Projects table
+-- Projects table - Active work projects from accepted proposals
 CREATE TABLE projects (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
-    description TEXT,
-    client_id TEXT NOT NULL REFERENCES users(id),
-    freelancer_id TEXT REFERENCES users(id),
-    job_id INTEGER REFERENCES jobs(id),
-    status TEXT DEFAULT 'active',
+    description TEXT NOT NULL,
+    client_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    freelancer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    job_id INTEGER REFERENCES jobs(id) ON DELETE SET NULL,
+    status TEXT DEFAULT 'active', -- 'active', 'completed', 'cancelled'
+    budget INTEGER NOT NULL,
     deadline TIMESTAMP,
-    budget INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Tasks table
+-- Tasks table - Project task management
 CREATE TABLE tasks (
     id SERIAL PRIMARY KEY,
-    project_id INTEGER NOT NULL REFERENCES projects(id),
+    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     description TEXT,
-    assigned_to TEXT REFERENCES users(id),
-    status TEXT DEFAULT 'todo',
-    priority TEXT DEFAULT 'medium',
+    assigned_to TEXT REFERENCES users(id) ON DELETE SET NULL,
+    status TEXT DEFAULT 'pending', -- 'pending', 'in_progress', 'completed'
+    priority TEXT DEFAULT 'medium', -- 'low', 'medium', 'high'
     due_date TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Project Files table
+-- Project Files table - File attachments for projects
 CREATE TABLE project_files (
     id SERIAL PRIMARY KEY,
-    project_id INTEGER NOT NULL REFERENCES projects(id),
-    uploaded_by TEXT NOT NULL REFERENCES users(id),
+    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    uploaded_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     file_name TEXT NOT NULL,
-    file_path TEXT NOT NULL,
+    file_url TEXT NOT NULL,
     file_size INTEGER,
-    mime_type TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    file_type TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Project Messages table
+-- Project Messages table - Communication within projects
 CREATE TABLE project_messages (
     id SERIAL PRIMARY KEY,
-    project_id INTEGER NOT NULL REFERENCES projects(id),
-    sender_id TEXT NOT NULL REFERENCES users(id),
+    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    sender_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     message TEXT NOT NULL,
-    message_type TEXT DEFAULT 'text',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    message_type TEXT DEFAULT 'text', -- 'text', 'file', 'system'
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Project Members table
+-- Project Members table - Team members in projects
 CREATE TABLE project_members (
     id SERIAL PRIMARY KEY,
-    project_id INTEGER NOT NULL REFERENCES projects(id),
-    user_id TEXT NOT NULL REFERENCES users(id),
-    role TEXT DEFAULT 'member',
-    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL, -- 'client', 'freelancer', 'collaborator'
+    joined_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(project_id, user_id)
 );
 
--- User Sessions table
-CREATE TABLE user_sessions (
+-- Contracts table - Formal agreements (currently uses accepted proposals)
+CREATE TABLE contracts (
     id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id),
+    proposal_id INTEGER NOT NULL REFERENCES proposals(id) ON DELETE CASCADE,
+    client_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    freelancer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'active', -- 'active', 'completed', 'terminated'
+    start_date TIMESTAMP DEFAULT NOW(),
+    end_date TIMESTAMP,
+    terms TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- User Sessions table - Session management
+CREATE TABLE user_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token TEXT NOT NULL UNIQUE,
     expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Password Reset Tokens table
+-- User Permissions table - Role-based access control
+CREATE TABLE user_permissions (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    permission TEXT NOT NULL,
+    granted_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, permission)
+);
+
+-- Password Reset Tokens table - Secure password reset
 CREATE TABLE password_reset_tokens (
     id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id),
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token TEXT NOT NULL UNIQUE,
     expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    used BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Saved Jobs table - User bookmarked jobs
+CREATE TABLE saved_jobs (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    job_id INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    saved_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, job_id)
 );
 
 -- ========================================
--- SAMPLE DATA
+-- INDEXES FOR PERFORMANCE
 -- ========================================
 
--- Users (14 total)
-INSERT INTO users VALUES 
-('client_001', 'john.smith@techcorp.com', 'John', 'Smith', 'client', 'TechCorp Solutions', 48, 15, NULL, '2025-06-19 13:41:53.498933', '2025-06-19 13:41:53.498933', NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL),
-('client_002', 'sarah.johnson@startupxyz.com', 'Sarah', 'Johnson', 'client', 'StartupXYZ', 49, 8, NULL, '2025-06-19 13:41:53.498933', '2025-06-19 13:41:53.498933', NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL),
-('freelancer_001', 'alex.dev@gmail.com', 'Alex', 'Developer', 'freelancer', NULL, 47, 12, NULL, '2025-06-19 13:41:53.498933', '2025-06-19 13:41:53.498933', NULL, NULL, NULL, '[]', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL);
-
--- Jobs (10 total)
-INSERT INTO jobs VALUES 
-(1, 'React Developer - E-commerce Platform', 'Build a modern e-commerce platform using React and Node.js with payment integration and user authentication.', 'client_001', 'Web Development', 'fixed', 2000, 2500, NULL, 'Intermediate', '["React", "Node.js", "PostgreSQL", "Payment Integration"]', 'active', true, '2-3 months', 1, '2025-06-19 13:42:02.986194', '2025-06-19 13:42:02.986194'),
-(2, 'Mobile App Development - iOS/Android', 'Create a cross-platform mobile application for food delivery with real-time tracking.', 'client_002', 'Mobile Development', 'fixed', 3000, 3500, NULL, 'Expert', '["React Native", "Firebase", "Payment Integration", "GPS"]', 'active', true, '3-4 months', 1, '2025-06-19 13:42:02.986194', '2025-06-19 13:42:02.986194');
-
--- Proposals (13 total)
-INSERT INTO proposals VALUES 
-(1, 1, 'freelancer_001', 'I have 5+ years of experience building React applications and can deliver this e-commerce platform within your timeline.', 2300, '2.5 months', 'pending', '2025-06-19 13:42:09.162205', '2025-06-19 13:42:09.162205'),
-(3, 3, 'freelancer_002', 'UI/UX designer with extensive SaaS experience. I will create a modern, conversion-focused design.', NULL, '6 weeks', 'accepted', '2025-06-19 13:42:09.162205', '2025-06-19 13:42:09.162205');
-
--- Contracts (3 total)
-INSERT INTO contracts VALUES 
-(1, 1, 'client_001', 'freelancer_001', 1, 1500, NULL, 'completed', NULL, NULL, NULL, '2025-06-07 15:37:36.428032', '2025-06-14 17:33:16.172'),
-(2, 2, 'client_002', 'freelancer_002', 2, NULL, NULL, 'active', NULL, NULL, NULL, '2025-06-12 15:37:36.428032', '2025-06-14 17:33:37.661');
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_user_type ON users(user_type);
+CREATE INDEX idx_users_status ON users(status);
+CREATE INDEX idx_jobs_client_id ON jobs(client_id);
+CREATE INDEX idx_jobs_status ON jobs(status);
+CREATE INDEX idx_jobs_category ON jobs(category);
+CREATE INDEX idx_proposals_job_id ON proposals(job_id);
+CREATE INDEX idx_proposals_freelancer_id ON proposals(freelancer_id);
+CREATE INDEX idx_proposals_status ON proposals(status);
+CREATE INDEX idx_projects_client_id ON projects(client_id);
+CREATE INDEX idx_projects_freelancer_id ON projects(freelancer_id);
+CREATE INDEX idx_projects_status ON projects(status);
+CREATE INDEX idx_tasks_project_id ON tasks(project_id);
+CREATE INDEX idx_tasks_assigned_to ON tasks(assigned_to);
+CREATE INDEX idx_saved_jobs_user_id ON saved_jobs(user_id);
 
 -- ========================================
--- DATABASE STATISTICS
+-- SAMPLE DATA (Current users and content)
 -- ========================================
--- Total Records: 
--- Users: 14
--- Jobs: 10  
--- Proposals: 13
--- Contracts: 3
--- Saved Jobs: 7
--- Projects: 3
--- Tasks: 10
--- Project Messages: 8
--- Project Members: 6
--- User Sessions: 5
--- Password Reset Tokens: 0
+
+-- Note: Actual user data and content would be inserted here
+-- This export maintains the complete schema structure ready for data import
 
 -- ========================================
--- APPLICATION FEATURES SUPPORTED
+-- END OF EXPORT
 -- ========================================
--- ✓ User Authentication (Client/Freelancer/Admin)
--- ✓ Job Posting and Management
--- ✓ Proposal Submission System
--- ✓ Contract Creation and Management
--- ✓ Project Collaboration Tools
--- ✓ Task Management
--- ✓ File Sharing
--- ✓ Real-time Messaging
--- ✓ User Profiles and Ratings
--- ✓ Saved Jobs Functionality
--- ✓ Session Management
--- ✓ Password Reset System
