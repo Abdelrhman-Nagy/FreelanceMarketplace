@@ -582,35 +582,39 @@ app.post('/api/auth/register', async (req, res) => {
       company,
       title,
       bio,
-      skills: skills || [],
+      skills: Array.isArray(skills) ? JSON.stringify(skills) : JSON.stringify(skills || []),
       hourlyRate,
       location,
-      experience
+      experience,
+      createdAt: new Date()
     };
 
     const user = await dbService.createUser(userData);
-    const session = await dbService.createSession(user.id);
-    const token = dbService.generateToken(user);
-
-    res.cookie('authToken', session.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000
-    });
+    
+    // Create session for auto-login
+    req.session.userId = user.id;
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      firstName: user.first_name || user.firstName,
+      lastName: user.last_name || user.lastName,
+      userType: user.user_type || user.userType,
+      company: user.company,
+      title: user.title
+    };
 
     res.status(201).json({
       status: 'success',
-      message: 'User registered successfully',
+      message: 'User registered and logged in successfully',
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        role: user.user_type,
+        firstName: user.first_name || user.firstName,
+        lastName: user.last_name || user.lastName,
+        userType: user.user_type || user.userType,
         company: user.company,
         title: user.title
-      },
-      token
+      }
     });
 
   } catch (error) {

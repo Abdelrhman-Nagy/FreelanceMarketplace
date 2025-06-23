@@ -162,7 +162,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (data.status === 'success') {
         setUser(data.user);
-        console.log('Registration successful, user set:', data.user);
+        console.log('Registration successful, user logged in:', data.user);
+        // Auto redirect to home page after successful registration
+        window.location.href = '/';
       } else {
         throw new Error(data.message || 'Registration failed');
       }
