@@ -152,7 +152,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               <SelectContent>
                 <SelectItem value="freelancer">Freelancer</SelectItem>
                 <SelectItem value="client">Client</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>
