@@ -101,9 +101,6 @@ export default function SubmitProposalPage() {
       coverLetter: coverLetter.trim(),
       proposedRate: parseFloat(proposedRate),
       estimatedDuration: estimatedDuration.trim()
-      coverLetter: coverLetter.trim(),
-      proposedRate: proposedRate ? parseFloat(proposedRate) : null,
-      estimatedDuration: estimatedDuration.trim() || null,
     });
   };
 

@@ -471,6 +471,115 @@ app.get('/api/saved-jobs', async (req, res) => {
   }
 });
 
+// Saved jobs endpoints
+app.get('/api/saved-jobs', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const savedJobs = await dbService.getSavedJobs(req.session.userId);
+    
+    res.json({
+      status: 'success',
+      savedJobs: savedJobs,
+      total: savedJobs.length
+    });
+  } catch (error) {
+    console.error('Saved jobs fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch saved jobs'
+    });
+  }
+});
+
+app.post('/api/saved-jobs', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const { jobId } = req.body;
+    await dbService.saveJob(req.session.userId, jobId);
+    
+    res.status(201).json({
+      status: 'success',
+      message: 'Job saved successfully'
+    });
+  } catch (error) {
+    console.error('Save job error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to save job'
+    });
+  }
+});
+
+app.delete('/api/saved-jobs/:jobId', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const { jobId } = req.params;
+    await dbService.unsaveJob(req.session.userId, parseInt(jobId));
+    
+    res.json({
+      status: 'success',
+      message: 'Job unsaved successfully'
+    });
+  } catch (error) {
+    console.error('Unsave job error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to unsave job'
+    });
+  }
+});
+
+// Contracts endpoints
+app.get('/api/contracts', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const user = await dbService.getUserById(req.session.userId);
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'User not found'
+      });
+    }
+
+    const contracts = await dbService.getUserContracts(req.session.userId, user.userType);
+    
+    res.json({
+      success: true,
+      contracts: contracts
+    });
+  } catch (error) {
+    console.error('Contracts fetch error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch contracts'
+    });
+  }
+});
+
 // Projects endpoint
 app.get('/api/projects', async (req, res) => {
   try {
