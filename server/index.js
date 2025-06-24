@@ -226,6 +226,339 @@ app.post('/api/messages', async (req, res) => {
   }
 });
 
+// Admin endpoints
+app.get('/api/admin/stats', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const stats = await dbService.getAdminStats();
+    
+    res.json({
+      ...stats,
+      status: 'success'
+    });
+  } catch (error) {
+    console.error('Admin stats fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch admin stats'
+    });
+  }
+});
+
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const users = await dbService.getAllUsers();
+    
+    res.json({
+      users: users,
+      total: users.length,
+      status: 'success'
+    });
+  } catch (error) {
+    console.error('Admin users fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch users'
+    });
+  }
+});
+
+app.get('/api/admin/jobs', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const jobs = await dbService.getJobs(); // Admin sees all jobs
+    
+    res.json({
+      jobs: jobs,
+      total: jobs.length,
+      status: 'success'
+    });
+  } catch (error) {
+    console.error('Admin jobs fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch jobs'
+    });
+  }
+});
+
+app.get('/api/admin/proposals', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const proposals = await dbService.getAllProposals();
+    
+    res.json({
+      proposals: proposals,
+      total: proposals.length,
+      status: 'success'
+    });
+  } catch (error) {
+    console.error('Admin proposals fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch proposals'
+    });
+  }
+});
+
+// User moderation
+app.post('/api/admin/users/:userId/suspend', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const { userId } = req.params;
+    await dbService.suspendUser(userId);
+    
+    res.json({
+      status: 'success',
+      message: 'User suspended successfully'
+    });
+  } catch (error) {
+    console.error('User suspend error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to suspend user'
+    });
+  }
+});
+
+app.delete('/api/admin/users/:userId', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const { userId } = req.params;
+    await dbService.deleteUser(userId);
+    
+    res.json({
+      status: 'success',
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    console.error('User delete error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to delete user'
+    });
+  }
+});
+
+// Job moderation
+app.post('/api/admin/jobs/:jobId/suspend', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const { jobId } = req.params;
+    await dbService.suspendJob(parseInt(jobId));
+    
+    res.json({
+      status: 'success',
+      message: 'Job suspended successfully'
+    });
+  } catch (error) {
+    console.error('Job suspend error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to suspend job'
+    });
+  }
+});
+
+app.delete('/api/admin/jobs/:jobId', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const { jobId } = req.params;
+    await dbService.deleteJob(parseInt(jobId));
+    
+    res.json({
+      status: 'success',
+      message: 'Job deleted successfully'
+    });
+  } catch (error) {
+    console.error('Job delete error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to delete job'
+    });
+  }
+});
+
+// Proposal moderation
+app.post('/api/admin/proposals/:proposalId/suspend', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const { proposalId } = req.params;
+    await dbService.suspendProposal(parseInt(proposalId));
+    
+    res.json({
+      status: 'success',
+      message: 'Proposal suspended successfully'
+    });
+  } catch (error) {
+    console.error('Proposal suspend error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to suspend proposal'
+    });
+  }
+});
+
+app.delete('/api/admin/proposals/:proposalId', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const { proposalId } = req.params;
+    await dbService.deleteProposal(parseInt(proposalId));
+    
+    res.json({
+      status: 'success',
+      message: 'Proposal deleted successfully'
+    });
+  } catch (error) {
+    console.error('Proposal delete error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to delete proposal'
+    });
+  }
+});
+
 app.post('/api/jobs', async (req, res) => {
   try {
     if (!req.session?.user && !req.session?.userId) {
