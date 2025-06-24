@@ -1430,6 +1430,13 @@ var handleLogin = async (req, res) => {
         message: "Invalid credentials"
       });
     }
+    if (user.approvalStatus !== "approved") {
+      console.log("User not approved yet:", email, "Status:", user.approvalStatus);
+      return res.status(401).json({
+        status: "error",
+        message: user.approvalStatus === "pending" ? "Your account is pending admin approval. Please wait for approval before logging in." : "Your account has been rejected. Please contact support."
+      });
+    }
     console.log("Verifying password for user:", user.id);
     const isValidPassword = await dbService.verifyPassword(password, user.passwordHash);
     console.log("Password valid:", isValidPassword);

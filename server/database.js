@@ -1231,12 +1231,13 @@ export const handleLogin = async (req, res) => {
       });
     }
 
-    // Check if user is approved
-    if (user.approvalStatus !== 'approved') {
-      console.log('User not approved yet:', email, 'Status:', user.approvalStatus);
+    // Check if user is approved (treat null/undefined as approved for existing users)
+    const approvalStatus = user.approvalStatus || 'approved';
+    if (approvalStatus !== 'approved') {
+      console.log('User not approved yet:', email, 'Status:', approvalStatus);
       return res.status(401).json({
         status: 'error',
-        message: user.approvalStatus === 'pending' 
+        message: approvalStatus === 'pending' 
           ? 'Your account is pending admin approval. Please wait for approval before logging in.'
           : 'Your account has been rejected. Please contact support.'
       });
