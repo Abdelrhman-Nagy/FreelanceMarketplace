@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Plus, Briefcase, Users, DollarSign } from 'lucide-react';
+import { Plus, Briefcase, Users, DollarSign, FileText } from 'lucide-react';
 
 const ClientDashboard: React.FC = () => {
   const { user, isAuthenticated, hasRole, logout } = useAuth();
@@ -25,11 +26,33 @@ const ClientDashboard: React.FC = () => {
     setLocation('/');
   };
 
+  // Fetch client statistics
+  const { data: statsData } = useQuery({
+    queryKey: ['/api/auth/statistics'],
+    enabled: !!user,
+  });
+
+  // Fetch client jobs
+  const { data: jobsData } = useQuery({
+    queryKey: ['/api/jobs/my-jobs'],
+    enabled: !!user,
+  });
+
+  // Fetch client projects
+  const { data: projectsData } = useQuery({
+    queryKey: ['/api/projects'],
+    enabled: !!user,
+  });
+
   const stats = [
-    { title: 'Posted Jobs', value: '12', icon: Briefcase },
-    { title: 'Active Projects', value: '5', icon: Users },
-    { title: 'Total Spent', value: '$8,450', icon: DollarSign }
+    { title: 'Posted Jobs', value: jobsData?.total || '0', icon: Briefcase },
+    { title: 'Active Projects', value: projectsData?.total || '0', icon: Users },
+    { title: 'Total Proposals', value: statsData?.totalProposals || '0', icon: FileText },
+    { title: 'Total Spent', value: '$' + (statsData?.totalSpent || '0'), icon: DollarSign }
   ];
+
+  const recentJobs = jobsData?.jobs?.slice(0, 3) || [];
+  const activeProjects = projectsData?.projects?.slice(0, 3) || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -53,7 +76,7 @@ const ClientDashboard: React.FC = () => {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
@@ -130,20 +153,29 @@ const ClientDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">React Developer Needed</p>
-                      <p className="text-sm text-gray-500">5 proposals received</p>
+                  {recentJobs.length > 0 ? (
+                    recentJobs.map((job) => (
+                      <div key={job.id} className="flex justify-between items-center p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{job.title}</p>
+                          <p className="text-sm text-gray-500">{job.proposalCount} proposals received</p>
+                        </div>
+                        <Badge variant="secondary">{job.status}</Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <p>No jobs posted yet</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={() => setLocation('/post-job')}
+                      >
+                        Post Your First Job
+                      </Button>
                     </div>
-                    <Badge variant="secondary">Active</Badge>
-                  </div>
-                  <div className="flex justify-between items-center p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">UI/UX Designer</p>
-                      <p className="text-sm text-gray-500">2 proposals received</p>
-                    </div>
-                    <Badge variant="secondary">Active</Badge>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -155,20 +187,35 @@ const ClientDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">E-commerce Platform</p>
-                      <p className="text-sm text-gray-500">With John Doe</p>
+                  {activeProjects.length > 0 ? (
+                    activeProjects.map((project) => (
+                      <div key={project.id} className="flex justify-between items-center p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{project.title}</p>
+                          <p className="text-sm text-gray-500">With {project.freelancerName || 'Unassigned'}</p>
+                        </div>
+                        <Badge variant="secondary" className={
+                          project.status === 'active' ? 'bg-blue-100 text-blue-800' :
+                          project.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          'bg-gray-100 text-gray-800'
+                        }>
+                          {project.status}
+                        </Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <p>No active projects</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={() => setLocation('/projects')}
+                      >
+                        View All Projects
+                      </Button>
                     </div>
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">In Progress</Badge>
-                  </div>
-                  <div className="flex justify-between items-center p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">Mobile App Design</p>
-                      <p className="text-sm text-gray-500">With Jane Smith</p>
-                    </div>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">Review</Badge>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

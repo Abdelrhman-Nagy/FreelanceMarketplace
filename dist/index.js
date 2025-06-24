@@ -14,7 +14,7 @@ import crypto2 from "crypto";
 // server/database.js
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq, and, sql, or, inArray } from "drizzle-orm";
+import { eq, and, sql, or, inArray, desc } from "drizzle-orm";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -635,7 +635,7 @@ var DatabaseService = class {
             }
           }
         },
-        orderBy: (projects3, { desc }) => [desc(projects3.updatedAt)]
+        orderBy: (projects3, { desc: desc2 }) => [desc2(projects3.updatedAt)]
       });
       let additionalProjects = [];
       if (userType === "freelancer") {
@@ -937,7 +937,7 @@ var DatabaseService = class {
             }
           }
         },
-        orderBy: (proposals3, { desc }) => [desc(proposals3.createdAt)]
+        orderBy: (proposals3, { desc: desc2 }) => [desc2(proposals3.createdAt)]
       });
       return proposals2.map((proposal) => ({
         id: proposal.id,
@@ -995,7 +995,7 @@ var DatabaseService = class {
             }
           }
         },
-        orderBy: (savedJobs3, { desc }) => [desc(savedJobs3.savedAt)]
+        orderBy: (savedJobs3, { desc: desc2 }) => [desc2(savedJobs3.savedAt)]
       });
       return savedJobs2.map((saved) => ({
         id: saved.id,
@@ -1021,7 +1021,7 @@ var DatabaseService = class {
         with: {
           freelancer: true
         },
-        orderBy: (proposals3, { desc }) => [desc(proposals3.createdAt)]
+        orderBy: (proposals3, { desc: desc2 }) => [desc2(proposals3.createdAt)]
       });
       return proposals2.map((proposal) => ({
         id: proposal.id,
@@ -1299,6 +1299,39 @@ var DatabaseService = class {
       }
     } catch (error) {
       console.error("Error getting user statistics:", error);
+      throw error;
+    }
+  }
+  async getContracts(userId, userType) {
+    try {
+      if (!db) {
+        throw new Error("Database not initialized");
+      }
+      const contracts2 = await db.select({
+        id: proposals.id,
+        proposalId: proposals.id,
+        clientId: jobs.clientId,
+        freelancerId: proposals.freelancerId,
+        jobId: jobs.id,
+        jobTitle: jobs.title,
+        jobDescription: jobs.description,
+        proposedRate: proposals.proposedRate,
+        estimatedDuration: proposals.estimatedDuration,
+        status: sql`'active'`,
+        startDate: proposals.updatedAt,
+        coverLetter: proposals.coverLetter,
+        proposalStatus: proposals.status,
+        createdAt: proposals.createdAt,
+        updatedAt: proposals.updatedAt
+      }).from(proposals).leftJoin(jobs, eq(proposals.jobId, jobs.id)).where(
+        and(
+          eq(proposals.status, "accepted"),
+          userType === "client" ? eq(jobs.clientId, userId) : eq(proposals.freelancerId, userId)
+        )
+      ).orderBy(desc(proposals.updatedAt));
+      return contracts2;
+    } catch (error) {
+      console.error("Error getting contracts:", error);
       throw error;
     }
   }
@@ -1654,6 +1687,15 @@ app.post("/api/proposals", async (req, res) => {
         message: "Job ID and cover letter are required"
       });
     }
+    console.log("Creating proposal with data:", {
+      freelancerId: userId,
+      jobId: parseInt(jobId),
+      coverLetter,
+      proposedRate: proposedRate ? parseInt(proposedRate) : null,
+      estimatedDuration,
+      status: "pending",
+      createdAt: /* @__PURE__ */ new Date()
+    });
     const proposalData = {
       freelancerId: userId,
       jobId: parseInt(jobId),
@@ -1664,6 +1706,7 @@ app.post("/api/proposals", async (req, res) => {
       createdAt: /* @__PURE__ */ new Date()
     };
     const newProposal = await database_default.createProposal(proposalData);
+    console.log("Proposal created successfully:", newProposal);
     res.json({
       status: "success",
       message: "Proposal submitted successfully",
