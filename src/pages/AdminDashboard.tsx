@@ -569,6 +569,8 @@ const AdminDashboard: React.FC = () => {
             </Card>
           </div>
 
+          {/* Recent Activity and System Health Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
