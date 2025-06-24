@@ -1559,6 +1559,98 @@ var handleProfile = async (req, res) => {
     });
   }
 };
+DatabaseService.prototype.getClientJobs = async function(clientId) {
+  try {
+    console.log("Fetching jobs for client:", clientId);
+    if (!db) {
+      throw new Error("Database not initialized");
+    }
+    const jobs2 = await db.query.jobs.findMany({
+      where: (jobs3, { eq: eq2 }) => eq2(jobs3.clientId, clientId),
+      with: {
+        client: true
+      },
+      orderBy: (jobs3, { desc: desc2 }) => [desc2(jobs3.createdAt)]
+    });
+    console.log(`Found ${jobs2.length} jobs for client ${clientId}`);
+    return jobs2.map((job) => ({
+      id: job.id,
+      title: job.title,
+      description: job.description,
+      category: job.category,
+      skills: this.parseSkills(job.skills),
+      budgetMin: job.budgetMin,
+      budgetMax: job.budgetMax,
+      budgetType: job.budgetType,
+      experienceLevel: job.experienceLevel,
+      duration: job.duration,
+      status: job.status,
+      approvalStatus: job.approvalStatus || "approved",
+      proposalCount: job.proposalCount || 0,
+      createdAt: job.createdAt,
+      clientId: job.clientId,
+      clientName: job.client ? `${job.client.firstName} ${job.client.lastName}` : "Unknown Client",
+      clientCompany: job.client?.company,
+      budget: this.calculateBudget(job)
+    }));
+  } catch (error) {
+    console.error("Error fetching client jobs:", error);
+    throw error;
+  }
+};
+DatabaseService.prototype.getProjectById = async function(projectId) {
+  try {
+    console.log("Fetching project:", projectId);
+    if (!db) {
+      throw new Error("Database not initialized");
+    }
+    const project = await db.query.projects.findFirst({
+      where: (projects2, { eq: eq2 }) => eq2(projects2.id, projectId),
+      with: {
+        client: true,
+        freelancer: true
+      }
+    });
+    if (!project) {
+      return null;
+    }
+    return {
+      id: project.id,
+      title: project.title,
+      description: project.description,
+      status: project.status,
+      budget: project.budget,
+      deadline: project.deadline,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+      clientId: project.clientId,
+      freelancerId: project.freelancerId,
+      clientName: project.client ? `${project.client.firstName} ${project.client.lastName}` : "Unknown Client",
+      freelancerName: project.freelancer ? `${project.freelancer.firstName} ${project.freelancer.lastName}` : "Unknown Freelancer"
+    };
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    throw error;
+  }
+};
+DatabaseService.prototype.getProjectTasks = async function(projectId) {
+  try {
+    console.log("Fetching tasks for project:", projectId);
+    return [];
+  } catch (error) {
+    console.error("Error fetching project tasks:", error);
+    return [];
+  }
+};
+DatabaseService.prototype.getProjectMessages = async function(projectId) {
+  try {
+    console.log("Fetching messages for project:", projectId);
+    return [];
+  } catch (error) {
+    console.error("Error fetching project messages:", error);
+    return [];
+  }
+};
 var dbService = new DatabaseService();
 var database_default = dbService;
 
