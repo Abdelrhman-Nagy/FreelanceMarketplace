@@ -62,6 +62,40 @@ const AdminDashboard: React.FC = () => {
   });
 
   // User management mutations
+  const approveUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest(`/api/admin/users/${userId}/approve`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      toast({ title: 'User approved successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to approve user', variant: 'destructive' });
+    },
+  });
+
+  const rejectUserMutation = useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+      return apiRequest(`/api/admin/users/${userId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      toast({ title: 'User rejected successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to reject user', variant: 'destructive' });
+    },
+  });
+
   const suspendUserMutation = useMutation({
     mutationFn: async (userId: string) => {
       return apiRequest(`/api/admin/users/${userId}/suspend`, {
@@ -298,6 +332,7 @@ const AdminDashboard: React.FC = () => {
                                 <TableHead>Email</TableHead>
                                 <TableHead>Role</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Approval</TableHead>
                                 <TableHead>Actions</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -317,7 +352,40 @@ const AdminDashboard: React.FC = () => {
                                     </Badge>
                                   </TableCell>
                                   <TableCell>
-                                    <div className="flex space-x-2">
+                                    <Badge variant={
+                                      user.approvalStatus === 'approved' ? 'default' :
+                                      user.approvalStatus === 'pending' ? 'secondary' :
+                                      'destructive'
+                                    }>
+                                      {user.approvalStatus || 'approved'}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex space-x-1">
+                                      {user.approvalStatus === 'pending' && (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            variant="default"
+                                            onClick={() => approveUserMutation.mutate(user.id)}
+                                            disabled={approveUserMutation.isPending}
+                                            className="bg-green-600 hover:bg-green-700"
+                                          >
+                                            ✓
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={() => {
+                                              const reason = prompt('Rejection reason:');
+                                              if (reason) rejectUserMutation.mutate({ userId: user.id, reason });
+                                            }}
+                                            disabled={rejectUserMutation.isPending}
+                                          >
+                                            ✗
+                                          </Button>
+                                        </>
+                                      )}
                                       <Button
                                         size="sm"
                                         variant="outline"

@@ -1231,6 +1231,17 @@ export const handleLogin = async (req, res) => {
       });
     }
 
+    // Check if user is approved
+    if (user.approvalStatus !== 'approved') {
+      console.log('User not approved yet:', email, 'Status:', user.approvalStatus);
+      return res.status(401).json({
+        status: 'error',
+        message: user.approvalStatus === 'pending' 
+          ? 'Your account is pending admin approval. Please wait for approval before logging in.'
+          : 'Your account has been rejected. Please contact support.'
+      });
+    }
+
     // Verify password
     console.log('Verifying password for user:', user.id);
     const isValidPassword = await dbService.verifyPassword(password, user.passwordHash);
