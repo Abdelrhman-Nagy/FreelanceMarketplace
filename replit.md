@@ -115,11 +115,12 @@ FreelanceHub is a comprehensive full-stack freelance marketplace platform built 
 
 ## Recent Changes
 
-- June 24, 2025: Implemented complete job approval workflow system
-- June 24, 2025: Added comprehensive messaging system for user communication  
-- June 24, 2025: Enhanced admin moderation with full user/job/proposal management
-- June 24, 2025: Updated database schema with approval status and messaging tables
-- June 24, 2025: Created complete database export with all features (DATABASE_SCHEMA_COMPLETE_v2.sql)
+- June 24, 2025: Implemented dual approval workflow for user registration and job posting
+- June 24, 2025: Added user approval system - new registrations require admin approval before login
+- June 24, 2025: Added job approval system - new job posts require admin approval before appearing on Browse Jobs
+- June 24, 2025: Enhanced admin dashboard with user and job approval management
+- June 24, 2025: Updated database schema with approval_status columns for users and jobs tables
+- June 24, 2025: Created complete database export with approval workflow (COMPLETE_DATABASE_WITH_DATA_AND_APPROVALS.sql)
 
 ## Changelog
 
