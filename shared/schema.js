@@ -44,6 +44,10 @@ export const jobs = pgTable("jobs", {
   experienceLevel: text("experience_level").notNull(),
   skills: jsonb("skills").default([]),
   status: text("status").default("active"),
+  approvalStatus: text("approval_status").default("pending"), // 'pending', 'approved', 'rejected'
+  approvedBy: text("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
   remote: boolean("remote").default(false),
   duration: text("duration"),
   proposalCount: integer("proposal_count").default(0),
@@ -75,6 +79,10 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const jobsRelations = relations(jobs, ({ one, many }) => ({
   client: one(users, {
     fields: [jobs.clientId],
+    references: [users.id],
+  }),
+  approver: one(users, {
+    fields: [jobs.approvedBy],
     references: [users.id],
   }),
   proposals: many(proposals),

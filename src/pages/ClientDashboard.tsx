@@ -162,11 +162,22 @@ const ClientDashboard: React.FC = () => {
                   {recentJobs.length > 0 ? (
                     recentJobs.map((job) => (
                       <div key={job.id} className="flex justify-between items-center p-3 border rounded-lg">
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium">{job.title}</p>
                           <p className="text-sm text-gray-500">{job.proposalCount} proposals received</p>
                         </div>
-                        <Badge variant="secondary">{job.status}</Badge>
+                        <div className="flex flex-col items-end space-y-1">
+                          <Badge variant="secondary">{job.status}</Badge>
+                          <Badge variant={
+                            job.approvalStatus === 'approved' ? 'default' :
+                            job.approvalStatus === 'pending' ? 'secondary' :
+                            'destructive'
+                          } className="text-xs">
+                            {job.approvalStatus === 'pending' ? 'Pending Approval' :
+                             job.approvalStatus === 'approved' ? 'Approved' :
+                             job.approvalStatus === 'rejected' ? 'Rejected' : job.approvalStatus}
+                          </Badge>
+                        </div>
                       </div>
                     ))
                   ) : (
