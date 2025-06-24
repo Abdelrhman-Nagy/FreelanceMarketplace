@@ -1,0 +1,46 @@
+Response status: 500
+Fetch error: {"status":"error","message":"Failed to fetch client jobs"}
+Fetching: /api/projects/2
+Fetching: /api/projects/2/tasks
+Fetching: /api/projects/2/messages
+Response status: 404
+Fetch error: {"status":"error","message":"API endpoint not found","path":"/api/projects/2"}
+Response status: 404
+Fetch error: {"status":"error","message":"API endpoint not found","path":"/api/projects/2/tasks"}
+Response status: 404
+Fetch error: {"status":"error","message":"API endpoint not found","path":"/api/projects/2/messages"}
+Fetching: /api/projects/2
+Fetching: /api/projects/2/tasks
+Fetching: /api/projects/2/messages
+Response status: 404
+Fetch error: {"status":"error","message":"API endpoint not found","path":"/api/projects/2"}
+Response status: 404
+Fetch error: {"status":"error","message":"API endpoint not found","path":"/api/projects/2/tasks"}
+Response status: 404
+Fetch error: {"status":"error","message":"API endpoint not found","path":"/api/projects/2/messages"}
+Fetching: /api/jobs/my-jobs
+Response status: 500
+Fetch error: {"status":"error","message":"Failed to fetch client jobs"}
+Fetching: /api/jobs/my-jobs
+Response status: 500
+Fetch error: {"status":"error","message":"Failed to fetch client jobs"}
+AuthContext logout called
+Logout completed
+Rendered fewer hooks than expected. This may be caused by an accidental early return statement.
+Rendered fewer hooks than expected. This may be caused by an accidental early return statement.
+The above error occurred in the <V9> component:
+
+    at V9 (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev/assets/index-oFKAPQjJ.js:527:43774)
+    at pt (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev/assets/index-oFKAPQjJ.js:212:4026)
+    at CO (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev/assets/index-oFKAPQjJ.js:212:4839)
+    at main
+    at div
+    at Rk (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev/assets/index-oFKAPQjJ.js:212:3347)
+    at nF (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev/assets/index-oFKAPQjJ.js:483:25009)
+    at mM (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev/assets/index-oFKAPQjJ.js:233:3633)
+    at QO (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev/assets/index-oFKAPQjJ.js:233:421)
+    at h6
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+Rendered fewer hooks than expected. This may be caused by an accidental early return statement.

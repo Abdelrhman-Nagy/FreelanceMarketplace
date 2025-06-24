@@ -1430,11 +1430,12 @@ var handleLogin = async (req, res) => {
         message: "Invalid credentials"
       });
     }
-    if (user.approvalStatus !== "approved") {
-      console.log("User not approved yet:", email, "Status:", user.approvalStatus);
+    const approvalStatus = user.approvalStatus || "approved";
+    if (approvalStatus !== "approved") {
+      console.log("User not approved yet:", email, "Status:", approvalStatus);
       return res.status(401).json({
         status: "error",
-        message: user.approvalStatus === "pending" ? "Your account is pending admin approval. Please wait for approval before logging in." : "Your account has been rejected. Please contact support."
+        message: approvalStatus === "pending" ? "Your account is pending admin approval. Please wait for approval before logging in." : "Your account has been rejected. Please contact support."
       });
     }
     console.log("Verifying password for user:", user.id);
