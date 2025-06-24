@@ -1,16 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from 'wouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Users, Briefcase, FileText, TrendingUp } from 'lucide-react';
-import { UserManagementModal } from '../components/admin/UserManagementModal';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+import { Input } from '../components/ui/input';
+import { Users, Briefcase, FileText, DollarSign, TrendingUp, Eye, Ban, Trash2, AlertTriangle, Shield, BarChart3, Settings, Search } from 'lucide-react';
+import { useToast } from '../hooks/use-toast';
+import { apiRequest } from '../lib/queryClient';
 
 const AdminDashboard: React.FC = () => {
   const { user, isAuthenticated, hasRole, logout } = useAuth();
   const [, setLocation] = useLocation();
-  const [showUserManagement, setShowUserManagement] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [jobSearchTerm, setJobSearchTerm] = useState('');
+  const [proposalSearchTerm, setProposalSearchTerm] = useState('');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isAuthenticated || !hasRole(['admin'])) {
@@ -27,43 +37,183 @@ const AdminDashboard: React.FC = () => {
     setLocation('/');
   };
 
-  // User Management handlers
-  const handleViewAllUsers = () => {
-    setShowUserManagement(true);
-  };
+  // Fetch admin statistics
+  const { data: adminStats } = useQuery({
+    queryKey: ['/api/admin/stats'],
+    enabled: !!user,
+  });
 
-  const handleManagePermissions = () => {
-    console.log('Manage Permissions clicked');
-    alert('User Management feature: Manage Permissions');
-  };
+  // Fetch all users for management
+  const { data: usersData } = useQuery({
+    queryKey: ['/api/admin/users'],
+    enabled: !!user,
+  });
 
-  const handleUserAnalytics = () => {
-    console.log('User Analytics clicked');
-    alert('User Management feature: User Analytics');
-  };
+  // Fetch all jobs for moderation
+  const { data: jobsData } = useQuery({
+    queryKey: ['/api/admin/jobs'],
+    enabled: !!user,
+  });
 
-  // Platform Management handlers
-  const handleJobModeration = () => {
-    console.log('Job Moderation clicked');
-    alert('Platform Management feature: Job Moderation');
-  };
+  // Fetch all proposals for moderation
+  const { data: proposalsData } = useQuery({
+    queryKey: ['/api/admin/proposals'],
+    enabled: !!user,
+  });
 
-  const handlePaymentOversight = () => {
-    console.log('Payment Oversight clicked');
-    alert('Platform Management feature: Payment Oversight');
-  };
+  // User management mutations
+  const suspendUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest(`/api/admin/users/${userId}/suspend`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({ title: 'User suspended successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to suspend user', variant: 'destructive' });
+    },
+  });
 
-  const handleSystemReports = () => {
-    console.log('System Reports clicked');
-    alert('Platform Management feature: System Reports');
-  };
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return apiRequest(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({ title: 'User deleted successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to delete user', variant: 'destructive' });
+    },
+  });
+
+  // Job moderation mutations
+  const approveJobMutation = useMutation({
+    mutationFn: async (jobId: number) => {
+      return apiRequest(`/api/admin/jobs/${jobId}/approve`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      toast({ title: 'Job approved successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to approve job', variant: 'destructive' });
+    },
+  });
+
+  const rejectJobMutation = useMutation({
+    mutationFn: async ({ jobId, reason }: { jobId: number; reason: string }) => {
+      return apiRequest(`/api/admin/jobs/${jobId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      toast({ title: 'Job rejected successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to reject job', variant: 'destructive' });
+    },
+  });
+
+  const suspendJobMutation = useMutation({
+    mutationFn: async (jobId: number) => {
+      return apiRequest(`/api/admin/jobs/${jobId}/suspend`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/jobs'] });
+      toast({ title: 'Job suspended successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to suspend job', variant: 'destructive' });
+    },
+  });
+
+  const deleteJobMutation = useMutation({
+    mutationFn: async (jobId: number) => {
+      return apiRequest(`/api/admin/jobs/${jobId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/jobs'] });
+      toast({ title: 'Job deleted successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to delete job', variant: 'destructive' });
+    },
+  });
+
+  // Proposal moderation mutations
+  const suspendProposalMutation = useMutation({
+    mutationFn: async (proposalId: number) => {
+      return apiRequest(`/api/admin/proposals/${proposalId}/suspend`, {
+        method: 'POST',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/proposals'] });
+      toast({ title: 'Proposal suspended successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to suspend proposal', variant: 'destructive' });
+    },
+  });
+
+  const deleteProposalMutation = useMutation({
+    mutationFn: async (proposalId: number) => {
+      return apiRequest(`/api/admin/proposals/${proposalId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/proposals'] });
+      toast({ title: 'Proposal deleted successfully' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to delete proposal', variant: 'destructive' });
+    },
+  });
 
   const stats = [
-    { title: 'Total Users', value: '1,234', icon: Users, trend: '+12%' },
-    { title: 'Active Jobs', value: '456', icon: Briefcase, trend: '+8%' },
-    { title: 'Proposals', value: '789', icon: FileText, trend: '+15%' },
-    { title: 'Revenue', value: '$12,345', icon: TrendingUp, trend: '+23%' }
+    { title: 'Total Users', value: adminStats?.totalUsers || '0', icon: Users, change: '+12%' },
+    { title: 'Active Jobs', value: adminStats?.activeJobs || '0', icon: Briefcase, change: '+8%' },
+    { title: 'Proposals', value: adminStats?.totalProposals || '0', icon: FileText, change: '+15%' },
+    { title: 'Revenue', value: '$' + (adminStats?.totalRevenue || '0'), icon: DollarSign, change: '+23%' }
   ];
+
+  const users = usersData?.users || [];
+  const jobs = jobsData?.jobs || [];
+  const proposals = proposalsData?.proposals || [];
+
+  const filteredUsers = users.filter(user =>
+    user.firstName.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+    user.lastName.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(userSearchTerm.toLowerCase())
+  );
+
+  const filteredJobs = jobs.filter(job =>
+    job.title.toLowerCase().includes(jobSearchTerm.toLowerCase()) ||
+    job.category.toLowerCase().includes(jobSearchTerm.toLowerCase())
+  );
+
+  const filteredProposals = proposals.filter(proposal =>
+    proposal.freelancerName.toLowerCase().includes(proposalSearchTerm.toLowerCase()) ||
+    proposal.jobTitle.toLowerCase().includes(proposalSearchTerm.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -107,8 +257,8 @@ const AdminDashboard: React.FC = () => {
             })}
           </div>
 
-          {/* Admin Functions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Management Sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <Card>
               <CardHeader>
                 <CardTitle>User Management</CardTitle>
@@ -116,13 +266,91 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <Button className="w-full" variant="outline" onClick={handleViewAllUsers}>
-                    View All Users
-                  </Button>
-                  <Button className="w-full" variant="outline" onClick={handleManagePermissions}>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="w-full" variant="outline">
+                        <Users className="mr-2 h-4 w-4" />
+                        View All Users
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl">
+                      <DialogHeader>
+                        <DialogTitle>User Management</DialogTitle>
+                        <DialogDescription>
+                          Manage all platform users and their permissions
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <Search className="h-4 w-4" />
+                          <Input
+                            placeholder="Search users..."
+                            value={userSearchTerm}
+                            onChange={(e) => setUserSearchTerm(e.target.value)}
+                            className="flex-1"
+                          />
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Role</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredUsers.map((user) => (
+                                <TableRow key={user.id}>
+                                  <TableCell>{user.firstName} {user.lastName}</TableCell>
+                                  <TableCell>{user.email}</TableCell>
+                                  <TableCell>
+                                    <Badge variant="outline" className="capitalize">
+                                      {user.role}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={user.status === 'active' ? 'default' : 'destructive'}>
+                                      {user.status || 'active'}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex space-x-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => suspendUserMutation.mutate(user.id)}
+                                        disabled={suspendUserMutation.isPending}
+                                      >
+                                        <Ban className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => deleteUserMutation.mutate(user.id)}
+                                        disabled={deleteUserMutation.isPending}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <Button className="w-full" variant="outline">
+                    <Shield className="mr-2 h-4 w-4" />
                     Manage Permissions
                   </Button>
-                  <Button className="w-full" variant="outline" onClick={handleUserAnalytics}>
+                  <Button className="w-full" variant="outline">
+                    <BarChart3 className="mr-2 h-4 w-4" />
                     User Analytics
                   </Button>
                 </div>
@@ -136,18 +364,210 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <Button className="w-full" variant="outline" onClick={handleJobModeration}>
-                    Job Moderation
-                  </Button>
-                  <Button className="w-full" variant="outline" onClick={handlePaymentOversight}>
-                    Payment Oversight
-                  </Button>
-                  <Button className="w-full" variant="outline" onClick={handleSystemReports}>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="w-full" variant="outline">
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        Job Moderation
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-6xl">
+                      <DialogHeader>
+                        <DialogTitle>Job Moderation</DialogTitle>
+                        <DialogDescription>
+                          Review and approve job postings
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <Search className="h-4 w-4" />
+                          <Input
+                            placeholder="Search jobs..."
+                            value={jobSearchTerm}
+                            onChange={(e) => setJobSearchTerm(e.target.value)}
+                            className="flex-1"
+                          />
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Client</TableHead>
+                                <TableHead>Budget</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Approval</TableHead>
+                                <TableHead>Created</TableHead>
+                                <TableHead>Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredJobs.map((job) => (
+                                <TableRow key={job.id}>
+                                  <TableCell className="font-medium">{job.title}</TableCell>
+                                  <TableCell>{job.clientName}</TableCell>
+                                  <TableCell>{job.budget}</TableCell>
+                                  <TableCell>
+                                    <Badge variant={job.status === 'active' ? 'default' : 'secondary'}>
+                                      {job.status}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={
+                                      job.approvalStatus === 'approved' ? 'default' :
+                                      job.approvalStatus === 'pending' ? 'secondary' :
+                                      'destructive'
+                                    }>
+                                      {job.approvalStatus}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    {new Date(job.createdAt).toLocaleDateString()}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex space-x-1">
+                                      {job.approvalStatus === 'pending' && (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            variant="default"
+                                            onClick={() => approveJobMutation.mutate(job.id)}
+                                            disabled={approveJobMutation.isPending}
+                                            className="bg-green-600 hover:bg-green-700"
+                                          >
+                                            ✓
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={() => {
+                                              const reason = prompt('Rejection reason:');
+                                              if (reason) rejectJobMutation.mutate({ jobId: job.id, reason });
+                                            }}
+                                            disabled={rejectJobMutation.isPending}
+                                          >
+                                            ✗
+                                          </Button>
+                                        </>
+                                      )}
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => suspendJobMutation.mutate(job.id)}
+                                        disabled={suspendJobMutation.isPending}
+                                      >
+                                        <Ban className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => deleteJobMutation.mutate(job.id)}
+                                        disabled={deleteJobMutation.isPending}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="w-full" variant="outline">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Proposal Moderation
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-5xl">
+                      <DialogHeader>
+                        <DialogTitle>Proposal Moderation</DialogTitle>
+                        <DialogDescription>
+                          Review and moderate all proposals
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <Search className="h-4 w-4" />
+                          <Input
+                            placeholder="Search proposals..."
+                            value={proposalSearchTerm}
+                            onChange={(e) => setProposalSearchTerm(e.target.value)}
+                            className="flex-1"
+                          />
+                        </div>
+                        <div className="max-h-96 overflow-y-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Job Title</TableHead>
+                                <TableHead>Freelancer</TableHead>
+                                <TableHead>Rate</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Submitted</TableHead>
+                                <TableHead>Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredProposals.map((proposal) => (
+                                <TableRow key={proposal.id}>
+                                  <TableCell className="font-medium">{proposal.jobTitle}</TableCell>
+                                  <TableCell>{proposal.freelancerName}</TableCell>
+                                  <TableCell>${proposal.proposedRate}</TableCell>
+                                  <TableCell>
+                                    <Badge variant={
+                                      proposal.status === 'accepted' ? 'default' :
+                                      proposal.status === 'pending' ? 'secondary' :
+                                      'destructive'
+                                    }>
+                                      {proposal.status}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    {new Date(proposal.createdAt).toLocaleDateString()}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex space-x-2">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => suspendProposalMutation.mutate(proposal.id)}
+                                        disabled={suspendProposalMutation.isPending}
+                                      >
+                                        <Ban className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => deleteProposalMutation.mutate(proposal.id)}
+                                        disabled={deleteProposalMutation.isPending}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Button className="w-full" variant="outline">
+                    <Settings className="mr-2 h-4 w-4" />
                     System Reports
                   </Button>
                 </div>
               </CardContent>
             </Card>
+          </div>
 
             <Card>
               <CardHeader>
@@ -197,11 +617,6 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       </main>
-
-      <UserManagementModal 
-        isOpen={showUserManagement} 
-        onClose={() => setShowUserManagement(false)} 
-      />
     </div>
   );
 };

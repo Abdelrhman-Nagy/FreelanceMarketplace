@@ -27,6 +27,7 @@ __export(schema_exports, {
   contractsRelations: () => contractsRelations,
   insertContractSchema: () => insertContractSchema,
   insertJobSchema: () => insertJobSchema,
+  insertMessageSchema: () => insertMessageSchema,
   insertProjectFileSchema: () => insertProjectFileSchema,
   insertProjectMemberSchema: () => insertProjectMemberSchema,
   insertProjectMessageSchema: () => insertProjectMessageSchema,
@@ -37,6 +38,8 @@ __export(schema_exports, {
   insertUserSchema: () => insertUserSchema,
   jobs: () => jobs,
   jobsRelations: () => jobsRelations,
+  messages: () => messages,
+  messagesRelations: () => messagesRelations,
   passwordResetTokens: () => passwordResetTokens,
   passwordResetTokensRelations: () => passwordResetTokensRelations,
   projectFiles: () => projectFiles,
@@ -109,8 +112,16 @@ var jobs = pgTable("jobs", {
   experienceLevel: text("experience_level").notNull(),
   skills: jsonb("skills").default([]),
   status: text("status").default("active"),
+  approvalStatus: text("approval_status").default("pending"),
+  // 'pending', 'approved', 'rejected'
+  approvedBy: text("approved_by").references(() => users.id),
+  approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
   remote: boolean("remote").default(false),
   duration: text("duration"),
+  deadline: timestamp("deadline"),
+  urgencyLevel: text("urgency_level").default("normal"),
+  // 'low', 'normal', 'high', 'urgent'
   proposalCount: integer("proposal_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
@@ -137,6 +148,10 @@ var usersRelations = relations(users, ({ many }) => ({
 var jobsRelations = relations(jobs, ({ one, many }) => ({
   client: one(users, {
     fields: [jobs.clientId],
+    references: [users.id]
+  }),
+  approver: one(users, {
+    fields: [jobs.approvedBy],
     references: [users.id]
   }),
   proposals: many(proposals)
@@ -368,6 +383,38 @@ var savedJobsRelations = relations(savedJobs, ({ one }) => ({
 }));
 var insertSavedJobSchema = createInsertSchema(savedJobs);
 var insertContractSchema = createInsertSchema(contracts);
+var messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  senderId: text("sender_id").notNull().references(() => users.id),
+  receiverId: text("receiver_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  jobId: integer("job_id").references(() => jobs.id),
+  proposalId: integer("proposal_id").references(() => proposals.id),
+  read: boolean("read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var messagesRelations = relations(messages, ({ one }) => ({
+  sender: one(users, {
+    fields: [messages.senderId],
+    references: [users.id],
+    relationName: "sentMessages"
+  }),
+  receiver: one(users, {
+    fields: [messages.receiverId],
+    references: [users.id],
+    relationName: "receivedMessages"
+  }),
+  job: one(jobs, {
+    fields: [messages.jobId],
+    references: [jobs.id]
+  }),
+  proposal: one(proposals, {
+    fields: [messages.proposalId],
+    references: [proposals.id]
+  })
+}));
+var insertMessageSchema = createInsertSchema(messages);
 
 // server/database.js
 var { Pool } = pg;
@@ -766,14 +813,14 @@ var DatabaseService = class {
   }
   async getProjectMessages(projectId) {
     try {
-      const messages = await db.query.projectMessages.findMany({
-        where: (messages2, { eq: eq2 }) => eq2(messages2.projectId, projectId),
+      const messages2 = await db.query.projectMessages.findMany({
+        where: (messages3, { eq: eq2 }) => eq2(messages3.projectId, projectId),
         with: {
           sender: true
         },
-        orderBy: (messages2, { asc }) => [asc(messages2.createdAt)]
+        orderBy: (messages3, { asc }) => [asc(messages3.createdAt)]
       });
-      return messages.map((message) => ({
+      return messages2.map((message) => ({
         id: message.id,
         projectId: message.projectId,
         senderId: message.senderId,
@@ -1684,6 +1731,389 @@ app.post("/api/messages", async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "Failed to send message"
+    });
+  }
+});
+app.get("/api/admin/stats", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const stats = await database_default.getAdminStats();
+    res.json({
+      ...stats,
+      status: "success"
+    });
+  } catch (error) {
+    console.error("Admin stats fetch error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch admin stats"
+    });
+  }
+});
+app.get("/api/admin/users", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const users2 = await database_default.getAllUsers();
+    res.json({
+      users: users2,
+      total: users2.length,
+      status: "success"
+    });
+  } catch (error) {
+    console.error("Admin users fetch error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch users"
+    });
+  }
+});
+app.get("/api/admin/jobs", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const jobs2 = await database_default.getAllJobsForAdmin();
+    res.json({
+      jobs: jobs2,
+      total: jobs2.length,
+      status: "success"
+    });
+  } catch (error) {
+    console.error("Admin jobs fetch error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch jobs"
+    });
+  }
+});
+app.get("/api/admin/jobs/pending", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const jobs2 = await database_default.getPendingJobs();
+    res.json({
+      jobs: jobs2,
+      total: jobs2.length,
+      status: "success"
+    });
+  } catch (error) {
+    console.error("Pending jobs fetch error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch pending jobs"
+    });
+  }
+});
+app.post("/api/admin/jobs/:jobId/approve", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const { jobId } = req.params;
+    await database_default.approveJob(parseInt(jobId), req.session.userId);
+    res.json({
+      status: "success",
+      message: "Job approved successfully"
+    });
+  } catch (error) {
+    console.error("Job approval error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to approve job"
+    });
+  }
+});
+app.post("/api/admin/jobs/:jobId/reject", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const { jobId } = req.params;
+    const { reason } = req.body;
+    if (!reason) {
+      return res.status(400).json({
+        status: "error",
+        message: "Rejection reason is required"
+      });
+    }
+    await database_default.rejectJob(parseInt(jobId), req.session.userId, reason);
+    res.json({
+      status: "success",
+      message: "Job rejected successfully"
+    });
+  } catch (error) {
+    console.error("Job rejection error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to reject job"
+    });
+  }
+});
+app.get("/api/admin/proposals", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const proposals2 = await database_default.getAllProposals();
+    res.json({
+      proposals: proposals2,
+      total: proposals2.length,
+      status: "success"
+    });
+  } catch (error) {
+    console.error("Admin proposals fetch error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch proposals"
+    });
+  }
+});
+app.post("/api/admin/users/:userId/suspend", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const { userId } = req.params;
+    await database_default.suspendUser(userId);
+    res.json({
+      status: "success",
+      message: "User suspended successfully"
+    });
+  } catch (error) {
+    console.error("User suspend error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to suspend user"
+    });
+  }
+});
+app.delete("/api/admin/users/:userId", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const { userId } = req.params;
+    await database_default.deleteUser(userId);
+    res.json({
+      status: "success",
+      message: "User deleted successfully"
+    });
+  } catch (error) {
+    console.error("User delete error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to delete user"
+    });
+  }
+});
+app.post("/api/admin/jobs/:jobId/suspend", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const { jobId } = req.params;
+    await database_default.suspendJob(parseInt(jobId));
+    res.json({
+      status: "success",
+      message: "Job suspended successfully"
+    });
+  } catch (error) {
+    console.error("Job suspend error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to suspend job"
+    });
+  }
+});
+app.delete("/api/admin/jobs/:jobId", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const { jobId } = req.params;
+    await database_default.deleteJob(parseInt(jobId));
+    res.json({
+      status: "success",
+      message: "Job deleted successfully"
+    });
+  } catch (error) {
+    console.error("Job delete error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to delete job"
+    });
+  }
+});
+app.post("/api/admin/proposals/:proposalId/suspend", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const { proposalId } = req.params;
+    await database_default.suspendProposal(parseInt(proposalId));
+    res.json({
+      status: "success",
+      message: "Proposal suspended successfully"
+    });
+  } catch (error) {
+    console.error("Proposal suspend error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to suspend proposal"
+    });
+  }
+});
+app.delete("/api/admin/proposals/:proposalId", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Admin access required"
+      });
+    }
+    const { proposalId } = req.params;
+    await database_default.deleteProposal(parseInt(proposalId));
+    res.json({
+      status: "success",
+      message: "Proposal deleted successfully"
+    });
+  } catch (error) {
+    console.error("Proposal delete error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to delete proposal"
     });
   }
 });
