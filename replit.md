@@ -23,9 +23,11 @@ FreelanceHub is a comprehensive full-stack freelance marketplace platform built 
 
 ### Database Architecture
 - **ORM**: Drizzle ORM with PostgreSQL
-- **Schema**: 16 tables covering users, jobs, proposals, projects, contracts, and admin functionality
+- **Schema**: 18 tables covering users, jobs, proposals, projects, contracts, messaging, and admin functionality
+- **Key Features**: Job approval workflow, direct messaging, admin moderation, session management
 - **Relationships**: Comprehensive foreign key relationships with cascade delete
 - **Indexing**: Optimized queries for performance
+- **Export**: Complete schema available in DATABASE_SCHEMA_COMPLETE_v2.sql
 
 ## Key Components
 
@@ -111,9 +113,18 @@ FreelanceHub is a comprehensive full-stack freelance marketplace platform built 
 - **Auto-deployment**: Automatic scaling with build and start scripts
 - **Port Handling**: Optimized for Replit's port forwarding
 
+## Recent Changes
+
+- June 24, 2025: Implemented complete job approval workflow system
+- June 24, 2025: Added comprehensive messaging system for user communication  
+- June 24, 2025: Enhanced admin moderation with full user/job/proposal management
+- June 24, 2025: Updated database schema with approval status and messaging tables
+- June 24, 2025: Created complete database export with all features (DATABASE_SCHEMA_COMPLETE_v2.sql)
+
 ## Changelog
 
-- June 24, 2025. Initial setup
+- June 24, 2025: Initial setup
+- June 24, 2025: Complete marketplace functionality with approval workflow
 
 ## User Preferences
 

@@ -50,6 +50,8 @@ export const jobs = pgTable("jobs", {
   rejectionReason: text("rejection_reason"),
   remote: boolean("remote").default(false),
   duration: text("duration"),
+  deadline: timestamp("deadline"),
+  urgencyLevel: text("urgency_level").default("normal"), // 'low', 'normal', 'high', 'urgent'
   proposalCount: integer("proposal_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -345,3 +347,39 @@ export const savedJobsRelations = relations(savedJobs, ({ one }) => ({
 
 export const insertSavedJobSchema = createInsertSchema(savedJobs);
 export const insertContractSchema = createInsertSchema(contracts);
+
+// Messages table for communication
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  senderId: text("sender_id").notNull().references(() => users.id),
+  receiverId: text("receiver_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  jobId: integer("job_id").references(() => jobs.id),
+  proposalId: integer("proposal_id").references(() => proposals.id),
+  read: boolean("read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  sender: one(users, {
+    fields: [messages.senderId],
+    references: [users.id],
+    relationName: "sentMessages",
+  }),
+  receiver: one(users, {
+    fields: [messages.receiverId],
+    references: [users.id],
+    relationName: "receivedMessages",
+  }),
+  job: one(jobs, {
+    fields: [messages.jobId],
+    references: [jobs.id],
+  }),
+  proposal: one(proposals, {
+    fields: [messages.proposalId],
+    references: [proposals.id],
+  }),
+}));
+
+export const insertMessageSchema = createInsertSchema(messages);
