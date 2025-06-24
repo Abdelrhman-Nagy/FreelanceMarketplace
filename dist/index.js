@@ -1581,6 +1581,36 @@ app.get("/api/jobs", async (req, res) => {
     });
   }
 });
+app.get("/api/jobs/my-jobs", async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: "error",
+        message: "Authentication required"
+      });
+    }
+    const userId = req.session.userId;
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== "client") {
+      return res.status(403).json({
+        status: "error",
+        message: "Only clients can access this endpoint"
+      });
+    }
+    const jobs2 = await database_default.getClientJobs(userId);
+    res.json({
+      jobs: jobs2,
+      total: jobs2.length,
+      status: "success"
+    });
+  } catch (error) {
+    console.error("Client jobs fetch error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch client jobs"
+    });
+  }
+});
 app.post("/api/jobs", async (req, res) => {
   try {
     if (!req.session?.user && !req.session?.userId) {

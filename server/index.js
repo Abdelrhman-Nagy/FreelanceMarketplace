@@ -136,6 +136,96 @@ app.get('/api/jobs/my-jobs', async (req, res) => {
   }
 });
 
+// Get all freelancers
+app.get('/api/freelancers', async (req, res) => {
+  try {
+    const freelancers = await dbService.getFreelancers();
+    
+    res.json({
+      freelancers: freelancers,
+      total: freelancers.length,
+      status: 'success'
+    });
+  } catch (error) {
+    console.error('Freelancers fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch freelancers'
+    });
+  }
+});
+
+// Get user messages/conversations
+app.get('/api/messages', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = req.session.userId;
+    const conversations = await dbService.getUserConversations(userId);
+    
+    res.json({
+      conversations: conversations,
+      status: 'success'
+    });
+  } catch (error) {
+    console.error('Messages fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch messages'
+    });
+  }
+});
+
+// Send a message
+app.post('/api/messages', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const { receiverId, content, jobId, proposalId } = req.body;
+    
+    if (!receiverId || !content) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Receiver ID and content are required'
+      });
+    }
+
+    const messageData = {
+      senderId: req.session.userId,
+      receiverId,
+      content,
+      jobId: jobId ? parseInt(jobId) : null,
+      proposalId: proposalId ? parseInt(proposalId) : null,
+      read: false,
+      createdAt: new Date()
+    };
+
+    const newMessage = await dbService.createMessage(messageData);
+    
+    res.json({
+      status: 'success',
+      message: 'Message sent successfully',
+      messageData: newMessage
+    });
+  } catch (error) {
+    console.error('Message send error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to send message'
+    });
+  }
+});
+
 app.post('/api/jobs', async (req, res) => {
   try {
     if (!req.session?.user && !req.session?.userId) {

@@ -108,11 +108,17 @@ const ClientDashboard: React.FC = () => {
                     <Plus className="mr-2 h-4 w-4" />
                     Post New Job
                   </Button>
-                  <Button className="w-full" variant="outline" onClick={() => setLocation('/jobs')}>
-                    Browse Talent
+                  <Button className="w-full" variant="outline" onClick={() => setLocation('/freelancers')}>
+                    <Users className="mr-2 h-4 w-4" />
+                    Find Freelancers
                   </Button>
                   <Button className="w-full" variant="outline" onClick={() => setLocation('/projects')}>
+                    <Briefcase className="mr-2 h-4 w-4" />
                     Manage Projects
+                  </Button>
+                  <Button className="w-full" variant="outline" onClick={() => setLocation('/messages')}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Messages
                   </Button>
                 </div>
               </CardContent>
