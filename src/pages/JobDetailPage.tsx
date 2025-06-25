@@ -154,7 +154,7 @@ export default function JobDetailPage() {
     return `${Math.floor(diffInHours / 24)}d ago`;
   };
 
-  if (isLoading) {
+  if (isLoading || proposalsLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
