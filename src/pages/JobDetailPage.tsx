@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRoute, Link } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../hooks/use-toast';
+import { apiRequest } from '../lib/queryClient';
 import { 
   ArrowLeft, 
   DollarSign, 
@@ -11,12 +13,17 @@ import {
   Briefcase,
   Star,
   Users,
-  Calendar
+  Calendar,
+  FileText,
+  Send
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
+import { Textarea } from '../components/ui/textarea';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 
 interface Job {
   id: number;
@@ -46,6 +53,21 @@ interface Proposal {
   createdAt: string;
 }
 
+interface Proposal {
+  id: number;
+  freelancerId: string;
+  freelancerName: string;
+  freelancerEmail: string;
+  freelancerTitle: string;
+  freelancerSkills: string[];
+  freelancerRating: number;
+  coverLetter: string;
+  proposedRate: number;
+  estimatedDuration: string;
+  status: string;
+  createdAt: string;
+}
+
 interface JobsResponse {
   jobs: Job[];
   total: number;
@@ -56,12 +78,71 @@ export default function JobDetailPage() {
   const [match, params] = useRoute('/jobs/:id');
   const jobId = params?.id;
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('details');
+
+  const [proposal, setProposal] = useState({
+    coverLetter: '',
+    proposedRate: '',
+    estimatedDuration: ''
+  });
 
   const { data: jobsData, isLoading } = useQuery<JobsResponse>({
     queryKey: ['/api/jobs'],
   });
 
+  const { data: proposalsData, isLoading: proposalsLoading } = useQuery({
+    queryKey: ['/api/jobs', jobId, 'proposals'],
+    enabled: !!jobId,
+    staleTime: 30000,
+  });
+
   const job = jobsData?.jobs?.find(j => j.id.toString() === jobId);
+  const proposals = proposalsData?.proposals || [];
+
+  const submitProposalMutation = useMutation({
+    mutationFn: (proposalData: any) =>
+      apiRequest('/api/proposals', {
+        method: 'POST',
+        body: JSON.stringify(proposalData),
+      }),
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Proposal submitted successfully!',
+      });
+      setProposal({ coverLetter: '', proposedRate: '', estimatedDuration: '' });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs', jobId, 'proposals'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to submit proposal',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleSubmitProposal = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!proposal.coverLetter || !proposal.proposedRate || !proposal.estimatedDuration) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in all fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    submitProposalMutation.mutate({
+      jobId: parseInt(jobId || '0'),
+      coverLetter: proposal.coverLetter,
+      proposedRate: parseFloat(proposal.proposedRate),
+      estimatedDuration: proposal.estimatedDuration,
+    });
+  };
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);

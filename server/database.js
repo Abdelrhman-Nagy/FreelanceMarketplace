@@ -142,7 +142,13 @@ class DatabaseService {
         })
         .from(jobs)
         .leftJoin(users, eq(jobs.clientId, users.id))
-        .where(eq(jobs.status, 'active'))
+        .where(and(
+          eq(jobs.status, 'active'),
+          or(
+            eq(jobs.approvalStatus, 'approved'),
+            isNull(jobs.approvalStatus) // Include legacy jobs without approval status
+          )
+        ))
         .orderBy(jobs.createdAt);
 
       console.log(`Filtered ${jobsWithClients.length} active jobs`);
@@ -1402,6 +1408,56 @@ export const handleProfile = async (req, res) => {
       status: 'error',
       message: 'Failed to fetch profile'
     });
+  }
+};
+
+// Job approval methods
+DatabaseService.prototype.approveJob = async function(jobId, adminId) {
+  try {
+    console.log('Approving job:', jobId, 'by admin:', adminId);
+    
+    if (!db) {
+      throw new Error('Database not initialized');
+    }
+
+    await db.update(schema.jobs)
+      .set({
+        approvalStatus: 'approved',
+        approvedBy: adminId,
+        approvedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(schema.jobs.id, jobId));
+
+    console.log('Job approved successfully');
+  } catch (error) {
+    console.error('Error approving job:', error);
+    throw error;
+  }
+};
+
+DatabaseService.prototype.rejectJob = async function(jobId, adminId, reason) {
+  try {
+    console.log('Rejecting job:', jobId, 'by admin:', adminId);
+    
+    if (!db) {
+      throw new Error('Database not initialized');
+    }
+
+    await db.update(schema.jobs)
+      .set({
+        approvalStatus: 'rejected',
+        approvedBy: adminId,
+        approvedAt: new Date(),
+        rejectionReason: reason,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.jobs.id, jobId));
+
+    console.log('Job rejected successfully');
+  } catch (error) {
+    console.error('Error rejecting job:', error);
+    throw error;
   }
 };
 

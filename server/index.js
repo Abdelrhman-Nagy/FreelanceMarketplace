@@ -720,6 +720,7 @@ app.post('/api/jobs', async (req, res) => {
       skills: Array.isArray(skills) ? JSON.stringify(skills) : skills,
       duration,
       status: 'active',
+      approvalStatus: 'pending', // Jobs require admin approval
       createdAt: new Date()
     };
 
@@ -727,7 +728,7 @@ app.post('/api/jobs', async (req, res) => {
 
     res.json({
       status: 'success',
-      message: 'Job posted successfully',
+      message: 'Job posted successfully and is pending admin approval',
       job: newJob
     });
 
