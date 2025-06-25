@@ -14,7 +14,7 @@ import crypto2 from "crypto";
 // server/database.js
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq, and, sql, or, inArray, desc } from "drizzle-orm";
+import { eq, and, sql, or, inArray, desc, isNull } from "drizzle-orm";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -526,7 +526,14 @@ var DatabaseService = class {
         clientName: sql`${users2.firstName} || ' ' || ${users2.lastName}`.as("clientName"),
         clientCompany: users2.company,
         clientRating: users2.rating
-      }).from(jobs2).leftJoin(users2, eq(jobs2.clientId, users2.id)).where(eq(jobs2.status, "active")).orderBy(jobs2.createdAt);
+      }).from(jobs2).leftJoin(users2, eq(jobs2.clientId, users2.id)).where(and(
+        eq(jobs2.status, "active"),
+        or(
+          eq(jobs2.approvalStatus, "approved"),
+          isNull(jobs2.approvalStatus)
+          // Include legacy jobs without approval status
+        )
+      )).orderBy(jobs2.createdAt);
       console.log(`Filtered ${jobsWithClients.length} active jobs`);
       const result = jobsWithClients.map((job) => {
         console.log("Processing job:", job.id, job.title);
@@ -1573,6 +1580,43 @@ var handleProfile = async (req, res) => {
     });
   }
 };
+DatabaseService.prototype.approveJob = async function(jobId, adminId) {
+  try {
+    console.log("Approving job:", jobId, "by admin:", adminId);
+    if (!db) {
+      throw new Error("Database not initialized");
+    }
+    await db.update(jobs).set({
+      approvalStatus: "approved",
+      approvedBy: adminId,
+      approvedAt: /* @__PURE__ */ new Date(),
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(jobs.id, jobId));
+    console.log("Job approved successfully");
+  } catch (error) {
+    console.error("Error approving job:", error);
+    throw error;
+  }
+};
+DatabaseService.prototype.rejectJob = async function(jobId, adminId, reason) {
+  try {
+    console.log("Rejecting job:", jobId, "by admin:", adminId);
+    if (!db) {
+      throw new Error("Database not initialized");
+    }
+    await db.update(jobs).set({
+      approvalStatus: "rejected",
+      approvedBy: adminId,
+      approvedAt: /* @__PURE__ */ new Date(),
+      rejectionReason: reason,
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(jobs.id, jobId));
+    console.log("Job rejected successfully");
+  } catch (error) {
+    console.error("Error rejecting job:", error);
+    throw error;
+  }
+};
 DatabaseService.prototype.getClientJobs = async function(clientId) {
   try {
     console.log("Fetching jobs for client:", clientId);
@@ -2276,12 +2320,14 @@ app.post("/api/jobs", async (req, res) => {
       skills: Array.isArray(skills) ? JSON.stringify(skills) : skills,
       duration,
       status: "active",
+      approvalStatus: "pending",
+      // Jobs require admin approval
       createdAt: /* @__PURE__ */ new Date()
     };
     const newJob = await database_default.createJob(jobData);
     res.json({
       status: "success",
-      message: "Job posted successfully",
+      message: "Job posted successfully and is pending admin approval",
       job: newJob
     });
   } catch (error) {
