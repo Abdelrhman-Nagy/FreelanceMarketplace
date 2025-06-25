@@ -31,6 +31,21 @@ interface Job {
   createdAt: string;
 }
 
+interface Proposal {
+  id: number;
+  freelancerId: string;
+  freelancerName: string;
+  freelancerEmail: string;
+  freelancerTitle: string;
+  freelancerSkills: string[];
+  freelancerRating: number;
+  coverLetter: string;
+  proposedRate: number;
+  estimatedDuration: string;
+  status: string;
+  createdAt: string;
+}
+
 interface JobsResponse {
   jobs: Job[];
   total: number;
