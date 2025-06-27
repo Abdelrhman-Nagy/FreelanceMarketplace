@@ -42,6 +42,10 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     console.log(`${req.method} ${req.path}`);
+    if (req.path.includes('/api/auth/')) {
+      console.log('Request headers:', req.headers);
+      console.log('Request body:', req.body);
+    }
   }
   next();
 });
