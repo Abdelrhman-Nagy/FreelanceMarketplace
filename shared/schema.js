@@ -5,11 +5,16 @@ import { createInsertSchema } from "drizzle-zod";
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   email: text("email").notNull().unique(),
-  passwordHash: text("password_hash"), // hashed password for authentication
+  passwordHash: varchar("password_hash"), // hashed password for authentication
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   userType: text("user_type").notNull(), // 'admin', 'client', or 'freelancer'
+  role: text("role"), // alternative role field
   status: text("status").default("active"), // 'active', 'pending', 'suspended'
+  approvalStatus: text("approval_status").default("pending"), // 'pending', 'approved', 'rejected'
+  approvedBy: text("approved_by"),
+  approvedAt: timestamp("approved_at"),
+  rejectionReason: text("rejection_reason"),
   company: text("company"),
   title: text("title"),
   bio: text("bio"),
