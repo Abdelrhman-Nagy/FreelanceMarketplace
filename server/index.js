@@ -1356,9 +1356,17 @@ app.get('/api', (req, res) => {
 // Authentication Routes
 app.post('/api/auth/register', async (req, res) => {
   try {
+    console.log('=== REGISTRATION REQUEST ===');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
     const { email, password, firstName, lastName, role, company, title, bio, skills, hourlyRate, location, experience } = req.body;
 
+    console.log('Extracted fields:', {
+      email, firstName, lastName, role, company, title, bio, skills, hourlyRate, location, experience
+    });
+
     if (!email || !password || !firstName || !lastName) {
+      console.log('Validation failed: Missing required fields');
       return res.status(400).json({
         status: 'error',
         message: 'Email, password, first name, and last name are required'
@@ -1401,7 +1409,9 @@ app.post('/api/auth/register', async (req, res) => {
       createdAt: new Date()
     };
 
+    console.log('Creating user with data:', JSON.stringify(userData, null, 2));
     const user = await dbService.createUser(userData);
+    console.log('User created successfully:', user.id);
     
     // Create session for auto-login
     req.session.userId = user.id;
@@ -1432,10 +1442,14 @@ app.post('/api/auth/register', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('=== REGISTRATION ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Registration failed'
+      message: 'Registration failed',
+      details: error.message
     });
   }
 });
