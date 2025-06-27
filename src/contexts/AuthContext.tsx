@@ -106,8 +106,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const apiUrl = '/api/auth/login';
+      // Smart API URL detection for local development
+      const apiUrl = window.location.port === '5000' 
+        ? '/api/auth/login' 
+        : 'http://localhost:5000/api/auth/login';
+      
       console.log('Attempting login to:', apiUrl);
+      console.log('Current window location:', window.location.href);
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -120,6 +126,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('Login response status:', response.status);
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Login error response:', errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
@@ -140,8 +148,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData) => {
     try {
-      const apiUrl = '/api/auth/register';
+      // Smart API URL detection for local development
+      const apiUrl = window.location.port === '5000' 
+        ? '/api/auth/register' 
+        : 'http://localhost:5000/api/auth/register';
+      
       console.log('Attempting registration to:', apiUrl);
+      console.log('Current window location:', window.location.href);
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -154,6 +168,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('Registration response status:', response.status);
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Registration error response:', errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 

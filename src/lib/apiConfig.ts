@@ -1,7 +1,15 @@
 // API configuration utility
 export const getApiUrl = (endpoint: string): string => {
-  // Use relative URLs that work with any port
-  return endpoint;
+  // Smart API URL detection for local development
+  const currentPort = window.location.port;
+  
+  if (currentPort === '5000') {
+    // If running on port 5000, use relative URLs
+    return endpoint;
+  } else {
+    // If running on any other port, use absolute URLs to port 5000
+    return `http://localhost:5000${endpoint}`;
+  }
 };
 
 export const apiEndpoints = {
