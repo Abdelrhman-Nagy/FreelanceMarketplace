@@ -1716,7 +1716,7 @@ var database_default = dbService;
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
 var app = express();
-var PORT = process.env.PORT || process.env.IISNODE_PORT || 5e3;
+var PORT = process.env.PORT || process.env.IISNODE_PORT || 80;
 var HOST = process.env.HOST || "0.0.0.0";
 app.use(express.json());
 app.use(cookieParser());

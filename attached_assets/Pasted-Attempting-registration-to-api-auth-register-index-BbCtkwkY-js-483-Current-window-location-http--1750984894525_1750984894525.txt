@@ -1,0 +1,59 @@
+Attempting registration to: /api/auth/register
+index-BbCtkwkY.js:483 Current window location: http://localhost/register
+api/auth/register:1 
+            
+            
+           Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+index-BbCtkwkY.js:483 Registration response status: 500
+index-BbCtkwkY.js:483 Registration error response: {"status":"error","message":"Registration failed"}
+register @ index-BbCtkwkY.js:483Understand this error
+index-BbCtkwkY.js:483 Registration error: Error: HTTP 500: Internal Server Error
+    at register (index-BbCtkwkY.js:483:26740)
+    at async w (index-BbCtkwkY.js:523:28281)
+register @ index-BbCtkwkY.js:483Understand this error
+index-BbCtkwkY.js:483 Attempting login to: /api/auth/login
+index-BbCtkwkY.js:483 Current window location: http://localhost/login
+index-BbCtkwkY.js:483 
+            
+            
+           POST http://localhost/api/auth/login 500 (Internal Server Error)
+login @ index-BbCtkwkY.js:483
+x @ index-BbCtkwkY.js:483
+He @ index-BbCtkwkY.js:78
+Ex @ index-BbCtkwkY.js:78
+Tb @ index-BbCtkwkY.js:78
+JV @ index-BbCtkwkY.js:78
+U0 @ index-BbCtkwkY.js:90
+F3 @ index-BbCtkwkY.js:90
+H0 @ index-BbCtkwkY.js:90
+L3 @ index-BbCtkwkY.js:90
+(anonymous) @ index-BbCtkwkY.js:90
+qv @ index-BbCtkwkY.js:174
+yx @ index-BbCtkwkY.js:78
+Og @ index-BbCtkwkY.js:90
+mT @ index-BbCtkwkY.js:78
+vg @ index-BbCtkwkY.js:78
+cT @ index-BbCtkwkY.js:78Understand this error
+index-BbCtkwkY.js:483 Login response status: 500
+index-BbCtkwkY.js:483 Login error response: {"status":"error","message":"Login failed: column \"profile_image\" does not exist"}
+login @ index-BbCtkwkY.js:483
+await in login
+x @ index-BbCtkwkY.js:483
+He @ index-BbCtkwkY.js:78
+Ex @ index-BbCtkwkY.js:78
+Tb @ index-BbCtkwkY.js:78
+JV @ index-BbCtkwkY.js:78
+U0 @ index-BbCtkwkY.js:90
+F3 @ index-BbCtkwkY.js:90
+H0 @ index-BbCtkwkY.js:90
+L3 @ index-BbCtkwkY.js:90
+(anonymous) @ index-BbCtkwkY.js:90
+qv @ index-BbCtkwkY.js:174
+yx @ index-BbCtkwkY.js:78
+Og @ index-BbCtkwkY.js:90
+mT @ index-BbCtkwkY.js:78
+vg @ index-BbCtkwkY.js:78
+cT @ index-BbCtkwkY.js:78Understand this error
+index-BbCtkwkY.js:483 Login error: Error: HTTP 500: Internal Server Error
+    at login (index-BbCtkwkY.js:483:26022)
+    at async x (index-BbCtkwkY.js:483:157761)
