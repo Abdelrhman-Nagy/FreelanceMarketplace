@@ -1,6 +1,7 @@
+
 // API configuration utility
 export const getApiUrl = (endpoint: string): string => {
-  // Use relative URL - server runs on same port
+  // Always use relative URLs since server runs on same port
   return endpoint;
 };
 
