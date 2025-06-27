@@ -54,7 +54,7 @@ The application runs entirely on port 80:
 3. **500 Internal Server Errors:**
    - Check server logs in the terminal
    - Verify database connection is working
-   - Test with: `curl http://localhost:5000/api/test`
+   - Test with: `curl http://localhost:80/api/test`
 
 ### Database Issues
 

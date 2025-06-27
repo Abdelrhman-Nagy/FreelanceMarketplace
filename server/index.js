@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || process.env.IISNODE_PORT || 5000;
+const PORT = process.env.PORT || process.env.IISNODE_PORT || 80;
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Parse JSON bodies

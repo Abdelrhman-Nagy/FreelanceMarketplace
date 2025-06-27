@@ -81,8 +81,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      // Always use absolute URL to port 5000 for API requests
-      const apiUrl = 'http://localhost:5000/api/auth/profile';
+      // Use relative URL - server runs on same port
+      const apiUrl = '/api/auth/profile';
       const response = await fetch(apiUrl, {
         credentials: 'include'
       });
@@ -212,8 +212,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (data: Partial<User>) => {
     try {
-      // Always use absolute URL to port 5000 for API requests
-      const apiUrl = 'http://localhost:5000/api/auth/profile';
+      // Use relative URL - server runs on same port
+      const apiUrl = '/api/auth/profile';
       
       const response = await fetch(apiUrl, {
         method: 'PUT',
