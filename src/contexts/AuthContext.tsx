@@ -215,7 +215,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (data: Partial<User>) => {
     try {
-      const apiUrl = '/api/auth/profile';
+      // Smart API URL detection for local development
+      const apiUrl = window.location.port === '5000' 
+        ? '/api/auth/profile' 
+        : 'http://localhost:5000/api/auth/profile';
+      
       const response = await fetch(apiUrl, {
         method: 'PUT',
         headers: {
