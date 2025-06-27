@@ -130,3 +130,4 @@ FreelanceHub is a comprehensive full-stack freelance marketplace platform built 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Port configuration: Frontend on port 80, API server on port 5000.

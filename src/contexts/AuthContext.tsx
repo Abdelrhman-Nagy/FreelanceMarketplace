@@ -81,7 +81,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const apiUrl = '/api/auth/profile';
+      // Always use absolute URL to port 5000 for API requests
+      const apiUrl = 'http://localhost:5000/api/auth/profile';
       const response = await fetch(apiUrl, {
         credentials: 'include'
       });
@@ -106,10 +107,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      // Smart API URL detection for local development
-      const apiUrl = window.location.port === '5000' 
-        ? '/api/auth/login' 
-        : 'http://localhost:5000/api/auth/login';
+      // Always use absolute URL to port 5000 for API requests
+      const apiUrl = 'http://localhost:5000/api/auth/login';
       
       console.log('Attempting login to:', apiUrl);
       console.log('Current window location:', window.location.href);
@@ -148,10 +147,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData) => {
     try {
-      // Smart API URL detection for local development
-      const apiUrl = window.location.port === '5000' 
-        ? '/api/auth/register' 
-        : 'http://localhost:5000/api/auth/register';
+      // Always use absolute URL to port 5000 for API requests
+      const apiUrl = 'http://localhost:5000/api/auth/register';
       
       console.log('Attempting registration to:', apiUrl);
       console.log('Current window location:', window.location.href);
@@ -194,7 +191,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     console.log('AuthContext logout called');
     try {
       // Call logout endpoint to destroy session
-      const apiUrl = '/api/auth/logout';
+      const apiUrl = 'http://localhost:5000/api/auth/logout';
       await fetch(apiUrl, {
         method: 'POST',
         credentials: 'include',
@@ -215,10 +212,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (data: Partial<User>) => {
     try {
-      // Smart API URL detection for local development
-      const apiUrl = window.location.port === '5000' 
-        ? '/api/auth/profile' 
-        : 'http://localhost:5000/api/auth/profile';
+      // Always use absolute URL to port 5000 for API requests
+      const apiUrl = 'http://localhost:5000/api/auth/profile';
       
       const response = await fetch(apiUrl, {
         method: 'PUT',

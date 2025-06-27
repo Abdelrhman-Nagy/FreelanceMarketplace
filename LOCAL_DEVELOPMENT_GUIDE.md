@@ -9,8 +9,9 @@
    The server will run on `http://localhost:5000`
 
 2. **Access the application:**
-   - Open your browser to exactly: `http://localhost:5000`
-   - Do NOT use port 80 or any other port
+   - API Server runs on: `http://localhost:5000`
+   - Frontend can be accessed via: `http://localhost:80` or `http://localhost`
+   - All API requests automatically route to port 5000
 
 ## Test Accounts
 
@@ -31,12 +32,13 @@ The following pre-approved test accounts are available:
 - **Password:** `password`
 - **Role:** Freelancer (can apply for jobs)
 
-## Smart Port Detection
+## Cross-Port Configuration
 
-The application automatically detects your setup:
+The application is configured for port 80 frontend with port 5000 API:
 
-- **If accessed via port 5000:** Uses relative URLs (`/api/auth/login`)
-- **If accessed via any other port:** Uses absolute URLs (`http://localhost:5000/api/auth/login`)
+- **Frontend:** Runs on port 80 (`http://localhost:80`)
+- **API Server:** Runs on port 5000 (`http://localhost:5000`)
+- **All API requests:** Automatically route to `http://localhost:5000`
 
 ## Common Issues & Solutions
 
