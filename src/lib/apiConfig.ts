@@ -1,7 +1,7 @@
 // API configuration utility
 export const getApiUrl = (endpoint: string): string => {
-  // Always use absolute URL to port 5000 for API requests
-  return `http://localhost:5000${endpoint}`;
+  // Use relative URL - server runs on same port
+  return endpoint;
 };
 
 export const apiEndpoints = {

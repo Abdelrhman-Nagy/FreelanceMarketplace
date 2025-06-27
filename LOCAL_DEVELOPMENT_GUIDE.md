@@ -6,12 +6,11 @@
    ```bash
    npm run dev
    ```
-   The server will run on `http://localhost:5000`
+   The server will run on `http://localhost:80`
 
 2. **Access the application:**
-   - API Server runs on: `http://localhost:5000`
-   - Frontend can be accessed via: `http://localhost:80` or `http://localhost`
-   - All API requests automatically route to port 5000
+   - Open your browser to: `http://localhost:80` or `http://localhost`
+   - Everything runs on port 80 (frontend + API)
 
 ## Test Accounts
 
@@ -32,20 +31,19 @@ The following pre-approved test accounts are available:
 - **Password:** `password`
 - **Role:** Freelancer (can apply for jobs)
 
-## Cross-Port Configuration
+## Single Port Configuration
 
-The application is configured for port 80 frontend with port 5000 API:
+The application runs entirely on port 80:
 
-- **Frontend:** Runs on port 80 (`http://localhost:80`)
-- **API Server:** Runs on port 5000 (`http://localhost:5000`)
-- **All API requests:** Automatically route to `http://localhost:5000`
+- **Frontend + API:** Both run on port 80 (`http://localhost:80`)
+- **All requests:** Use relative URLs (no port numbers needed)
 
 ## Common Issues & Solutions
 
 ### Login/Register Errors
 
 1. **404 Errors on authentication:**
-   - Make sure you're accessing `http://localhost:5000` exactly
+   - Make sure you're accessing `http://localhost:80` or `http://localhost`
    - Check browser console for error details
    - Verify the server is running with `npm run dev`
 
@@ -62,7 +60,7 @@ The application is configured for port 80 frontend with port 5000 API:
 
 1. **Test database connection:**
    ```bash
-   curl http://localhost:5000/api/test
+   curl http://localhost:80/api/test
    ```
 
 2. **If users don't exist:**
@@ -84,7 +82,7 @@ The application is configured for port 80 frontend with port 5000 API:
 
 1. **Clear browser cache and cookies**
 2. **Use browser developer tools to check network requests**
-3. **Verify server is running on port 5000**
+3. **Verify server is running on port 80**
 4. **Test API endpoints directly with curl**
 5. **Check browser console for error messages**
 

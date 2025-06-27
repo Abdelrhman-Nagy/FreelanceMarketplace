@@ -107,8 +107,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      // Always use absolute URL to port 5000 for API requests
-      const apiUrl = 'http://localhost:5000/api/auth/login';
+      // Use relative URL - server runs on same port
+      const apiUrl = '/api/auth/login';
       
       console.log('Attempting login to:', apiUrl);
       console.log('Current window location:', window.location.href);
@@ -147,8 +147,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData) => {
     try {
-      // Always use absolute URL to port 5000 for API requests
-      const apiUrl = 'http://localhost:5000/api/auth/register';
+      // Use relative URL - server runs on same port
+      const apiUrl = '/api/auth/register';
       
       console.log('Attempting registration to:', apiUrl);
       console.log('Current window location:', window.location.href);
@@ -190,8 +190,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     console.log('AuthContext logout called');
     try {
-      // Call logout endpoint to destroy session
-      const apiUrl = 'http://localhost:5000/api/auth/logout';
+      // Use relative URL - server runs on same port
+      const apiUrl = '/api/auth/logout';
       await fetch(apiUrl, {
         method: 'POST',
         credentials: 'include',
