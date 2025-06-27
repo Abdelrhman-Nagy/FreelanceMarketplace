@@ -115,12 +115,13 @@ FreelanceHub is a comprehensive full-stack freelance marketplace platform built 
 
 ## Recent Changes
 
+- June 27, 2025: ✅ COMPLETE PORT 80 CONFIGURATION - Removed ALL port 5000 dependencies
+- June 27, 2025: ✅ Updated server to run entirely on port 80 (server/index.js)
+- June 27, 2025: ✅ Converted all authentication endpoints to relative URLs
+- June 27, 2025: ✅ Fixed database column references (profile_image)
+- June 27, 2025: ✅ Verified authentication system working on port 80
 - June 24, 2025: Implemented dual approval workflow for user registration and job posting
-- June 24, 2025: Added user approval system - new registrations require admin approval before login
-- June 24, 2025: Added job approval system - new job posts require admin approval before appearing on Browse Jobs
 - June 24, 2025: Enhanced admin dashboard with user and job approval management
-- June 24, 2025: Updated database schema with approval_status columns for users and jobs tables
-- June 24, 2025: Created complete database export with approval workflow (COMPLETE_DATABASE_WITH_DATA_AND_APPROVALS.sql)
 
 ## Changelog
 
