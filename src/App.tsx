@@ -26,6 +26,8 @@ import PostJobPage from './pages/PostJobPage';
 import SubmitProposalPage from './pages/SubmitProposalPage';
 import FreelancersPage from './pages/FreelancersPage';
 import MessagesPage from './pages/MessagesPage';
+import PaymentsPage from './pages/PaymentsPage';
+import TransactionsPage from './pages/TransactionsPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { queryClient } from './lib/queryClient';
 
@@ -61,6 +63,8 @@ function App() {
                   <Route path="/jobs/:id/apply" component={SubmitProposalPage} />
                   <Route path="/freelancers" component={FreelancersPage} />
                   <Route path="/messages" component={MessagesPage} />
+                  <Route path="/payments" component={PaymentsPage} />
+                  <Route path="/transactions" component={TransactionsPage} />
                   <Route>
                     <div className="text-center py-20">
                       <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
