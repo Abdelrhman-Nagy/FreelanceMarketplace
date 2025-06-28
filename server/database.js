@@ -1313,6 +1313,233 @@ class DatabaseService {
       throw error;
     }
   }
+
+  // Payment Request Methods
+  async createPaymentRequest(requestData) {
+    try {
+      const query = `
+        INSERT INTO payment_requests (
+          contract_id, freelancer_id, client_id, amount, description, currency
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      `;
+      
+      const values = [
+        requestData.contractId,
+        requestData.freelancerId,
+        requestData.clientId,
+        requestData.amount,
+        requestData.description,
+        requestData.currency || 'USD'
+      ];
+      
+      const result = await pool.query(query, values);
+      console.log('Payment request created:', result.rows[0]);
+      
+      return {
+        id: result.rows[0].id,
+        contractId: result.rows[0].contract_id,
+        freelancerId: result.rows[0].freelancer_id,
+        clientId: result.rows[0].client_id,
+        amount: result.rows[0].amount,
+        currency: result.rows[0].currency,
+        description: result.rows[0].description,
+        status: result.rows[0].status,
+        requestedAt: result.rows[0].requested_at,
+        createdAt: result.rows[0].created_at
+      };
+    } catch (error) {
+      console.error('Error creating payment request:', error);
+      throw error;
+    }
+  }
+
+  async getPaymentRequestsByUser(userId, userType) {
+    try {
+      let query;
+      if (userType === 'freelancer') {
+        query = `
+          SELECT pr.*, c.job_id, j.title as job_title,
+                 cl.first_name as client_first_name, cl.last_name as client_last_name,
+                 cl.company as client_company
+          FROM payment_requests pr
+          JOIN contracts c ON pr.contract_id = c.id
+          JOIN jobs j ON c.job_id = j.id
+          JOIN users cl ON pr.client_id = cl.id
+          WHERE pr.freelancer_id = $1
+          ORDER BY pr.created_at DESC
+        `;
+      } else {
+        query = `
+          SELECT pr.*, c.job_id, j.title as job_title,
+                 fl.first_name as freelancer_first_name, fl.last_name as freelancer_last_name
+          FROM payment_requests pr
+          JOIN contracts c ON pr.contract_id = c.id
+          JOIN jobs j ON c.job_id = j.id
+          JOIN users fl ON pr.freelancer_id = fl.id
+          WHERE pr.client_id = $1
+          ORDER BY pr.created_at DESC
+        `;
+      }
+      
+      const result = await pool.query(query, [userId]);
+      
+      return result.rows.map(row => ({
+        id: row.id,
+        contractId: row.contract_id,
+        jobId: row.job_id,
+        jobTitle: row.job_title,
+        freelancerId: row.freelancer_id,
+        clientId: row.client_id,
+        amount: row.amount,
+        currency: row.currency,
+        description: row.description,
+        status: row.status,
+        requestedAt: row.requested_at,
+        approvedAt: row.approved_at,
+        paidAt: row.paid_at,
+        rejectedAt: row.rejected_at,
+        rejectionReason: row.rejection_reason,
+        freelancerName: userType === 'client' ? `${row.freelancer_first_name} ${row.freelancer_last_name}` : null,
+        clientName: userType === 'freelancer' ? `${row.client_first_name} ${row.client_last_name}` : null,
+        clientCompany: userType === 'freelancer' ? row.client_company : null,
+        createdAt: row.created_at
+      }));
+    } catch (error) {
+      console.error('Error getting payment requests:', error);
+      throw error;
+    }
+  }
+
+  async approvePaymentRequest(requestId, clientId) {
+    try {
+      // First get the payment request details
+      const getRequestQuery = `
+        SELECT * FROM payment_requests WHERE id = $1 AND client_id = $2
+      `;
+      const requestResult = await pool.query(getRequestQuery, [requestId, clientId]);
+      
+      if (requestResult.rows.length === 0) {
+        throw new Error('Payment request not found or unauthorized');
+      }
+      
+      const request = requestResult.rows[0];
+      
+      // Update payment request status
+      const updateQuery = `
+        UPDATE payment_requests 
+        SET status = 'approved', approved_at = NOW(), approved_by = $1, paid_at = NOW()
+        WHERE id = $2
+        RETURNING *
+      `;
+      const updateResult = await pool.query(updateQuery, [clientId, requestId]);
+      
+      // Create transaction record
+      const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const createTransactionQuery = `
+        INSERT INTO transactions (
+          payment_request_id, contract_id, from_user_id, to_user_id, 
+          amount, currency, type, description, transaction_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `;
+      
+      const transactionResult = await pool.query(createTransactionQuery, [
+        requestId,
+        request.contract_id,
+        clientId,
+        request.freelancer_id,
+        request.amount,
+        request.currency,
+        'payment_request',
+        `Payment for: ${request.description}`,
+        transactionId
+      ]);
+      
+      // Update freelancer total earnings
+      await pool.query(`
+        UPDATE users 
+        SET total_earnings = total_earnings + $1
+        WHERE id = $2
+      `, [request.amount, request.freelancer_id]);
+      
+      console.log('Payment request approved and transaction created');
+      
+      return {
+        paymentRequest: updateResult.rows[0],
+        transaction: transactionResult.rows[0]
+      };
+    } catch (error) {
+      console.error('Error approving payment request:', error);
+      throw error;
+    }
+  }
+
+  async rejectPaymentRequest(requestId, clientId, reason) {
+    try {
+      const query = `
+        UPDATE payment_requests 
+        SET status = 'rejected', rejected_at = NOW(), rejection_reason = $1
+        WHERE id = $2 AND client_id = $3
+        RETURNING *
+      `;
+      
+      const result = await pool.query(query, [reason, requestId, clientId]);
+      
+      if (result.rows.length === 0) {
+        throw new Error('Payment request not found or unauthorized');
+      }
+      
+      console.log('Payment request rejected');
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error rejecting payment request:', error);
+      throw error;
+    }
+  }
+
+  async getTransactionHistory(userId) {
+    try {
+      const query = `
+        SELECT t.*, 
+               fu.first_name as from_first_name, fu.last_name as from_last_name,
+               tu.first_name as to_first_name, tu.last_name as to_last_name,
+               c.job_id, j.title as job_title
+        FROM transactions t
+        JOIN users fu ON t.from_user_id = fu.id
+        JOIN users tu ON t.to_user_id = tu.id
+        LEFT JOIN contracts c ON t.contract_id = c.id
+        LEFT JOIN jobs j ON c.job_id = j.id
+        WHERE t.from_user_id = $1 OR t.to_user_id = $1
+        ORDER BY t.created_at DESC
+      `;
+      
+      const result = await pool.query(query, [userId]);
+      
+      return result.rows.map(row => ({
+        id: row.id,
+        paymentRequestId: row.payment_request_id,
+        contractId: row.contract_id,
+        jobId: row.job_id,
+        jobTitle: row.job_title,
+        fromUserId: row.from_user_id,
+        toUserId: row.to_user_id,
+        fromUserName: `${row.from_first_name} ${row.from_last_name}`,
+        toUserName: `${row.to_first_name} ${row.to_last_name}`,
+        amount: row.amount,
+        currency: row.currency,
+        type: row.type,
+        status: row.status,
+        description: row.description,
+        transactionId: row.transaction_id,
+        createdAt: row.created_at,
+        direction: row.from_user_id === userId ? 'outgoing' : 'incoming'
+      }));
+    } catch (error) {
+      console.error('Error getting transaction history:', error);
+      throw error;
+    }
+  }
 }
 
 // Session-based authentication middleware

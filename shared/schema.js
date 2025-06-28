@@ -388,3 +388,83 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 }));
 
 export const insertMessageSchema = createInsertSchema(messages);
+
+// Payment Requests table
+export const paymentRequests = pgTable("payment_requests", {
+  id: serial("id").primaryKey(),
+  contractId: integer("contract_id").notNull().references(() => contracts.id),
+  freelancerId: text("freelancer_id").notNull().references(() => users.id),
+  clientId: text("client_id").notNull().references(() => users.id),
+  amount: integer("amount").notNull(), // amount in cents
+  currency: text("currency").default("USD"),
+  description: text("description").notNull(),
+  status: text("status").default("pending"), // 'pending', 'approved', 'rejected', 'paid'
+  requestedAt: timestamp("requested_at").defaultNow(),
+  approvedAt: timestamp("approved_at"),
+  paidAt: timestamp("paid_at"),
+  rejectedAt: timestamp("rejected_at"),
+  rejectionReason: text("rejection_reason"),
+  approvedBy: text("approved_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Transactions table for payment history
+export const transactions = pgTable("transactions", {
+  id: serial("id").primaryKey(),
+  paymentRequestId: integer("payment_request_id").references(() => paymentRequests.id),
+  contractId: integer("contract_id").references(() => contracts.id),
+  fromUserId: text("from_user_id").notNull().references(() => users.id),
+  toUserId: text("to_user_id").notNull().references(() => users.id),
+  amount: integer("amount").notNull(), // amount in cents
+  currency: text("currency").default("USD"),
+  type: text("type").notNull(), // 'payment_request', 'project_payment', 'bonus'
+  status: text("status").default("completed"), // 'completed', 'pending', 'failed'
+  description: text("description").notNull(),
+  transactionId: text("transaction_id"), // simulated transaction ID
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for payment requests
+export const paymentRequestsRelations = relations(paymentRequests, ({ one }) => ({
+  contract: one(contracts, {
+    fields: [paymentRequests.contractId],
+    references: [contracts.id]
+  }),
+  freelancer: one(users, {
+    fields: [paymentRequests.freelancerId],
+    references: [users.id]
+  }),
+  client: one(users, {
+    fields: [paymentRequests.clientId],
+    references: [users.id]
+  }),
+  approver: one(users, {
+    fields: [paymentRequests.approvedBy],
+    references: [users.id]
+  })
+}));
+
+// Relations for transactions
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  paymentRequest: one(paymentRequests, {
+    fields: [transactions.paymentRequestId],
+    references: [paymentRequests.id]
+  }),
+  contract: one(contracts, {
+    fields: [transactions.contractId],
+    references: [contracts.id]
+  }),
+  fromUser: one(users, {
+    fields: [transactions.fromUserId],
+    references: [users.id]
+  }),
+  toUser: one(users, {
+    fields: [transactions.toUserId],
+    references: [users.id]
+  })
+}));
+
+// Insert schemas for new tables
+export const insertPaymentRequestSchema = createInsertSchema(paymentRequests);
+export const insertTransactionSchema = createInsertSchema(transactions);

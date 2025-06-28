@@ -1322,6 +1322,156 @@ app.get('/api/proposals', async (req, res) => {
   }
 });
 
+// Payment system endpoints
+app.post('/api/payments/request', requireSessionAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const userType = req.session.user?.userType || req.session.user?.role;
+    
+    if (userType !== 'freelancer') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Only freelancers can create payment requests'
+      });
+    }
+
+    const { contractId, clientId, amount, description } = req.body;
+    
+    if (!contractId || !clientId || !amount || !description) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Contract ID, client ID, amount, and description are required'
+      });
+    }
+
+    const paymentRequest = await dbService.createPaymentRequest({
+      contractId: parseInt(contractId),
+      freelancerId: userId,
+      clientId,
+      amount: parseInt(amount * 100), // Convert to cents
+      description
+    });
+
+    res.json({
+      status: 'success',
+      paymentRequest
+    });
+  } catch (error) {
+    console.error('Payment request creation error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to create payment request'
+    });
+  }
+});
+
+app.get('/api/payments', requireSessionAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const userType = req.session.user?.userType || req.session.user?.role;
+    
+    const paymentRequests = await dbService.getPaymentRequestsByUser(userId, userType);
+    
+    res.json({
+      status: 'success',
+      paymentRequests
+    });
+  } catch (error) {
+    console.error('Get payment requests error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch payment requests'
+    });
+  }
+});
+
+app.post('/api/payments/:requestId/approve', requireSessionAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const userType = req.session.user?.userType || req.session.user?.role;
+    
+    if (userType !== 'client') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Only clients can approve payment requests'
+      });
+    }
+
+    const { requestId } = req.params;
+    
+    const result = await dbService.approvePaymentRequest(parseInt(requestId), userId);
+    
+    res.json({
+      status: 'success',
+      message: 'Payment request approved and processed',
+      data: result
+    });
+  } catch (error) {
+    console.error('Payment approval error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message || 'Failed to approve payment request'
+    });
+  }
+});
+
+app.post('/api/payments/:requestId/reject', requireSessionAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const userType = req.session.user?.userType || req.session.user?.role;
+    
+    if (userType !== 'client') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Only clients can reject payment requests'
+      });
+    }
+
+    const { requestId } = req.params;
+    const { reason } = req.body;
+    
+    if (!reason) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Rejection reason is required'
+      });
+    }
+    
+    const result = await dbService.rejectPaymentRequest(parseInt(requestId), userId, reason);
+    
+    res.json({
+      status: 'success',
+      message: 'Payment request rejected',
+      data: result
+    });
+  } catch (error) {
+    console.error('Payment rejection error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message || 'Failed to reject payment request'
+    });
+  }
+});
+
+app.get('/api/transactions', requireSessionAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    const transactions = await dbService.getTransactionHistory(userId);
+    
+    res.json({
+      status: 'success',
+      transactions
+    });
+  } catch (error) {
+    console.error('Get transactions error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch transaction history'
+    });
+  }
+});
+
 // Serve static files from dist directory
 app.use(express.static('dist'));
 
