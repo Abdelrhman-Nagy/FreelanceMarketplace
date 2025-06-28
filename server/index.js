@@ -1402,7 +1402,17 @@ app.post('/api/auth/register', async (req, res) => {
       company,
       title,
       bio,
-      skills: Array.isArray(skills) ? skills : (skills || []),
+      skills: (() => {
+        try {
+          if (typeof skills === 'string') {
+            return JSON.parse(skills);
+          }
+          return Array.isArray(skills) ? skills : [];
+        } catch (e) {
+          console.log('Skills parsing error, using empty array:', e.message);
+          return [];
+        }
+      })(),
       hourlyRate,
       location,
       experience,
