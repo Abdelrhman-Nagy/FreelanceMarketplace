@@ -43,15 +43,15 @@ const AdminDashboard: React.FC = () => {
     enabled: !!user,
   });
 
-  // Fetch all users for management
-  const { data: usersData } = useQuery({
-    queryKey: ['/api/admin/users'],
+  // Fetch pending users for approval
+  const { data: pendingUsersData } = useQuery({
+    queryKey: ['/api/admin/users/pending'],
     enabled: !!user,
   });
 
-  // Fetch all jobs for moderation
-  const { data: jobsData } = useQuery({
-    queryKey: ['/api/admin/jobs'],
+  // Fetch pending jobs for approval
+  const { data: pendingJobsData } = useQuery({
+    queryKey: ['/api/admin/jobs/pending'],
     enabled: !!user,
   });
 
@@ -69,7 +69,7 @@ const AdminDashboard: React.FC = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users/pending'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
       toast({ title: 'User approved successfully' });
     },
@@ -87,7 +87,7 @@ const AdminDashboard: React.FC = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users/pending'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
       toast({ title: 'User rejected successfully' });
     },
@@ -229,8 +229,8 @@ const AdminDashboard: React.FC = () => {
     { title: 'Revenue', value: '$' + (adminStats?.totalRevenue || '0'), icon: DollarSign, change: '+23%' }
   ];
 
-  const users = usersData?.users || [];
-  const jobs = jobsData?.jobs || [];
+  const users = pendingUsersData?.users || [];
+  const jobs = pendingJobsData?.jobs || [];
   const proposals = proposalsData?.proposals || [];
 
   const filteredUsers = users.filter(user =>

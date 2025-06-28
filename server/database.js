@@ -1077,6 +1077,141 @@ class DatabaseService {
     }
   }
 
+  // Admin methods for managing pending users and jobs
+  async getPendingUsers() {
+    try {
+      const users = await db
+        .select()
+        .from(schema.users)
+        .where(eq(schema.users.approvalStatus, 'pending'))
+        .orderBy(desc(schema.users.createdAt));
+
+      return users;
+    } catch (error) {
+      console.error('Error fetching pending users:', error);
+      throw error;
+    }
+  }
+
+  async getPendingJobs() {
+    try {
+      const jobs = await db
+        .select({
+          id: schema.jobs.id,
+          title: schema.jobs.title,
+          description: schema.jobs.description,
+          category: schema.jobs.category,
+          budgetType: schema.jobs.budgetType,
+          budgetMin: schema.jobs.budgetMin,
+          budgetMax: schema.jobs.budgetMax,
+          experienceLevel: schema.jobs.experienceLevel,
+          skills: schema.jobs.skills,
+          status: schema.jobs.status,
+          approvalStatus: schema.jobs.approvalStatus,
+          createdAt: schema.jobs.createdAt,
+          clientId: schema.jobs.clientId,
+          clientName: schema.users.firstName,
+          clientLastName: schema.users.lastName,
+          clientCompany: schema.users.company
+        })
+        .from(schema.jobs)
+        .leftJoin(schema.users, eq(schema.jobs.clientId, schema.users.id))
+        .where(eq(schema.jobs.approvalStatus, 'pending'))
+        .orderBy(desc(schema.jobs.createdAt));
+
+      return jobs.map(job => ({
+        ...job,
+        clientName: `${job.clientName} ${job.clientLastName}`,
+        skills: this.parseSkills(job.skills)
+      }));
+    } catch (error) {
+      console.error('Error fetching pending jobs:', error);
+      throw error;
+    }
+  }
+
+  async approveUser(userId, adminId) {
+    try {
+      const [updatedUser] = await db
+        .update(schema.users)
+        .set({
+          approvalStatus: 'approved',
+          approvedBy: adminId,
+          approvedAt: new Date(),
+          status: 'active'
+        })
+        .where(eq(schema.users.id, userId))
+        .returning();
+
+      return updatedUser;
+    } catch (error) {
+      console.error('Error approving user:', error);
+      throw error;
+    }
+  }
+
+  async rejectUser(userId, adminId, reason) {
+    try {
+      const [updatedUser] = await db
+        .update(schema.users)
+        .set({
+          approvalStatus: 'rejected',
+          approvedBy: adminId,
+          approvedAt: new Date(),
+          rejectionReason: reason,
+          status: 'suspended'
+        })
+        .where(eq(schema.users.id, userId))
+        .returning();
+
+      return updatedUser;
+    } catch (error) {
+      console.error('Error rejecting user:', error);
+      throw error;
+    }
+  }
+
+  async approveJob(jobId, adminId) {
+    try {
+      const [updatedJob] = await db
+        .update(schema.jobs)
+        .set({
+          approvalStatus: 'approved',
+          approvedBy: adminId,
+          approvedAt: new Date(),
+          status: 'active'
+        })
+        .where(eq(schema.jobs.id, jobId))
+        .returning();
+
+      return updatedJob;
+    } catch (error) {
+      console.error('Error approving job:', error);
+      throw error;
+    }
+  }
+
+  async rejectJob(jobId, adminId, reason) {
+    try {
+      const [updatedJob] = await db
+        .update(schema.jobs)
+        .set({
+          approvalStatus: 'rejected',
+          approvedBy: adminId,
+          approvedAt: new Date(),
+          rejectionReason: reason,
+          status: 'rejected'
+        })
+        .where(eq(schema.jobs.id, jobId))
+        .returning();
+
+      return updatedJob;
+    } catch (error) {
+      console.error('Error rejecting job:', error);
+      throw error;
+    }
+  }
+
   async getUserStatistics(userId, userType) {
     try {
       if (!db) {

@@ -329,6 +329,40 @@ app.get('/api/admin/jobs', async (req, res) => {
   }
 });
 
+// Get pending users for approval
+app.get('/api/admin/users/pending', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const users = await dbService.getPendingUsers();
+    
+    res.json({
+      users: users,
+      total: users.length,
+      status: 'success'
+    });
+  } catch (error) {
+    console.error('Pending users fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch pending users'
+    });
+  }
+});
+
 // Get pending jobs for approval
 app.get('/api/admin/jobs/pending', async (req, res) => {
   try {
@@ -359,6 +393,83 @@ app.get('/api/admin/jobs/pending', async (req, res) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch pending jobs'
+    });
+  }
+});
+
+// Approve a user
+app.post('/api/admin/users/:userId/approve', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const { userId } = req.params;
+    await dbService.approveUser(userId, req.session.userId);
+    
+    res.json({
+      status: 'success',
+      message: 'User approved successfully'
+    });
+  } catch (error) {
+    console.error('User approval error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to approve user'
+    });
+  }
+});
+
+// Reject a user
+app.post('/api/admin/users/:userId/reject', async (req, res) => {
+  try {
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Authentication required'
+      });
+    }
+
+    const userType = req.session.user?.userType || req.session.user?.role;
+    if (userType !== 'admin') {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Admin access required'
+      });
+    }
+
+    const { userId } = req.params;
+    const { reason } = req.body;
+    
+    if (!reason) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Rejection reason is required'
+      });
+    }
+
+    await dbService.rejectUser(userId, req.session.userId, reason);
+    
+    res.json({
+      status: 'success',
+      message: 'User rejected successfully'
+    });
+  } catch (error) {
+    console.error('User rejection error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to reject user'
     });
   }
 });
