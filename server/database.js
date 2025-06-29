@@ -34,29 +34,27 @@ const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 // Initialize memory store for sessions
 const MemoryStoreSession = MemoryStore(session);
 
-// Session store instance with enhanced configuration
+// Session store instance with enhanced configuration  
 const sessionStore = new MemoryStoreSession({
   checkPeriod: 86400000, // prune expired entries every 24h
   max: 1000, // max number of sessions
   ttl: 86400000, // session TTL in milliseconds (24 hours)
   dispose: function(key, sess) {
     console.log('Session disposed:', key);
-  }
+  },
+  stale: false // Don't return stale sessions
 });
 
-// Session middleware configuration optimized for Replit
+// Simplified session configuration for reliable persistence
 export const sessionConfig = session({
-  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'freelance-platform-dev-secret-2024-strong-key',
-  resave: true, // Force save to ensure persistence
-  saveUninitialized: true, // Create sessions for tracking
-  rolling: false, // Don't reset expiration to maintain stability
+  resave: false,
+  saveUninitialized: false,
   cookie: {
-    secure: false, // False for development
-    httpOnly: false, // Allow client access for debugging
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax',
-    path: '/'
+    secure: false,
+    httpOnly: false,
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: 'lax'
   },
   name: 'sessionId'
 });
@@ -1678,26 +1676,16 @@ export const handleLogin = async (req, res) => {
     // Generate JWT token for more reliable authentication
     const token = dbService.generateToken(user);
     
-    // Store session data with proper persistence
-    req.session.userId = user.id;
-    req.session.user = {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      userType: user.userType,
-      role: user.userType,
-      company: user.company,
-      title: user.title
-    };
-
-    // Mark session as authenticated
-    req.session.authenticated = true;
+    // Simple session flag for basic tracking
+    if (req.session) {
+      req.session.userId = user.id;
+      req.session.authenticated = true;
+    }
     
-    console.log('User authenticated, session data stored:', {
-      sessionId: req.sessionID,
+    console.log('User authenticated successfully:', {
       userId: user.id,
-      email: user.email
+      email: user.email,
+      userType: user.userType
     });
 
     console.log('Session created for user:', user.id, 'Email:', user.email);

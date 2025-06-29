@@ -255,6 +255,28 @@ app.post('/api/messages', async (req, res) => {
   }
 });
 
+// Get user proposals
+app.get('/api/proposals/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Get user proposals from database
+    const proposals = await dbService.getUserProposals(userId);
+    
+    res.json({
+      proposals: proposals,
+      total: proposals.length,
+      status: 'success'
+    });
+  } catch (error) {
+    console.error('User proposals fetch error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch user proposals'
+    });
+  }
+});
+
 // Admin endpoints
 app.get('/api/admin/stats', async (req, res) => {
   try {

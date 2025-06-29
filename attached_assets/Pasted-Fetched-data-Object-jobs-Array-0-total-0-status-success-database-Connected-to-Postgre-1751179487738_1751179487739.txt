@@ -1,0 +1,28 @@
+Fetched data: 
+Object {jobs: Array(0), total: 0, status: "success", database: "Connected to PostgreSQL"}
+JobsPage render - jobsData: 
+Object {jobs: Array(0), total: 0, status: "success", database: "Connected to PostgreSQL"}
+JobsPage render - jobs: 
+Array []
+JobsPage render - jobs length: 0
+Filtered jobs count: 0
+JobsPage render - jobsData: 
+Object {jobs: Array(0), total: 0, status: "success", database: "Connected to PostgreSQL"}
+JobsPage render - jobs: 
+Array []
+JobsPage render - jobs length: 0
+Filtered jobs count: 0
+Fetching: /api/proposals/user/54f1b7c3-272d-4386-a5e8-f38dcec6b000
+Response status: 404
+Fetch error: {"status":"error","message":"API endpoint not found","path":"/api/proposals/user/54f1b7c3-272d-4386-a5e8-f38dcec6b000"}
+at t.value (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+Fetching: /api/proposals/user/54f1b7c3-272d-4386-a5e8-f38dcec6b000
+Response status: 404
+Fetch error: {"status":"error","message":"API endpoint not found","path":"/api/proposals/user/54f1b7c3-272d-4386-a5e8-f38dcec6b000"}
+at t.value (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://789cafd9-60b1-45fc-a05b-b50f1641a728-00-1g3qtyvlbb8so.spock.replit.dev:3000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
