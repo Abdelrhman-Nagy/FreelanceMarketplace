@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authStorage } from '../lib/auth';
 
 export type UserRole = 'admin' | 'client' | 'freelancer';
 export type UserStatus = 'active' | 'inactive' | 'suspended';
@@ -81,27 +82,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      // Always check localStorage first for reliable user data
-      const storedUser = localStorage.getItem('user');
+      // Use authStorage helper for consistent data retrieval
+      const storedUserData = authStorage.getUser();
       
-      if (storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          setUser(userData);
-          setLoading(false);
-          return;
-        } catch (parseError) {
-          console.error('Error parsing stored user data:', parseError);
-          localStorage.removeItem('user');
-        }
+      if (storedUserData) {
+        const userData: User = {
+          id: storedUserData.id,
+          email: storedUserData.email,
+          firstName: storedUserData.firstName,
+          lastName: storedUserData.lastName,
+          role: storedUserData.role as UserRole,
+          company: storedUserData.company,
+          title: storedUserData.title,
+          status: 'active' as UserStatus
+        };
+        setUser(userData);
+        console.log('Auth restored from storage:', userData.email);
+      } else {
+        setUser(null);
+        console.log('No stored authentication found');
       }
-
-      // Skip server check for now - rely on localStorage for persistence
-      console.log('No stored user data found');
     } catch (error) {
       console.error('Auth check failed:', error);
-      // Clear any existing user data on auth failure
-      localStorage.removeItem('user');
+      authStorage.clearUser();
       setUser(null);
     } finally {
       setLoading(false);
@@ -144,14 +147,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           firstName: data.user.firstName,
           lastName: data.user.lastName,
           role: data.user.userType || data.user.role,
-          userType: data.user.userType || data.user.role,
           company: data.user.company,
           title: data.user.title,
           status: 'active' as UserStatus
         };
         
         setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
+        // Use authStorage helper for consistent localStorage handling
+        authStorage.setUser({
+          id: userData.id,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          role: userData.role,
+          userType: userData.role,
+          company: userData.company,
+          title: userData.title
+        });
         console.log('Login successful, user stored:', userData);
       } else {
         throw new Error(data.message || 'Login failed - invalid response');
