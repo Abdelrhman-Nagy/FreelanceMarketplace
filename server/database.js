@@ -34,27 +34,30 @@ const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 // Initialize memory store for sessions
 const MemoryStoreSession = MemoryStore(session);
 
-// Session store instance
+// Session store instance with enhanced configuration
 const sessionStore = new MemoryStoreSession({
-  checkPeriod: 86400000 // prune expired entries every 24h
+  checkPeriod: 86400000, // prune expired entries every 24h
+  max: 1000, // max number of sessions
+  dispose: function(key, sess) {
+    console.log('Session disposed:', key);
+  }
 });
 
-// Session middleware configuration
+// Session middleware configuration optimized for Replit
 export const sessionConfig = session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET || 'freelance-platform-dev-secret-2024-strong-key',
-  resave: true, // Force session save to ensure persistence
-  saveUninitialized: true, // Create sessions to fix persistence
-  rolling: false, // Don't reset expiration to avoid conflicts
+  resave: true, // Force save to ensure persistence
+  saveUninitialized: true, // Create sessions for tracking
+  rolling: false, // Don't reset expiration to maintain stability
   cookie: {
-    secure: false, // Must be false for non-HTTPS
-    httpOnly: false, // Allow client-side access for debugging
+    secure: false, // False for development
+    httpOnly: false, // Allow client access for debugging
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax', // Allow same-site requests
+    sameSite: 'lax',
     path: '/'
   },
-  name: 'sessionId',
-  proxy: true // Trust proxy for Replit environment
+  name: 'sessionId'
 });
 
 // Database service for compatibility
@@ -1674,7 +1677,7 @@ export const handleLogin = async (req, res) => {
     // Generate JWT token for more reliable authentication
     const token = dbService.generateToken(user);
     
-    // Store session data and force immediate save
+    // Store session data with proper persistence
     req.session.userId = user.id;
     req.session.user = {
       id: user.id,
@@ -1687,31 +1690,13 @@ export const handleLogin = async (req, res) => {
       title: user.title
     };
 
-    // Regenerate session ID to fix persistence issues
-    req.session.regenerate((err) => {
-      if (!err) {
-        req.session.userId = user.id;
-        req.session.user = {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          userType: user.userType,
-          role: user.userType,
-          company: user.company,
-          title: user.title
-        };
-        
-        req.session.save((saveErr) => {
-          if (saveErr) {
-            console.error('Session save error:', saveErr);
-          } else {
-            console.log('Session regenerated and saved for user:', user.id);
-          }
-        });
-      } else {
-        console.error('Session regeneration error:', err);
-      }
+    // Mark session as authenticated
+    req.session.authenticated = true;
+    
+    console.log('User authenticated, session data stored:', {
+      sessionId: req.sessionID,
+      userId: user.id,
+      email: user.email
     });
 
     console.log('Session created for user:', user.id, 'Email:', user.email);
