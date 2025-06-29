@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import session from 'express-session';
+import MemoryStore from 'memorystore';
 import * as schema from "../shared/schema.js";
 
 const { Pool } = pg;
@@ -30,14 +31,20 @@ export { pool, db };
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
+// Initialize memory store for sessions
+const MemoryStoreSession = MemoryStore(session);
+
 // Session middleware configuration
 export const sessionConfig = session({
+  store: new MemoryStoreSession({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
   secret: process.env.SESSION_SECRET || 'freelance-platform-dev-secret-2024',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true, // Changed to true for debugging
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
+    secure: false, // Set to false for development
+    httpOnly: false, // Changed to false for debugging
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'lax'
   },

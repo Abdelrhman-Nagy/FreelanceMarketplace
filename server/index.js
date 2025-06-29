@@ -25,9 +25,20 @@ app.use(cookieParser());
 // Session middleware
 app.use(sessionConfig);
 
-// Enhanced CORS middleware for cross-port requests
+// Debug session middleware
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  if (process.env.NODE_ENV === 'development' && req.path.includes('/api/auth/')) {
+    console.log('Session debug - sessionID:', req.sessionID);
+    console.log('Session debug - session:', req.session);
+    console.log('Session debug - cookies:', req.headers.cookie);
+  }
+  next();
+});
+
+// CORS middleware for session support
+app.use((req, res, next) => {
+  const origin = req.headers.origin || req.headers.host;
+  res.header('Access-Control-Allow-Origin', origin);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
