@@ -39,14 +39,15 @@ export const sessionConfig = session({
   store: new MemoryStoreSession({
     checkPeriod: 86400000 // prune expired entries every 24h
   }),
-  secret: process.env.SESSION_SECRET || 'freelance-platform-dev-secret-2024',
-  resave: true, // Changed to true to ensure session is saved
-  saveUninitialized: false, // Changed back to false to prevent empty sessions
+  secret: process.env.SESSION_SECRET || 'freelance-platform-dev-secret-2024-strong-key',
+  resave: true, // Force session save to ensure persistence
+  saveUninitialized: true, // Create session even if empty
+  rolling: true, // Reset expiration on activity
   cookie: {
-    secure: false, // Set to false for development
-    httpOnly: false, // Changed to false for debugging
+    secure: false, // Must be false for non-HTTPS
+    httpOnly: false, // Allow client-side access for debugging
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax'
+    sameSite: 'lax' // Allow same-site requests
   },
   name: 'sessionId'
 });

@@ -29,18 +29,19 @@ app.use(sessionConfig);
 app.use((req, res, next) => {
   if (process.env.NODE_ENV === 'development' && req.path.includes('/api/auth/')) {
     console.log('Session debug - sessionID:', req.sessionID);
-    console.log('Session debug - session:', req.session);
+    console.log('Session debug - session data:', req.session);
     console.log('Session debug - cookies:', req.headers.cookie);
+    console.log('Session debug - session store:', req.sessionStore.sessions ? Object.keys(req.sessionStore.sessions).length : 'none');
   }
   next();
 });
 
 // CORS middleware for session support
 app.use((req, res, next) => {
-  const origin = req.headers.origin || req.headers.host;
+  const origin = req.headers.origin || `https://${req.headers.host}`;
   res.header('Access-Control-Allow-Origin', origin);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
   res.header('Access-Control-Allow-Credentials', 'true');
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -1626,6 +1627,10 @@ app.get('/api', (req, res) => {
 });
 
 // Authentication Routes
+app.post('/api/auth/login', handleLogin);
+app.post('/api/auth/logout', handleLogout);
+app.get('/api/auth/profile', handleProfile);
+
 app.post('/api/auth/register', async (req, res) => {
   try {
     console.log('=== REGISTRATION REQUEST ===');
