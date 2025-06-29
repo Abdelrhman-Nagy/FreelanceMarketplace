@@ -34,14 +34,17 @@ const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 // Initialize memory store for sessions
 const MemoryStoreSession = MemoryStore(session);
 
+// Session store instance
+const sessionStore = new MemoryStoreSession({
+  checkPeriod: 86400000 // prune expired entries every 24h
+});
+
 // Session middleware configuration
 export const sessionConfig = session({
-  store: new MemoryStoreSession({
-    checkPeriod: 86400000 // prune expired entries every 24h
-  }),
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'freelance-platform-dev-secret-2024-strong-key',
   resave: true, // Force session save to ensure persistence
-  saveUninitialized: true, // Create session even if empty
+  saveUninitialized: false, // Don't create empty sessions
   rolling: true, // Reset expiration on activity
   cookie: {
     secure: false, // Must be false for non-HTTPS
@@ -1666,17 +1669,30 @@ export const handleLogin = async (req, res) => {
       title: user.title
     };
 
-    // Force session save
-    await new Promise((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) {
-          console.error('Session save error:', err);
-          reject(err);
-        } else {
-          console.log('Session saved successfully for user:', user.id);
-          resolve();
-        }
-      });
+    // Generate JWT token for more reliable authentication
+    const token = dbService.generateToken(user);
+    
+    // Store session data directly (more reliable)
+    req.session.userId = user.id;
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userType: user.userType,
+      role: user.userType,
+      company: user.company,
+      title: user.title
+    };
+
+    // Force session save synchronously
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error('Session save error:', saveErr);
+      } else {
+        console.log('Session saved successfully for user:', user.id);
+        console.log('Session data after save:', req.session.userId, req.session.user?.email);
+      }
     });
 
     console.log('Session created for user:', user.id, 'Email:', user.email);
@@ -1715,7 +1731,8 @@ export const handleLogin = async (req, res) => {
     res.json({
       status: 'success',
       message: 'Login successful',
-      user: userResponse
+      user: userResponse,
+      token: token
     });
   } catch (error) {
     console.error('Login error details:', error);

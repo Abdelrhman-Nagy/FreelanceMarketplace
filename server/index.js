@@ -32,6 +32,8 @@ app.use((req, res, next) => {
     console.log('Session debug - session data:', req.session);
     console.log('Session debug - cookies:', req.headers.cookie);
     console.log('Session debug - session store:', req.sessionStore.sessions ? Object.keys(req.sessionStore.sessions).length : 'none');
+    console.log('Session debug - userId in session:', req.session.userId);
+    console.log('Session debug - user in session:', req.session.user);
   }
   next();
 });
@@ -59,6 +61,54 @@ app.use((req, res, next) => {
       console.log('Request body:', req.body);
     }
   }
+  next();
+});
+
+// Enhanced authentication middleware
+app.use((req, res, next) => {
+  // Skip auth middleware for non-protected routes
+  if (!req.path.startsWith('/api/') || 
+      req.path === '/api/test' || 
+      req.path === '/api/auth/login' || 
+      req.path === '/api/auth/register' ||
+      req.path === '/api/jobs' ||
+      req.path === '/api/freelancers') {
+    return next();
+  }
+
+  // Try session authentication first
+  if (req.session && req.session.userId) {
+    console.log('Session auth successful for user:', req.session.userId);
+    return next();
+  }
+
+  // Try token authentication
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    try {
+      const decoded = dbService.verifyToken(token);
+      req.session = req.session || {};
+      req.session.userId = decoded.userId;
+      req.session.user = decoded.user;
+      console.log('Token auth successful for user:', decoded.userId);
+      return next();
+    } catch (error) {
+      console.log('Token verification failed:', error.message);
+    }
+  }
+
+  // Check if this is a protected route
+  if (req.path.startsWith('/api/auth/profile') || 
+      req.path.startsWith('/api/admin/') ||
+      req.path.startsWith('/api/proposals') ||
+      req.path.includes('/my-')) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Authentication required'
+    });
+  }
+
   next();
 });
 

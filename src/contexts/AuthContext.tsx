@@ -81,10 +81,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
+      // First check localStorage for stored user data
+      const storedUser = localStorage.getItem('user');
+      const storedToken = localStorage.getItem('authToken');
+      
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        setLoading(false);
+        return;
+      }
+
       // Use relative URL - server runs on same port
       const apiUrl = '/api/auth/profile';
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Add token to headers if available
+      if (storedToken) {
+        headers['Authorization'] = `Bearer ${storedToken}`;
+      }
+      
       const response = await fetch(apiUrl, {
-        credentials: 'include'
+        credentials: 'include',
+        headers
       });
 
       if (response.ok) {
@@ -93,12 +114,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const data = JSON.parse(text);
           if (data.status === 'success') {
             setUser(data.user);
+            localStorage.setItem('user', JSON.stringify(data.user));
           }
         }
+      } else {
+        // Clear stored data if auth fails
+        localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
+        setUser(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       // Clear any existing user data on auth failure
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
       setUser(null);
     } finally {
       setLoading(false);
@@ -135,6 +164,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (data.status === 'success') {
         setUser(data.user);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
         console.log('Login successful, user set:', data.user);
       } else {
         throw new Error(data.message || 'Login failed');
