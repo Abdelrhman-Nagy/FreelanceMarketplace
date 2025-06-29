@@ -38,6 +38,7 @@ const MemoryStoreSession = MemoryStore(session);
 const sessionStore = new MemoryStoreSession({
   checkPeriod: 86400000, // prune expired entries every 24h
   max: 1000, // max number of sessions
+  ttl: 86400000, // session TTL in milliseconds (24 hours)
   dispose: function(key, sess) {
     console.log('Session disposed:', key);
   }
