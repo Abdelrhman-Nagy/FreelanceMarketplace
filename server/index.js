@@ -64,51 +64,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Enhanced authentication middleware
+// Authentication check middleware (non-blocking for debugging)
 app.use((req, res, next) => {
-  // Skip auth middleware for non-protected routes
-  if (!req.path.startsWith('/api/') || 
-      req.path === '/api/test' || 
-      req.path === '/api/auth/login' || 
-      req.path === '/api/auth/register' ||
-      req.path === '/api/jobs' ||
-      req.path === '/api/freelancers') {
-    return next();
+  // Log authentication state for debugging
+  if (req.path.startsWith('/api/auth/')) {
+    console.log('Auth check - Session exists:', !!req.session);
+    console.log('Auth check - Session ID:', req.sessionID);
+    console.log('Auth check - User ID in session:', req.session?.userId);
   }
-
-  // Try session authentication first
-  if (req.session && req.session.userId) {
-    console.log('Session auth successful for user:', req.session.userId);
-    return next();
-  }
-
-  // Try token authentication
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    try {
-      const decoded = dbService.verifyToken(token);
-      req.session = req.session || {};
-      req.session.userId = decoded.userId;
-      req.session.user = decoded.user;
-      console.log('Token auth successful for user:', decoded.userId);
-      return next();
-    } catch (error) {
-      console.log('Token verification failed:', error.message);
-    }
-  }
-
-  // Check if this is a protected route
-  if (req.path.startsWith('/api/auth/profile') || 
-      req.path.startsWith('/api/admin/') ||
-      req.path.startsWith('/api/proposals') ||
-      req.path.includes('/my-')) {
-    return res.status(401).json({
-      status: 'error',
-      message: 'Authentication required'
-    });
-  }
-
   next();
 });
 

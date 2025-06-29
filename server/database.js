@@ -44,15 +44,17 @@ export const sessionConfig = session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET || 'freelance-platform-dev-secret-2024-strong-key',
   resave: true, // Force session save to ensure persistence
-  saveUninitialized: false, // Don't create empty sessions
-  rolling: true, // Reset expiration on activity
+  saveUninitialized: true, // Create sessions to fix persistence
+  rolling: false, // Don't reset expiration to avoid conflicts
   cookie: {
     secure: false, // Must be false for non-HTTPS
     httpOnly: false, // Allow client-side access for debugging
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Allow same-site requests
+    sameSite: 'lax', // Allow same-site requests
+    path: '/'
   },
-  name: 'sessionId'
+  name: 'sessionId',
+  proxy: true // Trust proxy for Replit environment
 });
 
 // Database service for compatibility
@@ -1672,7 +1674,7 @@ export const handleLogin = async (req, res) => {
     // Generate JWT token for more reliable authentication
     const token = dbService.generateToken(user);
     
-    // Store session data directly (more reliable)
+    // Store session data and force immediate save
     req.session.userId = user.id;
     req.session.user = {
       id: user.id,
@@ -1685,13 +1687,30 @@ export const handleLogin = async (req, res) => {
       title: user.title
     };
 
-    // Force session save synchronously
-    req.session.save((saveErr) => {
-      if (saveErr) {
-        console.error('Session save error:', saveErr);
+    // Regenerate session ID to fix persistence issues
+    req.session.regenerate((err) => {
+      if (!err) {
+        req.session.userId = user.id;
+        req.session.user = {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          userType: user.userType,
+          role: user.userType,
+          company: user.company,
+          title: user.title
+        };
+        
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('Session save error:', saveErr);
+          } else {
+            console.log('Session regenerated and saved for user:', user.id);
+          }
+        });
       } else {
-        console.log('Session saved successfully for user:', user.id);
-        console.log('Session data after save:', req.session.userId, req.session.user?.email);
+        console.error('Session regeneration error:', err);
       }
     });
 
@@ -1769,42 +1788,86 @@ export const handleProfile = async (req, res) => {
     console.log('Profile request - Session userId:', req.session?.userId);
     console.log('Profile request - Session user:', req.session?.user);
     
-    if (!req.session?.userId) {
-      return res.status(401).json({
-        status: 'error',
-        message: 'Not authenticated'
-      });
-    }
+    // Check session authentication
+    if (req.session?.userId) {
+      const user = await dbService.getUserById(req.session.userId);
+      if (user) {
+        const userResponse = {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.userType,
+          userType: user.userType,
+          company: user.company,
+          title: user.title,
+          bio: user.bio,
+          skills: user.skills ? (typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills) : [],
+          hourlyRate: user.hourlyRate,
+          location: user.location,
+          phoneNumber: user.phoneNumber,
+          website: user.website,
+          rating: user.rating || 0,
+          totalJobs: user.totalJobs || 0,
+          completedJobs: user.completedJobs || 0,
+          totalEarnings: user.totalEarnings || 0,
+          createdAt: user.createdAt
+        };
 
-    const user = await dbService.getUserById(req.session.userId);
-    if (!user) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'User not found'
-      });
-    }
-
-    console.log('Profile request successful for user:', user.email);
-    
-    res.json({
-      status: 'success',
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        userType: user.userType,
-        company: user.company,
-        title: user.title,
-        bio: user.bio,
-        skills: user.skills,
-        hourlyRate: user.hourlyRate,
-        location: user.location
+        return res.json({
+          status: 'success',
+          user: userResponse
+        });
       }
+    }
+
+    // Try token authentication as fallback
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        const decoded = dbService.verifyToken(token);
+        const user = await dbService.getUserById(decoded.userId);
+        if (user) {
+          const userResponse = {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.userType,
+            userType: user.userType,
+            company: user.company,
+            title: user.title,
+            bio: user.bio,
+            skills: user.skills ? (typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills) : [],
+            hourlyRate: user.hourlyRate,
+            location: user.location,
+            phoneNumber: user.phoneNumber,
+            website: user.website,
+            rating: user.rating || 0,
+            totalJobs: user.totalJobs || 0,
+            completedJobs: user.completedJobs || 0,
+            totalEarnings: user.totalEarnings || 0,
+            createdAt: user.createdAt
+          };
+
+          return res.json({
+            status: 'success',
+            user: userResponse
+          });
+        }
+      } catch (error) {
+        console.log('Token verification failed:', error.message);
+      }
+    }
+    
+    return res.status(401).json({
+      status: 'error',
+      message: 'Not authenticated'
     });
   } catch (error) {
-    console.error('Profile error:', error);
-    res.status(500).json({
+    console.error('Profile request error:', error);
+    return res.status(500).json({
       status: 'error',
       message: 'Failed to fetch profile'
     });
