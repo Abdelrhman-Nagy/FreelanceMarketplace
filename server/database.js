@@ -40,8 +40,8 @@ export const sessionConfig = session({
     checkPeriod: 86400000 // prune expired entries every 24h
   }),
   secret: process.env.SESSION_SECRET || 'freelance-platform-dev-secret-2024',
-  resave: false,
-  saveUninitialized: true, // Changed to true for debugging
+  resave: true, // Changed to true to ensure session is saved
+  saveUninitialized: false, // Changed back to false to prevent empty sessions
   cookie: {
     secure: false, // Set to false for development
     httpOnly: false, // Changed to false for debugging
@@ -1664,6 +1664,19 @@ export const handleLogin = async (req, res) => {
       company: user.company,
       title: user.title
     };
+
+    // Force session save
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          reject(err);
+        } else {
+          console.log('Session saved successfully for user:', user.id);
+          resolve();
+        }
+      });
+    });
 
     console.log('Session created for user:', user.id, 'Email:', user.email);
 
